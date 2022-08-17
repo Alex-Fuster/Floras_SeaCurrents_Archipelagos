@@ -1,0 +1,738 @@
+---
+title: "Mantel test Galapagos - Floristic & Currents conectivity"
+output:
+  html_notebook: default
+  word_document: default
+Author: Alexandre Fuster and Guillem Pocull
+---
+
+In this script, we will convert the obtained floristic and currents matrices (floristic dissimilatiry matrix and oceanic current connectivity matrix) into distance matrices and perform a Procrustes analyses to explore their correlation and answer whether highly sea-current-connected islands more floristicaly similar. 
+
+We will also analyze whether floristic similarities are related to geographic, area, and age distance between islands.
+
+```{r}
+library(ade4)
+library(qgraph)
+library(ecodist)
+library(vegan)
+library(tidyverse)
+library(cluster)
+library(textshape)
+library(dplyr)
+library(tidyverse)
+library(cluster)
+library(spaa)
+```
+
+
+### Load data
+
+
+
+#### Load floristic matrices and convert to distance objects
+
+```{r}
+
+
+# All species
+distflor_all_gal<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Galapagos/df_all_gal")
+
+distflor_all_can<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Canaries/df_all_can")
+
+distflor_all_az<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Azores/df_all_az")
+
+
+# Thalassocorous
+
+distflor_tha_gal<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Galapagos/df_thalassochory_gal")
+
+distflor_tha_can<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Canaries/df_thalassochory_can")
+
+distflor_tha_az<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Azores/df_thalassochory_az")
+
+
+# Fleshy fruited
+
+distflor_freshy_gal<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Galapagos/df_fleshy_fruits_gal")
+
+
+# Littoral
+
+distflor_litt_gal<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Galapagos/df_littoral_gal")
+
+distflor_litt_can<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Canaries/df_littoral_can")
+
+distflor_litt_az<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Azores/df_littoral_az")
+
+
+
+# Littoral exclusive
+
+distflor_litt.excl_gal<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Galapagos/df_littoral_exclusive_gal")
+
+distflor_litt.excl_can<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Canaries/df_littoral_exclusive_can")
+
+distflor_litt.excl_az<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Azores/df_littoral_exclusive_az")
+
+
+
+# All but thalassochorous
+
+distflor_no.tha_gal<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Galapagos/df_all_without_thalassochory_gal")
+
+distflor_no.tha_can<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Canaries/df_all_without_thalassochory_can")
+
+distflor_no.tha_az<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Azores/df_all_without_thalassochory_az")
+
+
+
+
+# All but littoral
+
+distflor_no.litt_gal<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Galapagos/df_all_without_littoral_gal")
+
+distflor_no.litt_can<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Canaries/df_all_without_littoral_can")
+
+distflor_no.litt_az<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Azores/df_all_without_littoral_az")
+
+
+
+# All but littoral exlusive
+
+distflor_no.littexcl_gal<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Galapagos/df_all_without_littoral_exclusive_gal")
+
+distflor_no.littexcl_can<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Canaries/df_all_without_littoral_exclusive_can")
+
+distflor_no.littexcl_az<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Azores/df_all_without_littoral_exclusive_az")
+
+
+
+ # All but fleshy fruited 
+
+distflor_no.fleshy_gal<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Galapagos/df_all_without_fleshy_gal")
+
+
+
+```
+
+
+
+#### Load currents and geographic matrices and convert to distance objects
+
+```{r}
+
+# Currents distance matrix
+
+dist_curr_gal<-load_order_convert_csv_to_distanceMat(filepath ="../Matrices/Galapagos/Matrices-Currents_Galap/matrix_median_min_final_Galapagos.csv")
+
+dist_curr_can<-load_order_convert_csv_to_distanceMat(filepath ="../Matrices/Canaries/Matrices-Currents_Canaries/matrix_median_min_final_Canaries.csv")
+
+dist_curr_az<-load_order_convert_csv_to_distanceMat(filepath ="../Matrices/Azores/Matrices-Currents_Azores/matrix_median_min_final_Azores.csv")
+  
+
+
+dist_curr_gal<-load_order_convert_csv_to_distanceMat(filepath ="../Matrices/Galapagos/Matrices-Currents_Galap/matrix_median_min_final_Galapagos.csv")
+
+# Geographic distance matrix
+
+
+dist_geo_gal<-load_order_convert_csv_to_distanceMat(filepath ="../Matrices/Galapagos/Matrices-Geographic_Galap/geographic_distance_galap.csv")
+
+dist_geo_can<-load_order_convert_csv_to_distanceMat(filepath ="../Matrices/Canaries/Matrices-Geographic_Canaries/geographic_distance_canaries.csv")
+
+dist_geo_az<-load_order_convert_csv_to_distanceMat(filepath ="../Matrices/Azores/Matrices-Geographic_Azores/geographic_distance_azores.csv")
+
+```
+
+
+
+
+
+#### Load island area matrices and convert to distance objects
+
+Here we first open the file to calculate euclidean distances, and save it with write.table function to make it as we want
+
+```{r}
+df_area<-read.csv("../Data/Data_Galapagos/area_islands_galap.csv")
+df_area1<-column_to_rownames(df_area, 'X')
+
+dist_area<-daisy(df_area1, metric="euclidean")
+
+write.table(as.matrix(dist_area), file = "../Data/Data_Galapagos/Area_islands_Galapagos",
+            append = FALSE, quote = TRUE, sep = " ",
+            eol = "\n", na = "NA", dec = ".", row.names = TRUE,
+            col.names = TRUE, qmethod = c("escape", "double"),
+            fileEncoding = "")
+
+Area_islands_gal<-read.table("../Data/Data_Galapagos/Area_islands_Galapagos")
+
+
+
+
+df_area<-read.csv("../Data/Data_Canaries/area_islands_canaries.csv")
+df_area1<-column_to_rownames(df_area, 'X')
+
+dist_area<-daisy(df_area1, metric="euclidean")
+
+write.table(as.matrix(dist_area), file = "../../Data/Data_Canaries/Area_islands_Canaries",
+            append = FALSE, quote = TRUE, sep = " ",
+            eol = "\n", na = "NA", dec = ".", row.names = TRUE,
+            col.names = TRUE, qmethod = c("escape", "double"),
+            fileEncoding = "")
+
+Area_islands_can<-read.table("../Data/Data_Canaries/Area_islands_Canaries")
+
+
+
+
+
+df_area<-read.csv("../Data/Data_Azores/area_islands_azores.csv")
+df_area1<-column_to_rownames(df_area, 'X')
+
+dist_area<-daisy(df_area1, metric="euclidean")
+
+write.table(as.matrix(dist_area), file = "../Data/Data_Azores/Area_islands_Azores",
+            append = FALSE, quote = TRUE, sep = " ",
+            eol = "\n", na = "NA", dec = ".", row.names = TRUE,
+            col.names = TRUE, qmethod = c("escape", "double"),
+            fileEncoding = "")
+
+Area_islands_az<-read.table("../Data/Data_Azores/Area_islands_Azores")
+```
+
+
+```{r}
+dist_area_gal<-load_order_convert_table_to_distanceMat(filepath = "../Data/Data_Galapagos/Area_islands_Galapagos")
+
+dist_area_can<-load_order_convert_table_to_distanceMat(filepath = "../Data/Data_Canaries/Area_islands_Canaries")
+
+dist_area_az<-load_order_convert_table_to_distanceMat(filepath = "../Data/Data_Azores/Area_islands_Azores")
+```
+
+
+
+
+#### Load island age matrices and convert to distance objects
+
+```{r}
+
+df_Ages<-read.csv("../Data/Data_Galapagos/df_ages_Galap.csv", sep=";")
+df_Ages1<-column_to_rownames(df_Ages, 'island')
+
+dist_Ages<-daisy(df_Ages1, metric="euclidean")
+
+write.table(as.matrix(dist_Ages), file = "../Data/Data_Galapagos/Ages_islands_Galapagos",
+            append = FALSE, quote = TRUE, sep = " ",
+            eol = "\n", na = "NA", dec = ".", row.names = TRUE,
+            col.names = TRUE, qmethod = c("escape", "double"),
+            fileEncoding = "")
+
+
+Ages_islands_gal<-read.table("../Data/Data_Galapagos/Ages_islands_Galapagos")
+
+
+
+
+df_Ages<-read.csv("../Data/Data_Canaries/df_ages_canaries.csv", sep=";")
+df_Ages1<-column_to_rownames(df_Ages, 'island')
+
+dist_Ages<-daisy(df_Ages1, metric="euclidean")
+
+write.table(as.matrix(dist_Ages), file = "../Data/Data_Canaries/Ages_islands_Canaries",
+            append = FALSE, quote = TRUE, sep = " ",
+            eol = "\n", na = "NA", dec = ".", row.names = TRUE,
+            col.names = TRUE, qmethod = c("escape", "double"),
+            fileEncoding = "")
+
+
+Ages_islands_can<-read.table("../Data/Data_Canaries/Ages_islands_Canaries")
+
+
+
+
+df_Ages<-read.csv("../Data/Data_Azores/df_ages_azores.csv", sep=";")
+df_Ages1<-column_to_rownames(df_Ages, 'island')
+
+dist_Ages<-daisy(df_Ages1, metric="euclidean")
+
+write.table(as.matrix(dist_Ages), file = "../Data/Data_Azores/Ages_islands_Azores",
+            append = FALSE, quote = TRUE, sep = " ",
+            eol = "\n", na = "NA", dec = ".", row.names = TRUE,
+            col.names = TRUE, qmethod = c("escape", "double"),
+            fileEncoding = "")
+
+
+Ages_islands_az<-read.table("../Data/Data_Azores/Ages_islands_Azores")
+```
+
+```{r}
+dist_age_gal<-load_order_convert_table_to_distanceMat(filepath = "../Data/Data_Galapagos/Ages_islands_Galapagos")
+
+dist_age_can<-load_order_convert_table_to_distanceMat(filepath = "../Data/Data_Canaries/Ages_islands_Canaries")
+
+dist_age_az<-load_order_convert_table_to_distanceMat(filepath = "../Data/Data_Azores/Ages_islands_Azores")
+```
+
+
+
+
+
+
+# Procrustes test
+
+
+
+
+## Floras - currents
+
+```{r}
+
+# All species
+
+protest_curr_FlorAll_gal <-Compute_Protest_distMat(distMat_rot=distflor_all_gal,distMat_base = dist_curr_gal,k=11)
+protest_curr_FlorAll_can <-Compute_Protest_distMat(distMat_rot=distflor_all_can,distMat_base = dist_curr_can, k=6)
+protest_curr_FlorAll_az <-Compute_Protest_distMat(distMat_rot=distflor_all_az,distMat_base = dist_curr_az,k=8)
+
+# Thalassochorous
+
+protest_curr_Flortha_gal <-Compute_Protest_distMat(distMat_rot=distflor_all_gal,distMat_base = dist_curr_gal,k=11)
+protest_curr_Flortha_can <-Compute_Protest_distMat(distMat_rot=distflor_tha_can,distMat_base = dist_curr_can, k=6)
+protest_curr_Flortha_az <-Compute_Protest_distMat(distMat_rot=distflor_tha_az,distMat_base = dist_curr_az,k=8)
+
+
+# Littoral
+
+protest_curr_FlorLitt_gal <-Compute_Protest_distMat(distMat_rot=distflor_litt_gal,distMat_base = dist_curr_gal,k=11)
+protest_curr_FlorLitt_can <-Compute_Protest_distMat(distMat_rot=distflor_litt_can,distMat_base = dist_curr_can, k=6)
+protest_curr_FlorLitt_az <-Compute_Protest_distMat(distMat_rot=distflor_litt_az,distMat_base = dist_curr_az,k=8)
+
+
+# Littoral exclusive
+
+protest_curr_FlorLitt.excl_gal <-Compute_Protest_distMat(distMat_rot=distflor_litt.excl_gal,distMat_base = dist_curr_gal,k=11)
+protest_curr_FlorLitt.excl_can <-Compute_Protest_distMat(distMat_rot=distflor_litt.excl_can,distMat_base = dist_curr_can, k=6)
+protest_curr_FlorLitt.excl_az <-Compute_Protest_distMat(distMat_rot=distflor_litt.excl_az,distMat_base = dist_curr_az,k=8)
+
+
+# Fleshy fruitted
+
+protest_curr_Florflesh_gal <-Compute_Protest_distMat(distMat_rot=distflor_freshy_gal,distMat_base = dist_curr_gal,k=11)
+
+
+
+# All but thalassochorous
+
+protest_curr_FlorNotha.excl_gal <-Compute_Protest_distMat(distMat_rot=distflor_no.tha_gal,distMat_base = dist_curr_gal,k=11)
+protest_curr_FlorNotha.excl_can <-Compute_Protest_distMat(distMat_rot=distflor_no.tha_can,distMat_base = dist_curr_can, k=6)
+protest_curr_FlorNotha.excl_az <-Compute_Protest_distMat(distMat_rot=distflor_no.tha_az,distMat_base = dist_curr_az,k=8)
+
+
+# All but Littoral
+
+
+protest_curr_FlorNoLitt.excl_gal <-Compute_Protest_distMat(distMat_rot=distflor_no.litt_gal,distMat_base = dist_curr_gal,k=11)
+protest_curr_FlorNoLitt.excl_can <-Compute_Protest_distMat(distMat_rot=distflor_no.litt_can,distMat_base = dist_curr_can, k=6)
+protest_curr_FlorNoLitt.excl_az <-Compute_Protest_distMat(distMat_rot=distflor_no.litt_az,distMat_base = dist_curr_az,k=8)
+
+
+# All but Littoral exclusive
+
+protest_curr_FlorNoLitt.excl_gal <-Compute_Protest_distMat(distMat_rot=distflor_no.littexcl_gal,distMat_base = dist_curr_gal,k=11)
+protest_curr_FlorNoLitt.excl_can <-Compute_Protest_distMat(distMat_rot=distflor_no.littexcl_can,distMat_base = dist_curr_can, k=6)
+protest_curr_FlorNoLitt.excl_az <-Compute_Protest_distMat(distMat_rot=distflor_no.littexcl_az,distMat_base = dist_curr_az,k=8)
+
+
+
+```
+
+
+### Plot the results
+
+This chunk saves procrustes tests in the local repository file "plots". It can be ignored for the analyses.
+
+
+Plots are Kind 1, which gives a visual indication of the degree of match between the two ordinations. Symbols or labels show the position of the samples in the first ordination, and arrows point to their positions in the target ordination. The plot also shows the rotation between the two ordinations necessary to make them match as closely as possible
+
+
+```{r}
+  
+# All
+
+pdf(file= "plots/procrustes/protest_curr_FlorAll_gal.pdf" )
+plot(protest_curr_FlorAll_gal, kind=1, type = "text",cex = 1.2, main = "Currents & All plants", ar.col = "red1", len = 0.2)
+
+pdf(file= "plots/procrustes/protest_curr_FlorAll_can.pdf" )
+plot(protest_curr_FlorAll_can,kind=1, type = "text",cex = 1.2,main = "Currents & All plants", ar.col = "red1", len = 0.2)
+
+pdf(file= "plots/procrustes/protest_curr_FlorAll_az.pdf" )
+plot(protest_curr_FlorAll_az,kind=1, type = "text",cex = 1.2,main = "Currents & All plants", ar.col = "red1", len = 0.2)
+
+
+
+
+# Thalassochorous
+
+pdf(file= "plots/procrustes/protest_curr_Flortha_gal.pdf" )
+plot(protest_curr_Flortha_gal, kind=1, type = "text",cex = 1.2, main = "Currents & Thalassochorous plants", ar.col = "red1", len = 0.2)
+
+pdf(file= "plots/procrustes/protest_curr_Flortha_can.pdf" )
+plot(protest_curr_Flortha_can,kind=1, type = "text",cex = 1.2,main = "Currents & Thalassochorous plants", ar.col = "red1", len = 0.2)
+
+pdf(file= "plots/procrustes/protest_curr_Flortha_az.pdf" )
+plot(protest_curr_Flortha_az,kind=1, type = "text",cex = 1.2, main = "Currents & Thalassochorous plants", ar.col = "red1", len = 0.2)
+
+
+# Littoral
+
+pdf(file= "plots/procrustes/protest_curr_FlorLitt_gal.pdf" )
+plot(protest_curr_FlorLitt_gal, kind=1, type = "text",cex = 1.2, main = "Currents & Littoral plants", ar.col = "red1", len = 0.2)
+
+pdf(file= "plots/procrustes/protest_curr_FlorLitt_can.pdf" )
+plot(protest_curr_FlorLitt_can,kind=1, type = "text",cex = 1.2,main = "Currents & Littoral plants", ar.col = "red1", len = 0.2)
+
+pdf(file= "plots/procrustes/protest_curr_FlorLitt_az.pdf" )
+plot(protest_curr_FlorLitt_az,kind=1, type = "text",cex = 1.2,main = "Currents & Littoral plants", ar.col = "red1", len = 0.2)
+
+
+# Littoral exclusive
+
+pdf(file= "plots/procrustes/protest_curr_FlorLitt.excl_gal.pdf" )
+plot(protest_curr_FlorLitt.excl_gal, kind=1, type = "text",cex = 1.2, main = "Currents & Littoral exclusive plants", ar.col = "red1", len = 0.2)
+
+pdf(file= "plots/procrustes/protest_curr_FlorLitt.excl_can.pdf" )
+plot(protest_curr_FlorLitt.excl_can,kind=1, type = "text",cex = 1.2,main = "Currents & Littoral exclusive plants", ar.col = "red1", len = 0.2)
+
+pdf(file= "plots/procrustes/protest_curr_FlorLitt.excl_az.pdf" )
+plot(protest_curr_FlorLitt.excl_az,kind=1, type = "text",cex = 1.2,main = "Currents & Littoral exclusive plants", ar.col = "red1", len = 0.2)
+
+
+# Fleshy fruited
+
+pdf(file= "plots/procrustes/protest_curr_Florflesh_gal.pdf" )
+plot(protest_curr_Florflesh_gal, kind=1, type = "text",cex = 1.2, main = "Currents & Fleshy fruited plants", ar.col = "red1", len = 0.2)
+
+```
+
+
+Plots
+
+```{r}
+par(mfrow=c(2,3))
+
+plot(protest_curr_Flortha_gal, kind=1, type = "text",cex = 1.2, main = "Currents & Thalassochorous plants", ar.col = "red1", len = 0.2)
+plot(protest_curr_Flortha_gal, kind=1, type = "text",cex = 1.2, main = "Currents & Thalassochorous plants", ar.col = "red1", len = 0.2)
+plot(protest_curr_FlorLitt_gal, kind=1, type = "text",cex = 1.2, main = "Currents & Littoral plants", ar.col = "red1", len = 0.2)
+plot(protest_curr_FlorLitt.excl_gal, kind=1, type = "text",cex = 1.2, main = "Currents & Littoral exclusive plants", ar.col = "red1", len = 0.2)
+plot(protest_curr_Florflesh_gal, kind=1, type = "text",cex = 1.2, main = "Currents & Fleshy fruited plants", ar.col = "red1", len = 0.2)
+```
+
+
+```{r}
+
+par(mfrow=c(2,2))
+
+
+plot(protest_curr_FlorAll_can,kind=1, type = "text",cex = 1.2,main = "Currents & All plants", ar.col = "red1", len = 0.2)
+plot(protest_curr_Flortha_can,kind=1, type = "text",cex = 1.2,main = "Currents & Thalassochorous plants", ar.col = "red1", len = 0.2)
+plot(protest_curr_FlorLitt_can,kind=1, type = "text",cex = 1.2,main = "Currents & Littoral plants", ar.col = "red1", len = 0.2)
+plot(protest_curr_FlorLitt.excl_az,kind=1, type = "text",cex = 1.2,main = "Currents & Littoral exclusive plants", ar.col = "red1", len = 0.2)
+
+```
+
+```{r}
+
+par(mfrow=c(2,2))
+
+
+plot(protest_curr_FlorAll_az,kind=1, type = "text",cex = 1.2,main = "Currents & All plants", ar.col = "red1", len = 0.2)
+plot(protest_curr_Flortha_az,kind=1, type = "text",cex = 1.2, main = "Currents & Thalassochorous plants", ar.col = "red1", len = 0.2)
+plot(protest_curr_FlorLitt_az,kind=1, type = "text",cex = 1.2,main = "Currents & Littoral plants", ar.col = "red1", len = 0.2)
+plot(protest_curr_FlorLitt.excl_az,kind=1, type = "text",cex = 1.2,main = "Currents & Littoral exclusive plants", ar.col = "red1", len = 0.2)
+```
+
+
+## Floras - geo
+
+
+```{r}
+# All species
+
+protest_curr_FlorAll_gal <-Compute_Protest_distMat(distMat_rot=distflor_all_gal,distMat_base = dist_geo_gal,k=11)
+protest_geo_FlorAll_can <-Compute_Protest_distMat(distMat_rot=distflor_all_can,distMat_base = dist_geo_can, k=6)
+protest_geo_FlorAll_az <-Compute_Protest_distMat(distMat_rot=distflor_all_az,distMat_base = dist_geo_az,k=8)
+
+# Thalassochorous
+
+protest_geo_Flortha_gal <-Compute_Protest_distMat(distMat_rot=distflor_all_gal,distMat_base = dist_geo_gal,k=11)
+protest_geo_Flortha_can <-Compute_Protest_distMat(distMat_rot=distflor_tha_can,distMat_base = dist_geo_can, k=6)
+protest_geo_Flortha_az <-Compute_Protest_distMat(distMat_rot=distflor_tha_az,distMat_base = dist_geo_az,k=8)
+
+
+# Littoral
+
+protest_geo_FlorLitt_gal <-Compute_Protest_distMat(distMat_rot=distflor_litt_gal,distMat_base = dist_geo_gal,k=11)
+protest_geo_FlorLitt_can <-Compute_Protest_distMat(distMat_rot=distflor_litt_can,distMat_base = dist_geo_can, k=6)
+protest_geo_FlorLitt_az <-Compute_Protest_distMat(distMat_rot=distflor_litt_az,distMat_base = dist_geo_az,k=8)
+
+
+# Littoral exclusive
+
+protest_geo_FlorLitt.excl_gal <-Compute_Protest_distMat(distMat_rot=distflor_litt.excl_gal,distMat_base = dist_geo_gal,k=11)
+protest_geo_FlorLitt.excl_can <-Compute_Protest_distMat(distMat_rot=distflor_litt.excl_can,distMat_base = dist_geo_can, k=6)
+protest_geo_FlorLitt.excl_az <-Compute_Protest_distMat(distMat_rot=distflor_litt.excl_az,distMat_base = dist_geo_az,k=8)
+
+
+# Fleshy fruitted
+
+protest_geo_Florflesh_gal <-Compute_Protest_distMat(distMat_rot=distflor_freshy_gal,distMat_base = dist_geo_gal,k=11)
+
+
+
+# All but thalassochorous
+
+protest_geo_FlorNotha.excl_gal <-Compute_Protest_distMat(distMat_rot=distflor_no.tha_gal,distMat_base = dist_geo_gal,k=11)
+protest_geo_FlorNotha.excl_can <-Compute_Protest_distMat(distMat_rot=distflor_no.tha_can,distMat_base = dist_geo_can, k=6)
+protest_geo_FlorNotha.excl_az <-Compute_Protest_distMat(distMat_rot=distflor_no.tha_az,distMat_base = dist_geo_az,k=8)
+
+
+# All but Littoral
+
+
+protest_geo_FlorNoLitt.excl_gal <-Compute_Protest_distMat(distMat_rot=distflor_no.litt_gal,distMat_base = dist_geo_gal,k=11)
+protest_geo_FlorNoLitt.excl_can <-Compute_Protest_distMat(distMat_rot=distflor_no.litt_can,distMat_base = dist_geo_can, k=6)
+protest_geo_FlorNoLitt.excl_az <-Compute_Protest_distMat(distMat_rot=distflor_no.litt_az,distMat_base = dist_geo_az,k=8)
+
+
+# All but Littoral exclusive
+
+protest_geo_FlorNoLitt.excl_gal <-Compute_Protest_distMat(distMat_rot=distflor_no.littexcl_gal,distMat_base = dist_geo_gal,k=11)
+protest_geo_FlorNoLitt.excl_can <-Compute_Protest_distMat(distMat_rot=distflor_no.littexcl_can,distMat_base = dist_geo_can, k=6)
+protest_geo_FlorNoLitt.excl_az <-Compute_Protest_distMat(distMat_rot=distflor_no.littexcl_az,distMat_base = dist_geo_az,k=8)
+
+```
+
+
+
+
+## Floras - Area
+
+```{r}
+# All species
+
+protest_curr_FlorAll_gal <-Compute_Protest_distMat(distMat_rot=distflor_all_gal,distMat_base = dist_area_gal,k=11)
+protest_area_FlorAll_can <-Compute_Protest_distMat(distMat_rot=distflor_all_can,distMat_base = dist_area_can, k=6)
+protest_area_FlorAll_az <-Compute_Protest_distMat(distMat_rot=distflor_all_az,distMat_base = dist_area_az,k=8)
+
+# Thalassochorous
+
+protest_area_Flortha_gal <-Compute_Protest_distMat(distMat_rot=distflor_all_gal,distMat_base = dist_area_gal,k=11)
+protest_area_Flortha_can <-Compute_Protest_distMat(distMat_rot=distflor_tha_can,distMat_base = dist_area_can, k=6)
+protest_area_Flortha_az <-Compute_Protest_distMat(distMat_rot=distflor_tha_az,distMat_base = dist_area_az,k=8)
+
+
+# Littoral
+
+protest_area_FlorLitt_gal <-Compute_Protest_distMat(distMat_rot=distflor_litt_gal,distMat_base = dist_area_gal,k=11)
+protest_area_FlorLitt_can <-Compute_Protest_distMat(distMat_rot=distflor_litt_can,distMat_base = dist_area_can, k=6)
+protest_area_FlorLitt_az <-Compute_Protest_distMat(distMat_rot=distflor_litt_az,distMat_base = dist_area_az,k=8)
+
+
+# Littoral exclusive
+
+protest_area_FlorLitt.excl_gal <-Compute_Protest_distMat(distMat_rot=distflor_litt.excl_gal,distMat_base = dist_area_gal,k=11)
+protest_area_FlorLitt.excl_can <-Compute_Protest_distMat(distMat_rot=distflor_litt.excl_can,distMat_base = dist_area_can, k=6)
+protest_area_FlorLitt.excl_az <-Compute_Protest_distMat(distMat_rot=distflor_litt.excl_az,distMat_base = dist_area_az,k=8)
+
+
+# Fleshy fruitted
+
+protest_area_Florflesh_gal <-Compute_Protest_distMat(distMat_rot=distflor_freshy_gal,distMat_base = dist_area_gal,k=11)
+
+
+
+# All but thalassochorous
+
+protest_area_FlorNotha.excl_gal <-Compute_Protest_distMat(distMat_rot=distflor_no.tha_gal,distMat_base = dist_area_gal,k=11)
+protest_area_FlorNotha.excl_can <-Compute_Protest_distMat(distMat_rot=distflor_no.tha_can,distMat_base = dist_area_can, k=6)
+protest_area_FlorNotha.excl_az <-Compute_Protest_distMat(distMat_rot=distflor_no.tha_az,distMat_base = dist_area_az,k=8)
+
+
+# All but Littoral
+
+
+protest_area_FlorNoLitt.excl_gal <-Compute_Protest_distMat(distMat_rot=distflor_no.litt_gal,distMat_base = dist_area_gal,k=11)
+protest_area_FlorNoLitt.excl_can <-Compute_Protest_distMat(distMat_rot=distflor_no.litt_can,distMat_base = dist_area_can, k=6)
+protest_area_FlorNoLitt.excl_az <-Compute_Protest_distMat(distMat_rot=distflor_no.litt_az,distMat_base = dist_area_az,k=8)
+
+
+# All but Littoral exclusive
+
+protest_area_FlorNoLitt.excl_gal <-Compute_Protest_distMat(distMat_rot=distflor_no.littexcl_gal,distMat_base = dist_area_gal,k=11)
+protest_area_FlorNoLitt.excl_can <-Compute_Protest_distMat(distMat_rot=distflor_no.littexcl_can,distMat_base = dist_area_can, k=6)
+protest_area_FlorNoLitt.excl_az <-Compute_Protest_distMat(distMat_rot=distflor_no.littexcl_az,distMat_base = dist_area_az,k=8)
+
+```
+
+
+## Floras - Ages
+
+```{r}
+# All species
+
+protest_curr_FlorAll_gal <-Compute_Protest_distMat(distMat_rot=dist_age_gal,distMat_base =distflor_all_gal ,k=11)
+protest_age_FlorAll_can <-Compute_Protest_distMat(distMat_rot=distflor_all_can,distMat_base = dist_age_can, k=6)
+protest_age_FlorAll_az <-Compute_Protest_distMat(distMat_rot=distflor_all_az,distMat_base = dist_age_az,k=8)
+
+# Thalassochorous
+
+protest_age_Flortha_gal <-Compute_Protest_distMat(distMat_rot=dist_age_gal,distMat_base = distflor_all_gal,k=11)
+protest_age_Flortha_can <-Compute_Protest_distMat(distMat_rot=distflor_tha_can,distMat_base = dist_age_can, k=6)
+protest_age_Flortha_az <-Compute_Protest_distMat(distMat_rot=distflor_tha_az,distMat_base = dist_age_az,k=8)
+
+
+# Littoral
+
+protest_age_FlorLitt_gal <-Compute_Protest_distMat(distMat_rot=distflor_litt_gal,distMat_base = dist_age_gal,k=11)
+protest_age_FlorLitt_can <-Compute_Protest_distMat(distMat_rot=distflor_litt_can,distMat_base = dist_age_can, k=6)
+protest_age_FlorLitt_az <-Compute_Protest_distMat(distMat_rot=distflor_litt_az,distMat_base = dist_age_az,k=8)
+
+
+# Littoral exclusive
+
+protest_age_FlorLitt.excl_gal <-Compute_Protest_distMat(distMat_rot=distflor_litt.excl_gal,distMat_base = dist_age_gal,k=11)
+protest_age_FlorLitt.excl_can <-Compute_Protest_distMat(distMat_rot=distflor_litt.excl_can,distMat_base = dist_age_can, k=6)
+protest_age_FlorLitt.excl_az <-Compute_Protest_distMat(distMat_rot=distflor_litt.excl_az,distMat_base = dist_age_az,k=8)
+
+
+# Fleshy fruitted
+
+protest_age_Florflesh_gal <-Compute_Protest_distMat(distMat_rot=distflor_freshy_gal,distMat_base = dist_age_gal,k=11)
+
+
+
+# All but thalassochorous
+
+protest_age_FlorNotha.excl_gal <-Compute_Protest_distMat(distMat_rot=distflor_no.tha_gal,distMat_base = dist_age_gal,k=11)
+protest_age_FlorNotha.excl_can <-Compute_Protest_distMat(distMat_rot=distflor_no.tha_can,distMat_base = dist_age_can, k=6)
+protest_age_FlorNotha.excl_az <-Compute_Protest_distMat(distMat_rot=distflor_no.tha_az,distMat_base = dist_age_az,k=8)
+
+
+# All but Littoral
+
+
+protest_age_FlorNoLitt.excl_gal <-Compute_Protest_distMat(distMat_rot=distflor_no.litt_gal,distMat_base = dist_age_gal,k=11)
+protest_age_FlorNoLitt.excl_can <-Compute_Protest_distMat(distMat_rot=distflor_no.litt_can,distMat_base = dist_age_can, k=6)
+protest_age_FlorNoLitt.excl_az <-Compute_Protest_distMat(distMat_rot=distflor_no.litt_az,distMat_base = dist_age_az,k=8)
+
+
+# All but Littoral exclusive
+
+protest_age_FlorNoLitt.excl_gal <-Compute_Protest_distMat(distMat_rot=distflor_no.littexcl_gal,distMat_base = dist_age_gal,k=11)
+protest_age_FlorNoLitt.excl_can <-Compute_Protest_distMat(distMat_rot=distflor_no.littexcl_can,distMat_base = dist_age_can, k=6)
+protest_age_FlorNoLitt.excl_az <-Compute_Protest_distMat(distMat_rot=distflor_no.littexcl_az,distMat_base = dist_age_az,k=8)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+## Results
+
+
+
+###Currents and floristic connectivities
+
+
+```{r}
+
+Name_columns <- c("Galapagos", "Canaries", "Azores")
+Name_rows <- c("All", "Tha", "Litt","Litt.excl", "Fleshy")
+
+
+
+pvalue_gal <- c(protest_curr_FlorAll_gal$signif,
+                     protest_curr_Flortha_gal$signif,
+                     protest_curr_FlorLitt_gal$signif,
+                     protest_curr_FlorLitt.excl_gal$signif,
+                     protest_curr_Florflesh_gal$signif)
+
+pvalue_can <- c(protest_curr_FlorAll_can$signif,
+                     protest_curr_Flortha_can$signif,
+                     protest_curr_FlorLitt_can$signif,
+                     protest_curr_FlorLitt.excl_can$signif)
+
+pvalue_az <- c(protest_curr_FlorAll_az$signif,
+                     protest_curr_Flortha_az$signif,
+                     protest_curr_FlorLitt_az$signif,
+                     protest_curr_FlorLitt.excl_az$signif)
+
+corr_gal <- c(protest_curr_FlorAll_gal$t0,
+                     protest_curr_Flortha_gal$t0,
+                     protest_curr_FlorLitt_gal$t0,
+                     protest_curr_FlorLitt.excl_gal$t0,
+                     protest_curr_Florflesh_gal$t0)
+
+corr_can <- c(protest_curr_FlorAll_can$t0,
+                     protest_curr_Flortha_can$t0,
+                     protest_curr_FlorLitt_can$t0,
+                     protest_curr_FlorLitt.excl_can$t0)
+
+
+corr_az <- c(protest_curr_FlorAll_az$t0,
+                     protest_curr_Flortha_az$t0,
+                     protest_curr_FlorLitt_az$t0,
+                     protest_curr_FlorLitt.excl_az$t0)
+
+length(pvalue_can) <- length(pvalue_gal)
+length(pvalue_az) <- length(pvalue_gal)
+length(corr_can) <- length(pvalue_gal)
+length(corr_az) <- length(pvalue_gal)
+
+
+
+results_procrustes  <- data.frame(corr_gal,pvalue_gal,corr_can,pvalue_can,corr_az,pvalue_az)
+
+results_procrustes1  <-results_procrustes %>% 
+  mutate_if(is.numeric, round, digits=2)
+
+colnames(results_procrustes1)=c("Gal.corr","Gal.pval",
+                                "Can.corr","Can.pval", 
+                                "Az.corr", "Az.pval")
+
+rownames(results_procrustes1)=c("All","Tha",
+                                "Litt","Litt.excl",
+                                "Fleshy")
+results_procrustes1 
+
+```
+

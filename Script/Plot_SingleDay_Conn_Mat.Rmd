@@ -1,0 +1,187 @@
+---
+title: "Plot example connectivity rater"
+output: html_notebook
+---
+
+# To plot 1 day (V_u raster 1 day)
+
+This part is just an example to check how it works with one of the files
+
+```{r}
+library(ncdf4)
+library(date)
+library(lubridate) 
+library(curl)
+library(raster)
+library(rWind)
+library(rworldmap) 
+library(rworldxtra)
+library(shape)
+library(tidyverse) 
+library(gdistance)
+library(fields)
+```
+
+
+
+```{r}
+
+nc <- nc_open(
+  "/Users/alexf/Desktop/Article_Currents/HYCOM-Galapagos/galapagos_2013-08-21_.nc") 
+# choose your path
+
+if(length(which(abs(nc$var$water_u$dim[[1]]$vals)>180))>=1){
+  
+  rr_u <- rotate(raster(
+    "/Users/alexf/Desktop/Article_Currents/HYCOM-Galapagos/galapagos_2013-08-21_.nc", 
+    level = 1, varname = "water_u", band = 1))
+  rr_v <- rotate(raster(
+    "/Users/alexf/Desktop/Article_Currents/HYCOM-Galapagos/galapagos_2013-08-21_.nc", 
+    level = 1, varname = "water_v", band = 1))
+}else{
+  
+    rr_u <- raster(
+      "/Users/alexf/Desktop/Article_Currents/HYCOM-Galapagos/galapagos_2013-08-21_.nc", 
+      level = 1, varname = "water_u", band = 1)
+    rr_v <- raster(
+      "/Users/alexf/Desktop/Article_Currents/HYCOM-Galapagos/galapagos_2013-08-21_.nc",
+      level = 1, varname = "water_v", band = 1)
+}
+
+sea_dir <- atan2(rr_u, rr_v) 
+rad2deg <- function(rad) {(rad * 180) / (pi)}
+sea_dir <- rad2deg(sea_dir)
+sea_dir[sea_dir < 0] <- 360 + sea_dir[sea_dir < 0]
+sea_spe <- sqrt( (rr_u * rr_u) + (rr_v * rr_v))
+  
+sea_currents <- stack(sea_dir, sea_spe)
+names(sea_currents) <- c("wind.direction", "wind.speed")
+
+
+## Plot of sea current speed + arrows indicating sea current direction
+coordsraster<-xyFromCell(sea_dir,c(1:(sea_dir@ncols*sea_dir@nrows)))
+dir1<-as.vector(sea_dir@data@values)
+dir2<-as.vector(sea_spe@data@values)
+dirspeed<-cbind(dir1,dir2)
+colnames(dirspeed)<-c("dir","speed")
+dirspeed<-as.data.frame(dirspeed)
+acol <- colorRampPalette(c("white", "blue", "darkblue"))
+plottitle=paste("Sea current speed and direction in the Galapagos")
+
+
+
+#pdf(file= "plots/single_day/vel_dir_raster_gal.pdf", width=13, height = 10) 
+Gal_u_v_raster<-plot(sea_spe,main="Sea current speed and direction in Galapagos"
+                     ,col=acol(1000))
+Arrowhead(coordsraster[,1],coordsraster[,2],angle=arrowDir(dirspeed),
+          arr.length = 0.05,arr.type = "curved")
+lines(getMap(resolution = "high"), lwd=1)
+
+Gal_u_v_raster
+```
+
+
+
+# Least cost paths based on conductance matrices
+
+
+```{r}
+files_Galap_1Day <- list.files(
+  "/Users/alexf/Desktop/Article_Currents/OneDay_plot_Galap",#choose your local path
+                          full.names = TRUE, pattern = ".nc") 
+
+Galapagos_points <- read.csv("../Data/Data_Galapagos/Galapagos-points1.csv",
+                             header=TRUE, sep=",") 
+
+Galapagos_points$id<-NULL
+
+cost_list_1dayplot_Gal<-calculate_costMatrix(files_Galap_1Day)
+
+conductance_1dayplot_Gal<-calculate_conductance(files_Galap_1Day)
+
+daystacklist_1dayplot_Gal<-obtain_daystacklist(files_Galap_1Day)
+```
+
+
+
+```{r}
+
+
+pntA <- c(-89.69314, -0.865) # point at the west coast of San Cristobal
+pntB <- c(-91.14062, -1.028551) # point at South Isabella
+
+#I´ll write both points (source and destination) as a table
+points_table <- data.frame(lon = c(-89.69314, -91.14062),
+                           lat = c(-0.865, -1.028551))
+rownames(points_table) <- c("pntA", "pntB")
+
+
+
+
+# This function calculates the least cost path using conductance matrix. 
+#It will find the routes that take you from A to B with the smallest cost.
+
+
+AtoB<- shortestPath(conductance_1dayplot_Gal[[14]], #I´m using the raster of the first day 
+                    #as an example here
+                    pntA, pntB, 
+                    output = "SpatialLines")
+BtoA<- shortestPath(conductance_1dayplot_Gal[[14]], 
+                    pntB, 
+                    pntA, 
+                    output = "SpatialLines")
+
+# let´s make a plot to check that this looks ok
+
+
+
+#pdf(file= "plots/single_day/velocity_gal.pdf", width=13, height = 10 )
+
+velocity_gal<-image.plot(daystacklist_1dayplot_Gal[[14]]$speed,
+           main = "least cost paths by current speed",
+           col = terrain.colors(10), xlab = "Longitude", ylab = "Lattitude",
+           zlim = c(0.01, 0.999))
+
+lines(getMap(resolution = "low"), lwd = 4)    # adds lines around islands
+
+points(pntA, pch = 19, cex = 3.4, col = "red")   #adds pntA
+points(pntB, pch = 19, cex = 3.4, col = "blue")  #adds pntB
+
+lines(AtoB, col = "red", lwd = 4, lty = 2)   #draws line a to b
+lines(BtoA, col = "blue", lwd = 4, lty = 2)  #b to a
+
+
+velocity_gal
+```
+
+
+
+
+
+Same plot but for direction
+
+```{r}
+
+#pdf(file= "plots/single_day/direction_gal.pdf", width=13, height = 10 )
+
+direction_gal<-image.plot(daystacklist_1dayplot_Gal[[14]]$direction,    # background plot of speed raster for 
+           #this day (the first, as an example)
+           main = "least cost paths by current direction",
+           col = terrain.colors(10), xlab = "Longitude", ylab = "Lattitude",
+           zlim = c(0, 360))
+
+lines(getMap(resolution = "low"), lwd = 4)    # adds lines around islands
+
+points(pntA, pch = 19, cex = 3.4, col = "red")   #adds pntA
+points(pntB, pch = 19, cex = 3.4, col = "blue")  #adds pntB
+
+lines(AtoB, col = "red", lwd = 4, lty = 2)   #draws line a to b
+lines(BtoA, col = "blue", lwd = 4, lty = 2)  #b to a
+
+direction_gal
+```
+
+Red is going from San Cristobal to Isabella, and blue the
+opposite. 
+
+

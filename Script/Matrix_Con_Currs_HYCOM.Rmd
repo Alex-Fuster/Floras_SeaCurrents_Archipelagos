@@ -1,0 +1,385 @@
+---
+title: "Obtain current connectivity matrices from HYCOMdata"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+  markdown: 
+    wrap: 72
+---
+
+
+This script downloads currents velecoty and direction data from a given geographical area (target archipelago), creates and saves a current connectivity matrix between geographic points (island shores)
+
+
+
+
+```{r}
+library(ncdf4)
+library(date)
+library(lubridate) 
+library(curl)
+library(raster)
+library(rWind)
+library(rworldmap) 
+library(rworldxtra)
+library(shape)
+library(tidyverse) 
+library(gdistance)
+library(fields)
+library(scales)
+```
+
+
+
+# Download HYCOM data
+
+
+
+### Function parameters
+
+We set the geographic limits of interest, which consist on a vector with
+minlon, maxlon, minlat, maxlat (Longitude values are -180,180), the time interval of the data and the variable sof interest (current velocity and direction)
+
+```{r}
+
+limits_Galapagos <-c(-92,-88.7,-1.8,0.9)
+
+limits_Canaries <-c(-18.795540,-12.643394,26.671542,29.888286)
+
+limits_Azores <-c(-32.205721,-23.441093,36.454755,40.115043)
+
+
+
+time<-seq(ymd(paste(1992,10,2, sep="-")), ymd(paste(1995,08,01, sep="-")),
+          by="2 days")
+
+vars<-c("water_u", "water_v") #currents direction and speed
+
+```
+
+
+
+
+### Download data
+
+The following chunk downloads HYCOM data according to the parameters set above. Note that the data will be stored in the local repository. *If we dont want to store these files we can modify the get.hycom() function in the Functions.Rmd file to store them as object lists in the global environment.*
+
+
+```{r}
+
+# Galapagos
+
+for(i in 1:length(time)){
+  outputname<-paste("HYCOM_galapagos/galapagos_", time[i],"_.nc", sep="") #define the name
+  #of the output file
+  
+  get.hycom(limits_Galapagos, time[i], include_latlon = TRUE, filename = outputname,
+            depLevels = 1)
+}
+
+
+# Canaries
+
+for(i in 1:length(time)){
+  outputname<-paste("HYCOM_canaries/Canaries_", time[i],"_.nc", sep="") #define the name
+  #of the output file
+  
+  get.hycom(limits_Canaries, time[i], include_latlon = TRUE, filename = outputname, 
+            depLevels = 1)
+}
+
+
+#Azores
+
+for(i in 1:length(time)){
+  outputname<-paste("HYCOM_azores/Azores_", time[i],"_.nc", sep="") #define the name
+  #of the output file
+  
+  get.hycom(limits_Azores, time[i], include_latlon = TRUE, filename = outputname, 
+            depLevels = 1)
+}
+```
+
+
+
+
+
+
+# Obtain velocity and direction from .NC files
+
+
+The following chunks use the data downloaded in the code above to obtain velocity and direction rasters of the target geographic area and calculate costs associated with these values. The steps it follows are:
+
+    1.  opening \_.nc files
+
+    2.  (Rotate) function -\> Rotates a raster object that has x
+        coordinates (longitude) from 0 to 360, to standard coordinates
+        between -180 and 180 degrees.
+
+    3.  (Raster) function -\> to create a raster layer. One for variable
+        "water_u", rr_u, and one for variable "water_v", rr_v.
+
+    4.  (atan2)function -\> For Raster\* objects x and y, atan2(y, x)
+        returns the angle in radians for the tangent y/x.
+
+    5.  (rad2deg)-\> Transforms between angles in degrees and radians.Sea direction obtained from radiants to degrees Sea speed fromn mathematical formula with u and v
+
+    6.  (stack) -\> A RasterStack to create a collection of RasterLayer
+        objects with the same spatial extent and resolution. In this
+        case, both Sea_dir and Sea_spe.
+
+Notice that netcdf raster files have the property of including bands. In
+particular, these files contain 40 bands. Two of those are u and v
+(currents direction and speed). The code below use these bands and save
+them to raster stacks.
+
+
+
+
+First we read the .nc files and the .csv with geographic coordinates of islands points we want to connect. 
+
+Notice that the path to read the files may vary depending on when we store the
+nc files downloaded with the code above. As default, the path corresponds to pre-created empty files in the repository.
+
+```{r}
+
+# Read files and create a list
+
+files_Galap <- list.files("HYCOM_galapagos",
+                          full.names = TRUE, pattern = ".nc") 
+
+files_Canary <- list.files("HYCOM_canaries",
+                           full.names = TRUE, pattern = ".nc")
+
+
+files_Azores <- list.files("HYCOM_azores", 
+                           full.names = TRUE, pattern = ".nc") 
+
+ 
+
+# Read .csv files with geographic points coordinates created with Qgis
+
+Galapagos_points <- read.csv("../../Data/Data_Galapagos/Galapagos-points1.csv",
+                             header=TRUE, sep=",") 
+
+Canaries_points <- read.csv("../../Data/Data_Canaries/CanariesPoints1.csv",
+                            header=TRUE, sep=",") 
+
+Azores_points <- read.csv("../../Data/Data_Azores/AzoresPoints1.csv",
+                          header=TRUE, sep=",")
+
+
+Galapagos_points$id<-NULL
+Canaries_points$id<-NULL
+Azores_points$id<-NULL
+```
+
+
+
+
+Calculate costs between geographic points for each downloaded day's data. (steps 1 to 6)
+
+
+
+
+```{r}
+
+cost_list_Galapagos <- list()
+cost_list_Canaries <- list()
+cost_list_Azores <- list()
+
+
+cost_list_Galapagos<-calculate_costMatrix(files=files_Galap, geo_points = Galapagos_points)
+cost_list_Canaries<-calculate_costMatrix(files=files_Canary, geo_points = Canaries_points)
+cost_list_Azores<-calculate_costMatrix(files=files_Azores, geo_points = Azores_points)
+```
+
+
+
+
+Replace Inf by Nas
+
+```{r}
+
+Inf2NA <- function(v) replace(v, is.infinite(v), NA)
+
+costlist_clean_Galapagos<-lapply(cost_list_Galapagos, function(d) replace(d, TRUE, sapply(d, Inf2NA)))
+costlist_clean_Canary<-lapply(cost_list_Canaries, function(d) replace(d, TRUE, sapply(d, Inf2NA)))
+costlist_clean_Azores<-lapply(cost_list_Azores, function(d) replace(d, TRUE, sapply(d, Inf2NA)))
+
+```
+
+
+
+
+
+
+
+# Calculate minimum connectivity matrix
+
+
+We want to find the minimum sea-dispersal cost (i.e. maximum current connectivity)
+between each pair of islands across all the time span of our data. However, we want to avoid picking up an overall single minimum value because we might just be sampling an abnormal connectivity due to either errors in the data or unusual extreme climatic events.
+
+Therefore, we select a small portion of minimum cost values for each point among all the data, and choose the median of that set of minimum values to take it as the minimum connectivity value of the data.
+
+But first we need to check whether the data (each cost value at each day) is distributed normally. Below we analyze the normality of the data conducting shapiro tests on all cost values across the array of matrices (days).
+
+
+
+### Analyze the normality of the data
+
+
+Shapiro test needs, at least, data with two different values. We create an array
+with the list of matrices to apply the test across them. The array has the diagonals from all the matrixs filled with 0. So, the diagonal from the first matrix of the array is transformed to '1' values. It doesn't affect the final results, because data from the diagonal is ommited.
+
+
+
+```{r}
+arr_Galapagos <- array(unlist(costlist_clean_Galapagos), 
+                       c(46, 46, length(costlist_clean_Galapagos)))
+
+arr_Canary <- array(unlist(costlist_clean_Canary),
+                    c(46, 46, length(costlist_clean_Canary)))
+
+arr_Azores <- array(unlist(costlist_clean_Azores), 
+                    c(46, 46, length(costlist_clean_Azores)))
+
+
+diag(arr_Galapagos[,,1]) <- 1 
+diag(arr_Canary[,,1]) <- 1 
+diag(arr_Azores[,,1]) <- 1 
+
+
+shapiro_mat_Galapagos <-apply(arr_Galapagos, c(1, 2), FUN = shapiro.test) 
+shapiro_mat_Canaries <-apply(arr_Canary, c(1, 2), FUN = shapiro.test)
+shapiro_mat_Azores<-apply(arr_Azores, c(1, 2), FUN = shapiro.test)
+```
+
+
+
+Shapiro matrix include the results from each Shapiro Test on each matrix position.
+On the next code chunk, a p-value is extracted from each Shapiro Test and placed
+on a new matrix with the same number of rows and columns (46x46).
+
+Then, the normality of the data is assessed according to Pvalues and the percentage
+of data that is normally distributed is calculated
+
+
+
+```{r}
+
+pvalue_matrix_Galapagos<-Calculate_Pvalue_matrix(shapiro_matrix = shapiro_mat_Galapagos)
+pvalue_matrix_Canaries<-Calculate_Pvalue_matrix(shapiro_matrix = shapiro_mat_Canaries)
+pvalue_matrix_Azores<-Calculate_Pvalue_matrix(shapiro_matrix = shapiro_mat_Azores)
+
+
+normality_matrix_Galapagos <- ifelse(pvalue_matrix_Galapagos > 0.1, "YES", NA)
+normality_matrix_Canaries <- ifelse(pvalue_matrix_Canaries > 0.1, "YES", NA)
+normality_matrix_Azores <- ifelse(pvalue_matrix_Azores > 0.1, "YES", NA)
+
+
+percent_normalData_Galapagos <-Calculate_percent_norm_from_normMatrix(normality_matrix=normality_matrix_Galapagos)
+percent_normalData_Canaries <-Calculate_percent_norm_from_normMatrix(normality_matrix=normality_matrix_Canaries)
+percent_normalData_Azores <-Calculate_percent_norm_from_normMatrix(normality_matrix=normality_matrix_Azores)
+
+```
+
+
+
+
+
+## Method to find median of the minimum values for non-parametrical data
+
+Median of the minimum 5% of the values
+
+```{r}
+
+median_min_mat_Galapagos<-Calculate_median_minimum5percent(arr_Galapagos)
+median_min_mat_Canaries<-Calculate_median_minimum5percent(array =  arr_Canary)
+median_min_mat_Galapagos<-Calculate_median_minimum5percent(arr_Azores)
+
+```
+
+
+
+
+### Verification of the method and correlation with minimum values
+
+
+
+```{r}
+
+min_matrix_Galapagos <- apply(array(unlist(cost_list_Galapagos), c(46, 46, 4769)), c(1, 2), min)
+min_matrix_Canaries <- apply(array(unlist(cost_list_Canaries), c(46, 46, 4769)), c(1, 2), min)
+min_matrix_Azores <- apply(array(unlist(cost_list_Azores), c(46, 46, 4769)), c(1, 2), min)
+
+Corr_min_Galapagos <-Correlation_minMatrix_medianMinMatrix(
+  median_minimum_matrix=median_min_mat_Galapagos, min_matrix = min_matrix_Galapagos)
+
+Corr_min_Canaries <-Correlation_minMatrix_medianMinMatrix(
+  median_minimum_matrix=median_min_mat_Canaries, min_matrix = min_matrix_Canaries)
+
+Corr_min_Azores <-Correlation_minMatrix_medianMinMatrix(
+  median_minimum_matrix=median_min_mat_Azores, min_matrix = min_matrix_Azores)
+
+
+print(Corr_min_Galapagos,Corr_min_Canaries,Corr_min_Azores)
+```
+
+
+
+
+
+## Making matrices symmetric and saving as csv
+
+
+
+The matrices are not symmetric. The cost from point 1 to 2 is different
+than from 2 to 1. To obtain a symmetric distance matrix with minimum
+values between each pair of points:
+
+
+
+#### Matrix-median of minimum values
+
+```{r}
+mat_medianMin_sym_Galapagos<-Make_matrix_medianMin_symmetric(median_min_mat_Galapagos)
+mat_medianMin_sym_Canaries<-Make_matrix_medianMin_symmetric(median_min_mat_Canaries)
+mat_medianMin_sym_Azores<-Make_matrix_medianMin_symmetric(median_min_mat_Azores)
+
+write.csv(mat_medianMin_sym_Galapagos, "../../Matrices/Galapagos/
+          Matrices-Currents_Galap/matrix_median_min.csv", row.names = FALSE)
+
+write.csv(mat_medianMin_sym_Canaries, "matrix_median_min_can.csv", row.names = FALSE)
+
+write.csv(mat_medianMin_sym_Azores, "../../Matrices/Azores/
+          Matrices-Currents_Azores/matrix_median_min.csv", row.names = FALSE)
+
+```
+
+
+
+#### Matrix of absolute minimum values
+
+```{r}
+min_mat_sym_Galapagos<-Make_minMatrix_symmetric(min_matrix_Galapagos)
+min_mat_sym_Canaries<-Make_minMatrix_symmetric(min_matrix_Canaries)
+min_mat_sym_Azores<-Make_minMatrix_symmetric(min_matrix_Azores)
+
+write.csv(min_mat_sym_Galapagos, "../../Matrices/Galapagos/Matrices-Currents_Galap/
+          matrix_min.csv", row.names = FALSE)
+
+write.csv(min_mat_sym_Canaries, "../../Matrices/Galapagos/Matrices-Currents_Galap/
+          matrix_min.csv", row.names = FALSE)
+
+write.csv(min_mat_sym_Azores, "../../Matrices/Galapagos/Matrices-Currents_Galap/
+          matrix_min.csv", row.names = FALSE)
+```
+
+
+
+
+
+
+
