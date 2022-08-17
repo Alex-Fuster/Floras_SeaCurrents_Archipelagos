@@ -318,7 +318,7 @@ protest_curr_FlorAll_az <-Compute_Protest_distMat(distMat_rot=distflor_all_az,di
 
 # Thalassochorous
 
-protest_curr_Flortha_gal <-Compute_Protest_distMat(distMat_rot=distflor_all_gal,distMat_base = dist_curr_gal,k=11)
+protest_curr_Flortha_gal <-Compute_Protest_distMat(distMat_rot=distflor_tha_gal,distMat_base = dist_curr_gal,k=11)
 protest_curr_Flortha_can <-Compute_Protest_distMat(distMat_rot=distflor_tha_can,distMat_base = dist_curr_can, k=6)
 protest_curr_Flortha_az <-Compute_Protest_distMat(distMat_rot=distflor_tha_az,distMat_base = dist_curr_az,k=8)
 
