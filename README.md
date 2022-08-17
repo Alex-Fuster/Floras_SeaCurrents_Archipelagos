@@ -1,2 +1,3 @@
 # Correlation patterns between inter-island oceanic currents anf floristic connectivities in oceanic archipelagos
-Analyses of spatial correlations in floristic and sea currents connectivity across oceanic archipelagos
+
+These scripts (1) download current direction and velocity from satellite HYCOM data to create sea connectivity matrices between islands, (2) filtrate and categorize floristic data for each island in each archipelago, (3) calculate distance matrices between geographic points from both current connectivity and floristic similarities, and (4) conduct procrustes analyses, which looks for the orthogonal matrix that swings one set of vectors as nearly as possible onto a second set (in this case the distance matrices), to test for spatial correlations between currents and floristic connectivities across a target archipelago.
