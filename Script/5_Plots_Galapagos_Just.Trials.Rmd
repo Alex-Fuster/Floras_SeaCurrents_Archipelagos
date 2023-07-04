@@ -20,10 +20,13 @@ library(networkD3)
 library(animation)
 library(maps)
 library(geosphere)
+source("./Functions.R")
 ```
 
 Vertex to show connectance, not distance
 ```{r}
+dist_curr_gal<-load_order_convert_csv_to_distanceMat(filepath ="../Matrices/Galapagos/Matrices-Currents_Galap/matrix_median_min_final_Galapagos.csv")
+
 dist.Curr <- 1/dist_curr_gal
 ```
 
@@ -34,21 +37,62 @@ links_curr_galap<-dist2list(dist.Curr)
 #removing loops
 links_curr_galap1<-links_curr_galap[which(links_curr_galap$col != links_curr_galap$row),]
 
-Nodes_galap<-read.csv("../../Data/Data_Galapagos/Nodes_galap.csv", sep=";")
+net <- graph_from_data_frame(d=links_curr_galap1, directed=F)
+
+links<-E(net)
+vertex<-V(net)
 
 ```
 
-```{r}
-net <- graph_from_data_frame(d=links_curr_galap1, directed=F)
 
-E(net)
-V(net)
+```{r}
+
+x_vec <- c()
+
+set_vertex_attr(net, name = x, index = V(net), value)
+
+vertex.attributes(net)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-------------------------------
+
+
+```{r}
+
 
 E(net)$width <- E(net)$value*300
 
 l <- layout_with_fr(net)
 plot(net, layout=l)
 
+library(maps)
+library(network)
+
+map("world", regions = "Galapagos Islands",fill=TRUE,col='#f2f2f2',lwd=0.08)
+
+
+
+map('world',col="#f2f2f2", fill=TRUE, bg="white", lwd=0.05,mar=rep(0,4),border=0, ylim=c(-80,80) )
+points(x=Galapagos_points$long, y=Galapagos_points$lat, col="slateblue", cex=3, pch=20)
+
+
+Galapagos_points <- read.csv("../Data/Data_Galapagos/Galapagos-points1.csv",
+                             header=TRUE, sep=",") 
 ```
 
 
