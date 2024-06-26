@@ -497,7 +497,7 @@ Calculate_distmatrix_and_save <- function(matrix, file_path) {
 #------------- Get weighted matrix of minimum connecting points from median_min_mat_island
 
 
-compute_mat_min_conn_points <- function(matrix_conn) {
+compute_mat_min_weighted <- function(matrix_conn) {
   
   # Convert the dataframe to an igraph object
   g <- graph_from_adjacency_matrix(matrix_conn, mode = "directed", weighted = TRUE)
