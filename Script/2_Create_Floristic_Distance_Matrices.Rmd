@@ -88,7 +88,7 @@ df_Galapagos <- subset(df_Galapagos, df_Galapagos$X5 %in% c("Id", "En", "EnQ", "
 
 
 
-
+m_all_gal <- df_Galapagos[which(df_Galapagos$X25 == "0"),]
 m_all_gal <- df_Galapagos %>% select(2,7:18)
 
 m_thalassochory_gal <- subset(df_Galapagos, df_Galapagos$X25 %in% c("0.5", "1", "THA"))   # From lowland & native species, we filter only thalassochoric species
@@ -132,6 +132,12 @@ m_all_without_littoral_exclusive_gal <- m_all_without_littoral_exclusive_gal %>%
 
 m_all_without_fleshy_gal <- subset(df_Galapagos, !df_Galapagos$X21 %in% c("Berry", "Berry-like", "Drupe", "Drupaceous", "Drupe-like"))  # We filter NON littoral exclusive species
 m_all_without_fleshy_gal <- m_all_without_fleshy_gal %>% select(2,7:18)
+
+
+#### all non-adapted
+
+m_all_nonadapted_gal <- subset(df_Galapagos, !df_Galapagos$X25 %in% c("0.5", "1") & !df_Galapagos$X28 %in% c("presence", "exclusive"))
+m_all_nonadapted_gal <- m_all_nonadapted_gal %>% select(2,7:18)
 ```
 
 
@@ -175,6 +181,11 @@ m_all_without_littoral_can <- m_all_without_littoral_can %>% select(1,6:12)
 
 m_all_without_littoral_exclusive_can <- subset(df_Canaries, !df_Canaries$X5 %in% "exclusive")  # We filter NON littoral exclusive species
 m_all_without_littoral_exclusive_can <- m_all_without_littoral_exclusive_can %>% select(1,6:12)
+
+
+m_all_nonadapted_can <- subset(df_Canaries, !df_Canaries$X15 %in% c("0.5", "1") & !df_Canaries$X5 %in% c("presence", "exclusive"))
+m_all_nonadapted_can <- m_all_nonadapted_can %>% select(1,6:12)
+
 ```
 
 
@@ -212,6 +223,10 @@ m_all_without_littoral_az <- m_all_without_littoral_az %>% select(2,10:18)
 
 m_all_without_littoral_exclusive_az <- subset(df_Azores, !df_Azores$X2 %in% c("Crithmum_maritimum", "Juncus_maritimus", "Myosotis_maritima", "Ruppia_maritima", "Sagina_maritima", "Polygonum_maritimum"))  # We filter NON littoral exclusive species
 m_all_without_littoral_exclusive_az <- m_all_without_littoral_exclusive_az %>% select(2,10:18)
+
+m_all_nonadapted_az <- subset(df_Azores, !df_Azores$X7 %in% c("0.5", "1") & !df_Azores$X3 %in% "1")
+m_all_nonadapted_az <- m_all_nonadapted_az %>% select(2,10:18)
+
 ```
 
 
@@ -278,6 +293,8 @@ df_all_without_fleshy_gal <- Calculate_distmatrix_and_save(
   matrix = m_all_without_fleshy_gal,file_path = "Dist_Matices_floras_Galapagos/df_all_without_fleshy_gal")
 
 
+df_nonadapted_gal <- Calculate_distmatrix_and_save(
+  matrix = m_all_nonadapted_gal, file_path = "Dist_Matices_floras_Galapagos/df_non_adapted_gal")
 
 
 # Canaries
@@ -305,6 +322,10 @@ df_all_without_littoral_can <- Calculate_distmatrix_and_save(
 df_all_without_littoral_exclusive_can <- Calculate_distmatrix_and_save(
   matrix = m_all_without_littoral_exclusive_can,file_path = 
     "Dist_Matices_floras_Canaries/df_all_without_littoral_exclusive_can")
+
+df_nonadapted_can <- Calculate_distmatrix_and_save(
+  matrix = m_all_nonadapted_can,file_path = 
+    "Dist_Matices_floras_Canaries/df_non_adapted_can")
 
 
 
@@ -335,6 +356,10 @@ df_all_without_littoral_az <- Calculate_distmatrix_and_save(
 m_all_without_littoral_exclusive_az <- Calculate_distmatrix_and_save(
   matrix = m_all_without_littoral_exclusive_az,file_path = 
     "Dist_Matices_floras_Azores/df_all_without_littoral_exclusive_az")
+
+df_nonadapted_az <- Calculate_distmatrix_and_save(
+  matrix = m_all_nonadapted_az,file_path = 
+    "Dist_Matices_floras_Azores/df_non_adapted_az")
 
 
 ```

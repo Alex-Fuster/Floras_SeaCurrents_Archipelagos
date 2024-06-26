@@ -156,18 +156,18 @@ calculate_costMatrix <- function(files, geo_points) {
     sea_spe <- sqrt( (rr_u * rr_u) + (rr_v * rr_v)) #and speed
     names(sea_spe) <- "speed"
     
-    # LetÃÂ´s make a stack with direction and speed, that is what rWind needs to calculate conductance
+    # Let´s make a stack with direction and speed, that is what rWind needs to calculate conductance
     day_stack <- stack(sea_dir, sea_spe)
     
     # We now use rWind to calculate the Conductance matrix
     conductance <- flow.dispersion(day_stack, type = "passive", output = "transitionLayer")
     
-    # LetÃÂ´s save the conductance matrix of this day in a list. IÃÂ´ll use the
+    # LetÂ´s save the conductance matrix of this day in a list. IÃÂ´ll use the
     #date as the name of the element within the list (each position in a list can get a name)
     #conduct_list[[i]] <- conductance
     #names(conduct_list)[i] <- files[i] %>% str_replace("_.nc", "")
     
-    # And letÃÂ´s put the day_stack in the list
+    # And letÃÂ´s put the day_stack in the list
     #day_stacks_list[[i]] <- day_stack
     #names(day_stacks_list)[i] <- files[i] %>% str_replace("_.nc", "")
     
@@ -243,18 +243,18 @@ calculate_conductance <- function(files) {
     sea_spe <- sqrt( (rr_u * rr_u) + (rr_v * rr_v)) #and speed
     names(sea_spe) <- "speed"
     
-    # LetÃÂ´s make a stack with direction and speed, that is what rWind needs to calculate conductance
+    # LetÃÂ´s make a stack with direction and speed, that is what rWind needs to calculate conductance
     day_stack <- stack(sea_dir, sea_spe)
     
     # We now use rWind to calculate the Conductance matrix
     conductance <- flow.dispersion(day_stack, type = "passive", output = "transitionLayer")
     
-    # LetÃÂ´s save the conductance matrix of this day in a list. IÃÂ´ll use the date as the name of the element within the list (each position in a list can get a name)
+    # LetÃÂ´s save the conductance matrix of this day in a list. IÃÂ´ll use the date as the name of the element within the list (each position in a list can get a name)
     
     conduct_list[[i]] <- conductance
     names(conduct_list)[i] <- files[i] %>% str_replace("_.nc", "")
     
-    # And letÃÂ´s put the day_stack in the list
+    # And letÃÂ´s put the day_stack in the list
     #day_stacks_list[[i]] <- day_stack
     #names(day_stacks_list)[i] <- files[i] %>% str_replace("_.nc", "")
     
@@ -327,18 +327,18 @@ obtain_daystacklist <- function(files) {
     sea_spe <- sqrt( (rr_u * rr_u) + (rr_v * rr_v)) #and speed
     names(sea_spe) <- "speed"
     
-    # LetÃÂ´s make a stack with direction and speed, that is what rWind needs to calculate conductance
+    # LetÃÂ´s make a stack with direction and speed, that is what rWind needs to calculate conductance
     day_stack <- stack(sea_dir, sea_spe)
     
     # We now use rWind to calculate the Conductance matrix
     conductance <- flow.dispersion(day_stack, type = "passive", output = "transitionLayer")
     
-    # LetÃÂ´s save the conductance matrix of this day in a list. IÃÂ´ll use the date as the name of the element within the list (each position in a list can get a name)
+    # LetÃÂ´s save the conductance matrix of this day in a list. IÃÂ´ll use the date as the name of the element within the list (each position in a list can get a name)
     
     #conduct_list[[i]] <- conductance
     #names(conduct_list)[i] <- files[i] %>% str_replace("_.nc", "")
     
-    # And letÃÂ´s put the day_stack in the list
+    # And letÃÂ´s put the day_stack in the list
     day_stacks_list[[i]] <- day_stack
     names(day_stacks_list)[i] <- files[i] %>% str_replace("_.nc", "")
     
@@ -488,6 +488,44 @@ Calculate_distmatrix_and_save <- function(matrix, file_path) {
               eol = "\n", na = "NA", dec = ".", row.names = TRUE,
               col.names = TRUE, qmethod = c("escape", "double"),
               fileEncoding = "")
+  
+}
+
+
+
+
+#------------- Get weighted matrix of minimum connecting points from median_min_mat_island
+
+
+compute_mat_min_conn_points <- function(matrix_conn) {
+  
+  # Convert the dataframe to an igraph object
+  g <- graph_from_adjacency_matrix(matrix_conn, mode = "directed", weighted = TRUE)
+  
+  
+  # Extract the weighted edges
+  edges_df <- as_data_frame(g, what = "edges")
+  
+  # Eliminate "_" in names
+  
+  edges_df$from <- sub("_.*", "", edges_df$from)
+  edges_df$to <- sub("_.*", "", edges_df$to)
+  
+  
+  # Calculate minimum weight for each unique 'from' to 'to' combination
+  result <- aggregate(weight ~ from + to, data = edges_df, FUN = min)
+  
+  result <- edges_df %>%
+    group_by(from, to) %>%
+    summarize(min_weight = min(weight))
+  
+  # Create a graph from the data frame
+  g_single_point <- graph_from_data_frame(result, directed = TRUE)
+  
+  # Get the adjacency matrix with weights
+  adj_matrix <- as_adjacency_matrix(g_single_point, attr = "min_weight", sparse = FALSE)
+  
+  return(adj_matrix)
   
 }
 

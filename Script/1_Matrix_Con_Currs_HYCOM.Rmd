@@ -1,14 +1,9 @@
 ---
 title: "Obtain current connectivity matrices from HYCOMdata"
-output: html_notebook
-editor_options: 
-  chunk_output_type: inline
-  markdown: 
-    wrap: 72
 ---
 
 
-This script downloads currents velecoty and direction data from a given geographical area (target archipelago), creates and saves a current connectivity matrix between geographic points (island shores)
+This script downloads currents velecity and direction data from a given geographical area (target archipelago), creates and saves a current connectivity matrix between geographic points (island shores)
 
 
 
@@ -27,6 +22,7 @@ library(tidyverse)
 library(gdistance)
 library(fields)
 library(scales)
+source("Functions.R")
 ```
 
 
@@ -70,7 +66,7 @@ The following chunk downloads HYCOM data according to the parameters set above. 
 # Galapagos
 
 for(i in 1:length(time)){
-  outputname<-paste("HYCOM_galapagos/galapagos_", time[i],"_.nc", sep="") #define the name
+  outputname<-paste("c_output/HYCOM/HYCOM_galapagos/galapagos_", time[i],"_.nc", sep="") #define the name
   #of the output file
   
   get.hycom(limits_Galapagos, time[i], include_latlon = TRUE, filename = outputname,
@@ -81,7 +77,7 @@ for(i in 1:length(time)){
 # Canaries
 
 for(i in 1:length(time)){
-  outputname<-paste("HYCOM_canaries/Canaries_", time[i],"_.nc", sep="") #define the name
+  outputname<-paste("c_output/HYCOM/HYCOM_canaries/Canaries_", time[i],"_.nc", sep="") #define the name
   #of the output file
   
   get.hycom(limits_Canaries, time[i], include_latlon = TRUE, filename = outputname, 
@@ -92,7 +88,7 @@ for(i in 1:length(time)){
 #Azores
 
 for(i in 1:length(time)){
-  outputname<-paste("HYCOM_azores/Azores_", time[i],"_.nc", sep="") #define the name
+  outputname<-paste("c_output/HYCOM/HYCOM_azores/Azores_", time[i],"_.nc", sep="") #define the name
   #of the output file
   
   get.hycom(limits_Azores, time[i], include_latlon = TRUE, filename = outputname, 
@@ -145,33 +141,33 @@ nc files downloaded with the code above. As default, the path corresponds to pre
 
 # Read files and create a list
 
-files_Galap <- list.files("HYCOM_galapagos",
+files_Galap <- list.files(here::here("c_output/HYCOM/HYCOM_galapagos"),
                           full.names = TRUE, pattern = ".nc") 
 
-files_Canary <- list.files("HYCOM_canaries",
+files_Canary <- list.files(here::here("c_output/HYCOM/HYCOM_canaries"),
                            full.names = TRUE, pattern = ".nc")
 
 
-files_Azores <- list.files("HYCOM_azores", 
+files_Azores <- list.files(here::here("c_output/HYCOM/HYCOM_azores"), 
                            full.names = TRUE, pattern = ".nc") 
 
  
 
 # Read .csv files with geographic points coordinates created with Qgis
 
-Galapagos_points <- read.csv("../../Data/Data_Galapagos/Galapagos-points1.csv",
+Galapagos_points <- read.csv(here::here("b_data/Data_Galapagos/Galapagos-points.csv"),
                              header=TRUE, sep=",") 
 
-Canaries_points <- read.csv("../../Data/Data_Canaries/CanariesPoints1.csv",
+Canaries_points <- read.csv(here::here("b_data/Data_Canaries/CanariesPoints.csv"),
                             header=TRUE, sep=",") 
 
-Azores_points <- read.csv("../../Data/Data_Azores/AzoresPoints1.csv",
+Azores_points <- read.csv(here::here("b_data/Data_Azores/AzoresPoints.csv"),
                           header=TRUE, sep=",")
 
 
-Galapagos_points$id<-NULL
-Canaries_points$id<-NULL
-Azores_points$id<-NULL
+#Galapagos_points$id<-NULL
+#Canaries_points$id<-NULL
+#Azores_points$id<-NULL
 ```
 
 
@@ -192,6 +188,8 @@ cost_list_Azores <- list()
 cost_list_Galapagos<-calculate_costMatrix(files=files_Galap, geo_points = Galapagos_points)
 cost_list_Canaries<-calculate_costMatrix(files=files_Canary, geo_points = Canaries_points)
 cost_list_Azores<-calculate_costMatrix(files=files_Azores, geo_points = Azores_points)
+
+
 ```
 
 
@@ -297,9 +295,123 @@ Median of the minimum 5% of the values
 
 median_min_mat_Galapagos<-Calculate_median_minimum5percent(arr_Galapagos)
 median_min_mat_Canaries<-Calculate_median_minimum5percent(array =  arr_Canary)
-median_min_mat_Galapagos<-Calculate_median_minimum5percent(arr_Azores)
+median_min_mat_Azores<-Calculate_median_minimum5percent(arr_Azores)
 
 ```
+
+Add names
+
+```{r}
+rownames(median_min_mat_Galapagos) = Galapagos_points$id
+colnames(median_min_mat_Galapagos) = Galapagos_points$id
+
+rownames(median_min_mat_Canaries) = Canaries_points$id
+colnames(median_min_mat_Canaries) = Canaries_points$id
+
+rownames(median_min_mat_Azores) = Azores_points$id
+colnames(median_min_mat_Azores) = Azores_points$id
+```
+
+
+
+```{r}
+saveRDS(median_min_mat_Galapagos, "median_min_mat_Galapagos_June24.rds")
+median_min_mat_Galapagos <- read_rds("median_min_mat_Galapagos_June24.rds")
+```
+
+
+### Compute matrix minimum connectivity for single points
+
+```{r}
+
+single_point_min_Galap <- compute_mat_min_conn_points(median_min_mat_Galapagos)
+single_point_min_Can <- compute_mat_min_conn_points(median_min_mat_Canaries)
+single_point_min_Az <- compute_mat_min_conn_points(median_min_mat_Azores)
+
+```
+
+## Plot matrix
+
+```{r}
+
+coord_centroids_gal <- read.csv(here::here("b_data/Data_Galapagos/centroids_network_plot.csv"))
+
+# Load the libraries
+library(igraph)
+library(ggraph)
+library(tidygraph)
+
+# Assuming your adjacency matrix is named 'single_point_min_Galap'
+# Convert the matrix to an igraph object
+g <- graph_from_adjacency_matrix(single_point_min_Galap, mode = "directed", weighted = TRUE)
+
+# Handle zero weights to avoid division by zero
+#E(g)$weight[E(g)$weight == 0] <- NA
+
+# Create a data frame from the igraph object
+node_list <- data.frame(name = V(g)$name)
+
+# Merge the coordinates with the node list
+node_list <- merge(node_list, coord_centroids_gal, by.x = "name", by.y = "island", all.x = TRUE)
+
+# Ensure no missing coordinates
+node_list <- na.omit(node_list)
+
+# Ensure the graph vertices match the coordinates names
+V(g)$name <- as.character(V(g)$name)
+node_list$name <- as.character(node_list$name)
+
+# Convert the igraph object to a tidygraph object
+tg <- as_tbl_graph(g)
+
+# Add coordinates to the tidygraph object
+tg <- tg %>%
+  activate(nodes) %>%
+  left_join(node_list, by = c("name" = "name"))
+
+# Invert the weights: higher values become lower and vice versa
+E(tg)$inv_weight <- 1 / E(tg)$weight
+
+# Normalize the inverted weights for better visualization
+max_inv_weight <- max(E(tg)$inv_weight, na.rm = TRUE)
+E(tg)$norm_inv_weight <- E(tg)$inv_weight / max_inv_weight
+
+# Plot the graph using ggraph with spatial coordinates
+ggraph(tg, layout = 'manual', x = V(tg)$long, y = V(tg)$lat) + 
+  geom_edge_link(aes(width = norm_inv_weight, edge_alpha = norm_inv_weight), arrow = arrow(length = unit(3, 'mm')), end_cap = circle(3, 'mm')) +
+  geom_node_point(size = 5, color = 'blue') +
+  geom_node_text(aes(label = name), repel = TRUE, size = 5) +
+  scale_edge_width(range = c(0.5, 2)) + # Adjust the range for better visualization
+  theme_void() + 
+  theme(legend.position = "none")
+
+```
+
+
+Add colors based on in and outdegree
+
+
+```{r}
+library(ggrepel)
+
+# Calculate in-degree and out-degree based on the inverted weights
+V(tg)$in_degree <- strength(tg, mode = "in", weights = E(tg)$inv_weight)
+V(tg)$out_degree <- strength(tg, mode = "out", weights = E(tg)$inv_weight)
+
+
+# Plot the graph using ggraph with spatial coordinates and color nodes based on in-degree
+ggraph(tg, layout = 'manual', x = V(tg)$long, y = V(tg)$lat) + 
+  geom_edge_link(aes(width = norm_inv_weight, edge_alpha = norm_inv_weight), arrow = arrow(length = unit(3, 'mm')), end_cap = circle(3, 'mm')) +
+  geom_node_point(aes(color = in_degree), size = 6) +
+  scale_edge_width(range = c(0.5, 2)) + # Adjust the range for better visualization
+  scale_color_viridis(name = "In-Degree", option = "turbo") + # Use viridis color scale
+ geom_node_text(aes(label = name), repel = TRUE, 
+                 nudge_y = 0.1, 
+                nudge_x = -0.04, size = 5, segment.size = 0.15) +
+  theme_void() + 
+  theme(legend.position = "bottom")
+```
+
 
 
 
@@ -309,6 +421,8 @@ median_min_mat_Galapagos<-Calculate_median_minimum5percent(arr_Azores)
 
 
 ```{r}
+
+#saveRDS(min_matrix_Galapagos, "min_matrix_Galapagos.RDS")
 
 min_matrix_Galapagos <- apply(array(unlist(cost_list_Galapagos), c(46, 46, 4769)), c(1, 2), min)
 min_matrix_Canaries <- apply(array(unlist(cost_list_Canaries), c(46, 46, 4769)), c(1, 2), min)
@@ -329,6 +443,15 @@ print(Corr_min_Galapagos,Corr_min_Canaries,Corr_min_Azores)
 
 
 
+
+
+
+
+
+
+
+
+# Delete from here onward ----------------------
 
 
 ## Making matrices symmetric and saving as csv
@@ -377,6 +500,20 @@ write.csv(min_mat_sym_Azores, "../../Matrices/Galapagos/Matrices-Currents_Galap/
           matrix_min.csv", row.names = FALSE)
 ```
 
+
+
+
+
+```{r}
+library(MASS)
+
+rownames(median_min_mat_Galapagos) = Galapagos_points$id
+colnames(median_min_mat_Galapagos) = Galapagos_points$id
+
+write.table(format(median_min_mat_Galapagos, digits=4),file="file.csv",sep = ",", row.names = TRUE, col.names = TRUE)
+
+write.csv(median_min_mat_Galapagos, "median_min_mat_Galapagos.csv")
+```
 
 
 

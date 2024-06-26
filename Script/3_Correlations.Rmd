@@ -46,6 +46,16 @@ distflor_all_can<-load_order_convert_table_to_distanceMat(
 distflor_all_az<-load_order_convert_table_to_distanceMat(
   filepath="Dist_Matices_floras_Azores/df_all_az")
 
+# non-adapted
+distflor_nonad_gal<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Galapagos/df_non_adapted_gal")
+
+distflor_nonad_can<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Canaries/df_non_adapted_can")
+
+distflor_nonad_az<-load_order_convert_table_to_distanceMat(
+  filepath="Dist_Matices_floras_Azores/df_non_adapted_az")
+
 
 # Thalassocorous
 
@@ -155,8 +165,6 @@ dist_curr_can<-load_order_convert_csv_to_distanceMat(filepath ="../Matrices/Cana
 dist_curr_az<-load_order_convert_csv_to_distanceMat(filepath ="../Matrices/Azores/Matrices-Currents_Azores/matrix_median_min_final_Azores.csv")
   
 
-
-dist_curr_gal<-load_order_convert_csv_to_distanceMat(filepath ="../Matrices/Galapagos/Matrices-Currents_Galap/matrix_median_min_final_Galapagos.csv")
 
 # Geographic distance matrix
 
@@ -317,6 +325,13 @@ dist_age_az<-load_order_convert_table_to_distanceMat(filepath = "../Data/Data_Az
 protest_curr_FlorAll_gal <-Compute_Protest_distMat(distMat_rot=distflor_all_gal,distMat_base = dist_curr_gal,k=11)
 protest_curr_FlorAll_can <-Compute_Protest_distMat(distMat_rot=distflor_all_can,distMat_base = dist_curr_can, k=6)
 protest_curr_FlorAll_az <-Compute_Protest_distMat(distMat_rot=distflor_all_az,distMat_base = dist_curr_az,k=8)
+
+
+# Non-adapted
+
+protest_curr_Flornonad_gal <-Compute_Protest_distMat(distMat_rot=distflor_nonad_gal,distMat_base = dist_curr_gal,k=11)
+protest_curr_Flornonad_can <-Compute_Protest_distMat(distMat_rot=distflor_nonad_can,distMat_base = dist_curr_can, k=6)
+protest_curr_Flornonad_az <-Compute_Protest_distMat(distMat_rot=distflor_nonad_az,distMat_base = dist_curr_az,k=8)
 
 # Thalassochorous
 
@@ -486,6 +501,12 @@ protest_geo_FlorAll_gal <-Compute_Protest_distMat(distMat_rot=distflor_all_gal,d
 protest_geo_FlorAll_can <-Compute_Protest_distMat(distMat_rot=distflor_all_can,distMat_base = dist_geo_can, k=6)
 protest_geo_FlorAll_az <-Compute_Protest_distMat(distMat_rot=distflor_all_az,distMat_base = dist_geo_az,k=8)
 
+# Non-adapted
+
+protest_geo_Flornonad_gal <-Compute_Protest_distMat(distMat_rot=distflor_nonad_gal,distMat_base = dist_geo_gal,k=11)
+protest_geo_Flornonad_can <-Compute_Protest_distMat(distMat_rot=distflor_nonad_can,distMat_base = dist_geo_can, k=6)
+protest_geo_Flornonad_az <-Compute_Protest_distMat(distMat_rot=distflor_nonad_az,distMat_base = dist_geo_az,k=8)
+
 # Thalassochorous
 
 protest_geo_Flortha_gal <-Compute_Protest_distMat(distMat_rot=distflor_all_gal,distMat_base = dist_geo_gal,k=11)
@@ -548,6 +569,14 @@ protest_area_FlorAll_gal <-Compute_Protest_distMat(distMat_rot=distflor_all_gal,
 protest_area_FlorAll_can <-Compute_Protest_distMat(distMat_rot=distflor_all_can,distMat_base = dist_area_can, k=6)
 protest_area_FlorAll_az <-Compute_Protest_distMat(distMat_rot=distflor_all_az,distMat_base = dist_area_az,k=8)
 
+
+# Non-adapted
+
+protest_area_Flornonad_gal <-Compute_Protest_distMat(distMat_rot=distflor_nonad_gal,distMat_base = dist_area_gal,k=11)
+protest_area_Flornonad_can <-Compute_Protest_distMat(distMat_rot=distflor_nonad_can,distMat_base = dist_area_can, k=6)
+protest_area_Flornonad_az <-Compute_Protest_distMat(distMat_rot=distflor_nonad_az,distMat_base = dist_area_az,k=8)
+
+
 # Thalassochorous
 
 protest_area_Flortha_gal <-Compute_Protest_distMat(distMat_rot=distflor_all_gal,distMat_base = dist_area_gal,k=11)
@@ -607,6 +636,13 @@ protest_area_FlorNoLitt.excl_az <-Compute_Protest_distMat(distMat_rot=distflor_n
 protest_age_FlorAll_gal <-Compute_Protest_distMat(distMat_rot=distflor_all_gal,distMat_base = dist_age_gal ,k=11)
 protest_age_FlorAll_can <-Compute_Protest_distMat(distMat_rot=distflor_all_can,distMat_base = dist_age_can, k=6)
 protest_age_FlorAll_az <-Compute_Protest_distMat(distMat_rot=distflor_all_az,distMat_base = dist_age_az,k=8)
+
+
+# Non-adapted
+
+protest_age_Flornonad_gal <-Compute_Protest_distMat(distMat_rot=distflor_nonad_gal,distMat_base = dist_age_gal,k=11)
+protest_age_Flornonad_can <-Compute_Protest_distMat(distMat_rot=distflor_nonad_can,distMat_base = dist_age_can, k=6)
+protest_age_Flornonad_az <-Compute_Protest_distMat(distMat_rot=distflor_nonad_az,distMat_base = dist_age_az,k=8)
 
 # Thalassochorous
 
@@ -678,39 +714,43 @@ protest_age_FlorNoLitt.excl_az <-Compute_Protest_distMat(distMat_rot=distflor_no
 ```{r}
 
 Name_columns <- c("Galapagos", "Canaries", "Azores")
-Name_rows <- c("All", "Tha", "Litt","Litt.excl", "Fleshy")
+Name_rows <- c("All", "Nonad", "Tha", "Litt","Litt.excl")
 
 
 
 pvalue_gal <- c(protest_curr_FlorAll_gal$signif,
+                protest_curr_Flornonad_gal$signif,
                      protest_curr_Flortha_gal$signif,
                      protest_curr_FlorLitt_gal$signif,
-                     protest_curr_FlorLitt.excl_gal$signif,
-                     protest_curr_Florflesh_gal$signif)
+                     protest_curr_FlorLitt.excl_gal$signif)
 
 pvalue_can <- c(protest_curr_FlorAll_can$signif,
+                protest_curr_Flornonad_can$signif,
                      protest_curr_Flortha_can$signif,
                      protest_curr_FlorLitt_can$signif,
                      protest_curr_FlorLitt.excl_can$signif)
 
 pvalue_az <- c(protest_curr_FlorAll_az$signif,
+               protest_curr_Flornonad_az$signif,
                      protest_curr_Flortha_az$signif,
                      protest_curr_FlorLitt_az$signif,
                      protest_curr_FlorLitt.excl_az$signif)
 
 corr_gal <- c(protest_curr_FlorAll_gal$t0,
+              protest_curr_Flornonad_gal$t0,
                      protest_curr_Flortha_gal$t0,
                      protest_curr_FlorLitt_gal$t0,
-                     protest_curr_FlorLitt.excl_gal$t0,
-                     protest_curr_Florflesh_gal$t0)
+                     protest_curr_FlorLitt.excl_gal$t0)
 
 corr_can <- c(protest_curr_FlorAll_can$t0,
+              protest_curr_Flornonad_can$t0,
                      protest_curr_Flortha_can$t0,
                      protest_curr_FlorLitt_can$t0,
                      protest_curr_FlorLitt.excl_can$t0)
 
 
 corr_az <- c(protest_curr_FlorAll_az$t0,
+             protest_curr_Flornonad_az$t0,
                      protest_curr_Flortha_az$t0,
                      protest_curr_FlorLitt_az$t0,
                      protest_curr_FlorLitt.excl_az$t0)
@@ -731,12 +771,11 @@ colnames(results_procrustes1)=c("Gal.corr","Gal.pval",
                                 "Can.corr","Can.pval", 
                                 "Az.corr", "Az.pval")
 
-rownames(results_procrustes1)=c("All","Tha",
-                                "Litt","Litt.excl",
-                                "Fleshy")
+rownames(results_procrustes1)=c("All","Nonad","Tha",
+                                "Litt","Litt.excl")
 results_procrustes1 
 
-#write.csv(results_procrustes1,"../Results/results_currents_floras.csv")
+write.csv(results_procrustes1,"../Results/results_currents_floras.csv")
 
 ```
 
@@ -747,39 +786,43 @@ results_procrustes1
 ```{r}
 
 Name_columns <- c("Galapagos", "Canaries", "Azores")
-Name_rows <- c("All", "Tha", "Litt","Litt.excl", "Fleshy")
+Name_rows <- c("All", "Nonad", "Tha", "Litt","Litt.excl")
 
 
 
 pvalue_gal <- c(protest_geo_FlorAll_gal$signif,
+                protest_geo_Flornonad_gal$signif,
                      protest_geo_Flortha_gal$signif,
                      protest_geo_FlorLitt_gal$signif,
-                     protest_geo_FlorLitt.excl_gal$signif,
-                     protest_geo_Florflesh_gal$signif)
+                     protest_geo_FlorLitt.excl_gal$signif)
 
 pvalue_can <- c(protest_geo_FlorAll_can$signif,
+                protest_geo_Flornonad_can$signif,
                      protest_geo_Flortha_can$signif,
                      protest_geo_FlorLitt_can$signif,
                      protest_geo_FlorLitt.excl_can$signif)
 
 pvalue_az <- c(protest_geo_FlorAll_az$signif,
+               protest_geo_Flornonad_az$signif,
                      protest_geo_Flortha_az$signif,
                      protest_geo_FlorLitt_az$signif,
                      protest_geo_FlorLitt.excl_az$signif)
 
 corr_gal <- c(protest_geo_FlorAll_gal$t0,
+              protest_geo_Flornonad_gal$t0,
                      protest_geo_Flortha_gal$t0,
                      protest_geo_FlorLitt_gal$t0,
-                     protest_geo_FlorLitt.excl_gal$t0,
-                     protest_geo_Florflesh_gal$t0)
+                     protest_geo_FlorLitt.excl_gal$t0)
 
 corr_can <- c(protest_geo_FlorAll_can$t0,
+              protest_geo_Flornonad_can$t0,
                      protest_geo_Flortha_can$t0,
                      protest_geo_FlorLitt_can$t0,
                      protest_geo_FlorLitt.excl_can$t0)
 
 
 corr_az <- c(protest_geo_FlorAll_az$t0,
+             protest_geo_Flornonad_az$t0,
                      protest_geo_Flortha_az$t0,
                      protest_geo_FlorLitt_az$t0,
                      protest_geo_FlorLitt.excl_az$t0)
@@ -800,9 +843,8 @@ colnames(results_procrustes1_geo)=c("Gal.corr","Gal.pval",
                                 "Can.corr","Can.pval", 
                                 "Az.corr", "Az.pval")
 
-rownames(results_procrustes1_geo)=c("All","Tha",
-                                "Litt","Litt.excl",
-                                "Fleshy")
+rownames(results_procrustes1_geo)=c("All","Nonad","Tha",
+                                "Litt","Litt.excl")
 results_procrustes1_geo 
 
 write.csv(results_procrustes1_geo,"../Results/results_geo_floras.csv")
@@ -816,39 +858,43 @@ write.csv(results_procrustes1_geo,"../Results/results_geo_floras.csv")
 ```{r}
 
 Name_columns <- c("Galapagos", "Canaries", "Azores")
-Name_rows <- c("All", "Tha", "Litt","Litt.excl", "Fleshy")
+Name_rows <- c("All", "Nonad", "Tha", "Litt","Litt.excl")
 
 
 
 pvalue_gal <- c(protest_area_FlorAll_gal$signif,
+                protest_area_Flornonad_gal$signif,
                      protest_area_Flortha_gal$signif,
                      protest_area_FlorLitt_gal$signif,
-                     protest_area_FlorLitt.excl_gal$signif,
-                     protest_area_Florflesh_gal$signif)
+                     protest_area_FlorLitt.excl_gal$signif)
 
 pvalue_can <- c(protest_area_FlorAll_can$signif,
+                protest_area_Flornonad_can$signif,
                      protest_area_Flortha_can$signif,
                      protest_area_FlorLitt_can$signif,
                      protest_area_FlorLitt.excl_can$signif)
 
 pvalue_az <- c(protest_area_FlorAll_az$signif,
+               protest_area_Flornonad_az$signif,
                      protest_area_Flortha_az$signif,
                      protest_area_FlorLitt_az$signif,
                      protest_area_FlorLitt.excl_az$signif)
 
 corr_gal <- c(protest_area_FlorAll_gal$t0,
+              protest_area_Flornonad_gal$t0,
                      protest_area_Flortha_gal$t0,
                      protest_area_FlorLitt_gal$t0,
-                     protest_area_FlorLitt.excl_gal$t0,
-                     protest_area_Florflesh_gal$t0)
+                     protest_area_FlorLitt.excl_gal$t0)
 
 corr_can <- c(protest_area_FlorAll_can$t0,
+              protest_area_Flornonad_can$t0,
                      protest_area_Flortha_can$t0,
                      protest_area_FlorLitt_can$t0,
                      protest_area_FlorLitt.excl_can$t0)
 
 
 corr_az <- c(protest_area_FlorAll_az$t0,
+             protest_area_Flornonad_az$t0,
                      protest_area_Flortha_az$t0,
                      protest_area_FlorLitt_az$t0,
                      protest_area_FlorLitt.excl_az$t0)
@@ -869,9 +915,8 @@ colnames(results_procrustes1_area)=c("Gal.corr","Gal.pval",
                                 "Can.corr","Can.pval", 
                                 "Az.corr", "Az.pval")
 
-rownames(results_procrustes1_area)=c("All","Tha",
-                                "Litt","Litt.excl",
-                                "Fleshy")
+rownames(results_procrustes1_area)=c("All","Nonad","Tha",
+                                "Litt","Litt.excl")
 results_procrustes1_area 
 
 write.csv(results_procrustes1_area,"../Results/results_area_floras.csv")
@@ -885,39 +930,43 @@ write.csv(results_procrustes1_area,"../Results/results_area_floras.csv")
 ```{r}
 
 Name_columns <- c("Galapagos", "Canaries", "Azores")
-Name_rows <- c("All", "Tha", "Litt","Litt.excl", "Fleshy")
+Name_rows <- c("All", "Nonad", "Tha", "Litt","Litt.excl")
 
 
 
 pvalue_gal <- c(protest_age_FlorAll_gal$signif,
+                protest_age_Flornonad_gal$signif,
                      protest_age_Flortha_gal$signif,
                      protest_age_FlorLitt_gal$signif,
-                     protest_age_FlorLitt.excl_gal$signif,
-                     protest_age_Florflesh_gal$signif)
+                     protest_age_FlorLitt.excl_gal$signif)
 
 pvalue_can <- c(protest_age_FlorAll_can$signif,
+                protest_age_Flornonad_can$signif,
                      protest_age_Flortha_can$signif,
                      protest_age_FlorLitt_can$signif,
                      protest_age_FlorLitt.excl_can$signif)
 
 pvalue_az <- c(protest_age_FlorAll_az$signif,
+               protest_age_Flornonad_az$signif,
                      protest_age_Flortha_az$signif,
                      protest_age_FlorLitt_az$signif,
                      protest_age_FlorLitt.excl_az$signif)
 
 corr_gal <- c(protest_age_FlorAll_gal$t0,
+              protest_age_Flornonad_gal$t0,
                      protest_age_Flortha_gal$t0,
                      protest_age_FlorLitt_gal$t0,
-                     protest_age_FlorLitt.excl_gal$t0,
-                     protest_age_Florflesh_gal$t0)
+                     protest_age_FlorLitt.excl_gal$t0)
 
 corr_can <- c(protest_age_FlorAll_can$t0,
+              protest_age_Flornonad_can$t0,
                      protest_age_Flortha_can$t0,
                      protest_age_FlorLitt_can$t0,
                      protest_age_FlorLitt.excl_can$t0)
 
 
 corr_az <- c(protest_age_FlorAll_az$t0,
+             protest_age_Flornonad_az$t0,
                      protest_age_Flortha_az$t0,
                      protest_age_FlorLitt_az$t0,
                      protest_age_FlorLitt.excl_az$t0)
@@ -938,9 +987,8 @@ colnames(results_procrustes1_age)=c("Gal.corr","Gal.pval",
                                 "Can.corr","Can.pval", 
                                 "Az.corr", "Az.pval")
 
-rownames(results_procrustes1_age)=c("All","Tha",
-                                "Litt","Litt.excl",
-                                "Fleshy")
+rownames(results_procrustes1_age)=c("All","Nonad","Tha",
+                                "Litt","Litt.excl")
 results_procrustes1_age 
 
 write.csv(results_procrustes1_age,"../Results/results_age_floras.csv")
@@ -960,21 +1008,20 @@ write.csv(results_procrustes1_age,"../Results/results_age_floras.csv")
 df_corr_currents <- results_procrustes1[,c("Gal.corr", "Gal.pval")]
 df_corr_currents$flora <- rownames(df_corr_currents)
 rownames(df_corr_currents) <- NULL
-df_corr_currents <- df_corr_currents[-(which(df_corr_currents$flora == "Fleshy")),]
 df_corr_currents$archipelago <- rep("Galapagos", times = nrow(df_corr_currents))
 colnames(df_corr_currents) <- c("corr", "pval", "flora", "archipelago")
+
 
 df_corr_currents_can <- results_procrustes1[,c("Can.corr", "Can.pval")]
 df_corr_currents_can$flora <- rownames(df_corr_currents_can)
 rownames(df_corr_currents_can) <- NULL
-df_corr_currents_can <- df_corr_currents_can[-(which(df_corr_currents_can$flora == "Fleshy")),]
 df_corr_currents_can$archipelago <- rep("Canaries", times = nrow(df_corr_currents_can))
 colnames(df_corr_currents_can) <- c("corr", "pval", "flora", "archipelago")
+
 
 df_corr_currents_az <- results_procrustes1[,c("Az.corr", "Az.pval")]
 df_corr_currents_az$flora <- rownames(df_corr_currents_az)
 rownames(df_corr_currents_az) <- NULL
-df_corr_currents_az <- df_corr_currents_az[-(which(df_corr_currents_az$flora == "Fleshy")),]
 df_corr_currents_az$archipelago <- rep("Azores", times = nrow(df_corr_currents_az))
 colnames(df_corr_currents_az) <- c("corr", "pval", "flora", "archipelago")
 
@@ -985,12 +1032,15 @@ df_plot_corr_currents <- rbind(df_corr_currents, df_corr_currents_can, df_corr_c
 df_plot_corr_currents$sign <- with(df_plot_corr_currents, ifelse(pval < 0.051, 'sign', 'non.sign'))
 
 df_plot_corr_currents$archipelago <- factor(df_plot_corr_currents$archipelago, levels = c("Galapagos", "Canaries", "Azores"))
+df_plot_corr_currents$flora[which(df_plot_corr_currents$flora == "Nonad")] <- "Lowland"
 df_plot_corr_currents$flora[which(df_plot_corr_currents$flora == "Litt")] <- "Littoral"
 df_plot_corr_currents$flora[which(df_plot_corr_currents$flora == "Litt.excl")] <- "Littoral exclusive"
 df_plot_corr_currents$flora[which(df_plot_corr_currents$flora == "Tha")] <- "Thalassochorous"
 
 
-df_plot_corr_currents$flora <- factor(df_plot_corr_currents$flora, levels = c("All", "Thalassochorous", "Littoral", "Littoral exclusive"))
+df_plot_corr_currents$flora <- factor(df_plot_corr_currents$flora, levels = c("All","Lowland", "Thalassochorous", "Littoral", "Littoral exclusive"))
+
+df_plot_corr_currents <- df_plot_corr_currents[which(df_plot_corr_currents$flora != "All"),]
 
 #saveRDS(df_plot_corr_currents, "df_plot_corr_currents.rds")
 
@@ -1005,7 +1055,7 @@ my.theme<-theme(axis.text=element_text(size=15),
 
 plot_corr_currents <- ggplot(df_plot_corr_currents, 
        aes(x = flora, y = corr, group = archipelago, shape = sign, fill = archipelago))+
- geom_segment( aes(x=flora ,xend=flora, y=0, yend=1), color="grey") +
+ geom_segment( aes(x=flora ,xend=flora, y=0, yend=1), color="grey",size = 1.2) +
   geom_point(aes(color = archipelago),size = 5, alpha = 0.8,stroke = 2) + #alpha = 0.8, 
     theme(
       panel.grid.minor.y = element_blank(),
@@ -1020,6 +1070,8 @@ plot_corr_currents <- ggplot(df_plot_corr_currents,
   theme_bw()+
   my.theme
 
+
+plot_corr_currents
   
 #ggsave("plot_corr_currents.png", height = 5, width = 9)
   
@@ -1034,21 +1086,18 @@ plot_corr_currents <- ggplot(df_plot_corr_currents,
 df_corr_geo <- results_procrustes1_geo[,c("Gal.corr", "Gal.pval")]
 df_corr_geo$flora <- rownames(df_corr_geo)
 rownames(df_corr_geo) <- NULL
-df_corr_geo <- df_corr_geo[-(which(df_corr_geo$flora == "Fleshy")),]
 df_corr_geo$archipelago <- rep("Galapagos", times = nrow(df_corr_geo))
 colnames(df_corr_geo) <- c("corr", "pval", "flora", "archipelago")
 
 df_corr_geo_can <- results_procrustes1_geo[,c("Can.corr", "Can.pval")]
 df_corr_geo_can$flora <- rownames(df_corr_geo_can)
 rownames(df_corr_geo_can) <- NULL
-df_corr_geo_can <- df_corr_geo_can[-(which(df_corr_geo_can$flora == "Fleshy")),]
 df_corr_geo_can$archipelago <- rep("Canaries", times = nrow(df_corr_geo_can))
 colnames(df_corr_geo_can) <- c("corr", "pval", "flora", "archipelago")
 
 df_corr_geo_az <- results_procrustes1_geo[,c("Az.corr", "Az.pval")]
 df_corr_geo_az$flora <- rownames(df_corr_geo_az)
 rownames(df_corr_geo_az) <- NULL
-df_corr_geo_az <- df_corr_geo_az[-(which(df_corr_geo_az$flora == "Fleshy")),]
 df_corr_geo_az$archipelago <- rep("Azores", times = nrow(df_corr_geo_az))
 colnames(df_corr_geo_az) <- c("corr", "pval", "flora", "archipelago")
 
@@ -1060,11 +1109,14 @@ df_plot_corr_geo$sign <- with(df_plot_corr_geo, ifelse(pval < 0.051, 'sign', 'no
 
 df_plot_corr_geo$archipelago <- factor(df_plot_corr_geo$archipelago, levels = c("Galapagos", "Canaries", "Azores"))
 df_plot_corr_geo$flora[which(df_plot_corr_geo$flora == "Litt")] <- "Littoral"
+df_plot_corr_geo$flora[which(df_plot_corr_geo$flora == "Nonad")] <- "Lowland"
 df_plot_corr_geo$flora[which(df_plot_corr_geo$flora == "Litt.excl")] <- "Littoral exclusive"
 df_plot_corr_geo$flora[which(df_plot_corr_geo$flora == "Tha")] <- "Thalassochorous"
 
 
-df_plot_corr_geo$flora <- factor(df_plot_corr_geo$flora, levels = c("All", "Thalassochorous", "Littoral", "Littoral exclusive"))
+df_plot_corr_geo$flora <- factor(df_plot_corr_geo$flora, levels = c("All","Lowland", "Thalassochorous", "Littoral", "Littoral exclusive"))
+
+df_plot_corr_geo <- df_plot_corr_geo[which(df_plot_corr_geo$flora != "All"),]
 
 #saveRDS(df_plot_corr_geo, "df_plot_corr_geo.rds")
 
@@ -1079,7 +1131,7 @@ my.theme<-theme(axis.text=element_text(size=15),
 
 plot_corr_geo <- ggplot(df_plot_corr_geo, 
        aes(x = flora, y = corr, group = archipelago, shape = sign, fill = archipelago))+
- geom_segment( aes(x=flora ,xend=flora, y=0, yend=1), color="grey") +
+ geom_segment( aes(x=flora ,xend=flora, y=0, yend=1), color="grey",size = 1.2) +
   geom_point(aes(color = archipelago),size = 5, alpha = 0.8,stroke = 2) + #alpha = 0.8, 
     theme(
       panel.grid.minor.y = element_blank(),
@@ -1095,6 +1147,7 @@ plot_corr_geo <- ggplot(df_plot_corr_geo,
   my.theme
 
   plot_corr_geo
+  
 #ggsave("plot_corr_geo.png", height = 5, width = 9)
   
 ```
@@ -1106,21 +1159,18 @@ plot_corr_geo <- ggplot(df_plot_corr_geo,
 df_corr_area <- results_procrustes1_area[,c("Gal.corr", "Gal.pval")]
 df_corr_area$flora <- rownames(df_corr_area)
 rownames(df_corr_area) <- NULL
-df_corr_area <- df_corr_area[-(which(df_corr_area$flora == "Fleshy")),]
 df_corr_area$archipelago <- rep("Galapagos", times = nrow(df_corr_area))
 colnames(df_corr_area) <- c("corr", "pval", "flora", "archipelago")
 
 df_corr_area_can <- results_procrustes1_area[,c("Can.corr", "Can.pval")]
 df_corr_area_can$flora <- rownames(df_corr_area_can)
 rownames(df_corr_area_can) <- NULL
-df_corr_area_can <- df_corr_area_can[-(which(df_corr_area_can$flora == "Fleshy")),]
 df_corr_area_can$archipelago <- rep("Canaries", times = nrow(df_corr_area_can))
 colnames(df_corr_area_can) <- c("corr", "pval", "flora", "archipelago")
 
 df_corr_area_az <- results_procrustes1_area[,c("Az.corr", "Az.pval")]
 df_corr_area_az$flora <- rownames(df_corr_area_az)
 rownames(df_corr_area_az) <- NULL
-df_corr_area_az <- df_corr_area_az[-(which(df_corr_area_az$flora == "Fleshy")),]
 df_corr_area_az$archipelago <- rep("Azores", times = nrow(df_corr_area_az))
 colnames(df_corr_area_az) <- c("corr", "pval", "flora", "archipelago")
 
@@ -1132,11 +1182,14 @@ df_plot_corr_area$sign <- with(df_plot_corr_area, ifelse(pval < 0.051, 'sign', '
 
 df_plot_corr_area$archipelago <- factor(df_plot_corr_area$archipelago, levels = c("Galapagos", "Canaries", "Azores"))
 df_plot_corr_area$flora[which(df_plot_corr_area$flora == "Litt")] <- "Littoral"
+df_plot_corr_area$flora[which(df_plot_corr_area$flora == "Nonad")] <- "Lowland"
 df_plot_corr_area$flora[which(df_plot_corr_area$flora == "Litt.excl")] <- "Littoral exclusive"
 df_plot_corr_area$flora[which(df_plot_corr_area$flora == "Tha")] <- "Thalassochorous"
 
 
-df_plot_corr_area$flora <- factor(df_plot_corr_area$flora, levels = c("All", "Thalassochorous", "Littoral", "Littoral exclusive"))
+df_plot_corr_area$flora <- factor(df_plot_corr_area$flora, levels = c("All","Lowland", "Thalassochorous", "Littoral", "Littoral exclusive"))
+
+df_plot_corr_area <- df_plot_corr_area[which(df_plot_corr_area$flora != "All"),]
 
 #saveRDS(df_plot_corr_area, "df_plot_corr_area.rds")
 
@@ -1151,7 +1204,7 @@ my.theme<-theme(axis.text=element_text(size=15),
 
 plot_corr_area <- ggplot(df_plot_corr_area, 
        aes(x = flora, y = corr, group = archipelago, shape = sign, fill = archipelago))+
- geom_segment( aes(x=flora ,xend=flora, y=0, yend=1), color="grey") +
+ geom_segment( aes(x=flora ,xend=flora, y=0, yend=1), color="grey",size = 1.2) +
   geom_point(aes(color = archipelago),size = 5, alpha = 0.8,stroke = 2) + #alpha = 0.8, 
     theme(
       panel.grid.minor.y = element_blank(),
@@ -1167,6 +1220,7 @@ plot_corr_area <- ggplot(df_plot_corr_area,
   my.theme
 
   plot_corr_area
+  
 #ggsave("plot_corr_area.png", height = 5, width = 9)
 ```
 
@@ -1178,21 +1232,18 @@ plot_corr_area <- ggplot(df_plot_corr_area,
 df_corr_age <- results_procrustes1_age[,c("Gal.corr", "Gal.pval")]
 df_corr_age$flora <- rownames(df_corr_age)
 rownames(df_corr_age) <- NULL
-df_corr_age <- df_corr_age[-(which(df_corr_age$flora == "Fleshy")),]
 df_corr_age$archipelago <- rep("Galapagos", times = nrow(df_corr_age))
 colnames(df_corr_age) <- c("corr", "pval", "flora", "archipelago")
 
 df_corr_age_can <- results_procrustes1_age[,c("Can.corr", "Can.pval")]
 df_corr_age_can$flora <- rownames(df_corr_age_can)
 rownames(df_corr_age_can) <- NULL
-df_corr_age_can <- df_corr_age_can[-(which(df_corr_age_can$flora == "Fleshy")),]
 df_corr_age_can$archipelago <- rep("Canaries", times = nrow(df_corr_age_can))
 colnames(df_corr_age_can) <- c("corr", "pval", "flora", "archipelago")
 
 df_corr_age_az <- results_procrustes1_age[,c("Az.corr", "Az.pval")]
 df_corr_age_az$flora <- rownames(df_corr_age_az)
 rownames(df_corr_age_az) <- NULL
-df_corr_age_az <- df_corr_age_az[-(which(df_corr_age_az$flora == "Fleshy")),]
 df_corr_age_az$archipelago <- rep("Azores", times = nrow(df_corr_age_az))
 colnames(df_corr_age_az) <- c("corr", "pval", "flora", "archipelago")
 
@@ -1204,11 +1255,14 @@ df_plot_corr_age$sign <- with(df_plot_corr_age, ifelse(pval < 0.051, 'sign', 'no
 
 df_plot_corr_age$archipelago <- factor(df_plot_corr_age$archipelago, levels = c("Galapagos", "Canaries", "Azores"))
 df_plot_corr_age$flora[which(df_plot_corr_age$flora == "Litt")] <- "Littoral"
+df_plot_corr_age$flora[which(df_plot_corr_age$flora == "Nonad")] <- "Lowland"
 df_plot_corr_age$flora[which(df_plot_corr_age$flora == "Litt.excl")] <- "Littoral exclusive"
 df_plot_corr_age$flora[which(df_plot_corr_age$flora == "Tha")] <- "Thalassochorous"
 
 
-df_plot_corr_age$flora <- factor(df_plot_corr_age$flora, levels = c("All", "Thalassochorous", "Littoral", "Littoral exclusive"))
+df_plot_corr_age$flora <- factor(df_plot_corr_age$flora, levels = c("All","Lowland", "Thalassochorous", "Littoral", "Littoral exclusive"))
+
+df_plot_corr_age <- df_plot_corr_age[which(df_plot_corr_age$flora != "All"),]
 
 #saveRDS(df_plot_corr_age, "df_plot_corr_age.rds")
 
@@ -1225,7 +1279,7 @@ my.theme<-theme(axis.text=element_text(size=15),
 
 plot_corr_age <- ggplot(df_plot_corr_age, 
        aes(x = flora, y = corr, group = archipelago, shape = sign, fill = archipelago))+
- geom_segment( aes(x=flora ,xend=flora, y=0, yend=1), color="grey") +
+ geom_segment( aes(x=flora ,xend=flora, y=0, yend=1), color="grey", size = 1.2) +
   geom_point(aes(color = archipelago),size = 5, alpha = 0.8,stroke = 2) + #alpha = 0.8, 
     theme(
       panel.grid.minor.y = element_blank(),
@@ -1241,6 +1295,7 @@ plot_corr_age <- ggplot(df_plot_corr_age,
   my.theme
 
   plot_corr_age
+  
 #ggsave("plot_corr_age.png", height = 5, width = 9)
 ```
 
@@ -1263,7 +1318,7 @@ ggarrange(
   
 )
 
-#ggsave("plots/plots_correlations.png", height = 11, width = 14)
+ggsave("plots/plots_correlations.png", height = 11, width = 14)
 ```
 
 
@@ -1336,5 +1391,343 @@ qgraph(dist_az, layout='spring', vsize=12, border.color = "green", esize =40, ed
 dev.off()
 
 ```
+
+
+
+# Correlation currents with geo, area, age
+
+```{r}
+
+# corr with geo
+
+protest_geo_curr_gal <-Compute_Protest_distMat(distMat_rot=dist_curr_gal,distMat_base = dist_geo_gal,k=11)
+
+protest_geo_curr_can <-Compute_Protest_distMat(distMat_rot=dist_curr_can,distMat_base = dist_geo_can,k=6)
+
+protest_geo_curr_az <-Compute_Protest_distMat(distMat_rot=dist_curr_az,distMat_base = dist_geo_az,k=8)
+
+# corr with area
+
+protest_area_curr_gal <-Compute_Protest_distMat(distMat_rot=dist_curr_gal,distMat_base = dist_area_gal,k=11)
+
+protest_area_curr_can <-Compute_Protest_distMat(distMat_rot=dist_curr_can,distMat_base = dist_area_can,k=6)
+
+protest_area_curr_az <-Compute_Protest_distMat(distMat_rot=dist_curr_az,distMat_base = dist_area_az,k=8)
+
+# corr with age
+
+protest_age_curr_gal <-Compute_Protest_distMat(distMat_rot=dist_curr_gal,distMat_base = dist_age_gal,k=11)
+
+protest_age_curr_can <-Compute_Protest_distMat(distMat_rot=dist_curr_can,distMat_base = dist_age_can,k=6)
+
+protest_age_curr_az <-Compute_Protest_distMat(distMat_rot=dist_curr_az,distMat_base = dist_age_az,k=8)
+
+# Galapagos
+
+corr <- c(protest_geo_curr_gal$t0,
+          protest_area_curr_gal$t0,
+          protest_age_curr_gal$t0)
+
+sign <- c(protest_geo_curr_gal$signif,
+          protest_area_curr_gal$signif,
+          protest_age_curr_gal$signif)
+
+df_gal <- data.frame(corr, sign)
+df_gal$archipelago <- rep("Galapagos",nrow(df_gal))
+df_gal$distance <- c("geographic dist", "area", "age")
+
+
+# Canaries
+
+corr <- c(protest_geo_curr_can$t0,
+          protest_area_curr_can$t0,
+          protest_age_curr_can$t0)
+
+sign <- c(protest_geo_curr_can$signif,
+          protest_area_curr_can$signif,
+          protest_age_curr_can$signif)
+
+df_can <- data.frame(corr, sign)
+df_can$archipelago <- rep("Canaries",nrow(df_can))
+df_can$distance <- c("geographic dist", "area", "age")
+
+# Azores
+
+corr <- c(protest_geo_curr_az$t0,
+          protest_area_curr_az$t0,
+          protest_age_curr_az$t0)
+
+sign <- c(protest_geo_curr_az$signif,
+          protest_area_curr_az$signif,
+          protest_age_curr_az$signif)
+
+df_az <- data.frame(corr, sign)
+df_az$archipelago <- rep("Azores",nrow(df_az))
+df_az$distance <- c("geographic dist", "area", "age")
+
+df_corr_curr_rest <- rbind(df_gal, df_can, df_az)
+
+
+
+df_corr_curr_rest$sign <- with(df_corr_curr_rest, ifelse(sign < 0.051, 'sign', 'non.sign'))
+
+df_corr_curr_rest$archipelago <- factor(df_corr_curr_rest$archipelago, levels = c("Galapagos", "Canaries", "Azores"))
+
+df_corr_curr_rest$distance <- factor(df_corr_curr_rest$distance, levels = c("geographic dist", "area", "age"))
+
+plot_corr_curr_rest <- ggplot(df_corr_curr_rest, 
+       aes(x = distance, y = corr, group = archipelago, shape = sign, fill = archipelago))+
+ geom_segment( aes(x=distance ,xend=distance, y=0, yend=1), color="grey", size = 1.2) +
+  geom_point(aes(color = archipelago),size = 5, alpha = 0.8,stroke = 2) + #alpha = 0.8, 
+    theme(
+      panel.grid.minor.y = element_blank(),
+      panel.grid.major.y = element_blank(),
+      legend.position="right"
+    ) +
+    xlab("")+
+    ylab("correlation with sea current connectivity")+
+  ylim(0,1)   +
+  scale_color_manual(values = c("blue", "red", "green"))+
+  scale_shape_manual(values = c(1, 19))+
+  theme_bw()+
+  my.theme
+
+  plot_corr_curr_rest
+  
+ggsave("plot_corr_curr_rest.png", height = 5, width = 9)
+
+```
+
+
+
+# % THA and Litt with centrality by currents:
+
+
+Summing up the edge weights of the adjacent edges for each vertex.
+
+## obtain degrees
+
+```{r}
+
+library(igraph)
+library(qgraph)
+
+
+
+## Degree Galapagos
+
+dist_curr_gal <- as.matrix(dist_curr_gal)
+dist_curr_can <- as.matrix(dist_curr_can)
+dist_curr_az <- as.matrix(dist_curr_az)
+
+#dist_curr_gal <- as.matrix(dist_geo_gal)
+#dist_curr_can <- as.matrix(dist_geo_can)
+#dist_curr_az <- as.matrix(dist_geo_az)
+
+con_curr_gal <- 1/dist_curr_gal
+dist_curr_can <- 1/dist_curr_can
+dist_curr_az <- 1/dist_curr_az
+
+diag(con_curr_gal) <- 0
+diag(dist_curr_can) <- 0
+diag(dist_curr_az) <- 0
+
+
+
+
+g_gal <- graph_from_adjacency_matrix(con_curr_gal, mode="undirected", weighted=TRUE)
+g_can <- graph_from_adjacency_matrix(dist_curr_can, mode="undirected", weighted=TRUE)
+g_az <- graph_from_adjacency_matrix(dist_curr_az, mode="undirected", weighted=TRUE)
+
+## Normalize the weights
+
+E(g_gal)$weight <- (E(g_gal)$weight-min(E(g_gal)$weight))/(max(E(g_gal)$weight)-min(E(g_gal)$weight))
+E(g_can)$weight <- (E(g_can)$weight-min(E(g_can)$weight))/(max(E(g_can)$weight)-min(E(g_can)$weight))
+E(g_az)$weight <- (E(g_az)$weight-min(E(g_az)$weight))/(max(E(g_az)$weight)-min(E(g_az)$weight))
+
+degrees_gal <- strength(g_gal)
+degrees_can <- strength(g_can)
+degrees_az <- strength(g_az)
+
+
+
+```
+
+
+
+### Open Data
+
+```{r}
+data_Galapagos <- read_csv("../Data/Data_Galapagos/data_galapagos.csv", col_names = FALSE, trim_ws = TRUE)
+data_Canaries <- read_csv("../Data/Data_Canaries/data_canaries.csv", col_names = FALSE, trim_ws = TRUE)
+data_Azores <- read_csv("../Data/Data_Azores/data_azores.csv", col_names = FALSE)
+
+df_Galapagos <- as.data.frame(data_Galapagos)
+df_Canaries <- as.data.frame(data_Canaries)
+df_Azores <- as.data.frame(data_Azores)
+
+
+```
+
+
+
+## Smooth the data frame
+
+```{r}
+df_Galapagos[is.na(df_Galapagos)] <- 0
+df_Galapagos <- unite(df_Galapagos, name_species, c(X2, X3), remove=FALSE)
+df_Galapagos <- df_Galapagos %>% select(1,2,5:29)
+
+
+df_Canaries[is.na(df_Canaries)] <- 0
+
+df_Azores[is.na(df_Azores)] <- 0
+
+```
+
+
+
+
+## Galapagos
+
+```{r}
+# m = matrix
+
+df_Galapagos$name_species <- gsub('Sesuvium_edmondstonei', 'Sesuvium_edmonstonei', df_Galapagos$name_species)
+# Sesuvium edmondstonei has been probably misspelled by the data set. There is a specie called Sesuvium edmonstonei, correctly descrived by Wiggins & Porter (1971), native from Galapagos Islands (Title of vols. 1-6 (1791-1802) Transactions of the Linnean Society; for series 2 see Trans. Linn. Soc. London) (it can also be checked on http://powo.science.kew.org/taxon/235141-2). So we have changed the data set to correct the species spelling.
+
+df_Galapagos$name_species <- gsub('Pycreus_polystachyos', 'Cyperus_polystachyos', df_Galapagos$name_species)
+# The specie Pycreus polystachyos, found in our data, is a synonim of Cyperus polystachyos, found in Wiggins & Porter (1971). The taxonomical correct name is Cyperus polystachyos Rottb., Descr. Pl. Rar. 21 (1772), because it is ancient than Pycreus polystachyos P.Beauv., Fl. Oware 2: 48, t. 86 (1816). So we have changed Pycreus polystachyos to Cyperus polystachyos on our data.
+
+df_Galapagos <- subset(df_Galapagos, df_Galapagos$X4 %in% c("1", "habitats<500m")) # We filter only lowland species
+df_Galapagos <- subset(df_Galapagos, df_Galapagos$X5 %in% c("Id", "En", "EnQ", "Sub-Origin"))   # From lowland species, we filter only native (and endemic) species
+
+
+```
+
+
+
+```{r}
+
+# % tha
+
+perc_tha_gal <- nrow(subset(df_Galapagos, df_Galapagos$X25 %in% c("0.5", "1", "THA")))/nrow(df_Galapagos)
+
+esp_perc_tha_gal <- nrow(subset(df_Galapagos, df_Galapagos$X25 %in% c("0.5", "1", "THA") & df_Galapagos$X8 %in% "1"))/nrow(df_Galapagos)*100
+fer_perc_tha_gal <- nrow(subset(df_Galapagos, df_Galapagos$X25 %in% c("0.5", "1", "THA") & df_Galapagos$X9 %in% "1"))/nrow(df_Galapagos)*100
+flo_perc_tha_gal <- nrow(subset(df_Galapagos, df_Galapagos$X25 %in% c("0.5", "1", "THA") & df_Galapagos$X10 %in% "1"))/nrow(df_Galapagos)*100
+  gen_perc_tha_gal <- nrow(subset(df_Galapagos, df_Galapagos$X25 %in% c("0.5", "1", "THA") & df_Galapagos$X11 %in% "1"))/nrow(df_Galapagos)*100
+  isa_perc_tha_gal <- nrow(subset(df_Galapagos, df_Galapagos$X25 %in% c("0.5", "1", "THA") & df_Galapagos$X12 %in% "1"))/nrow(df_Galapagos)*100
+  mar_perc_tha_gal <- nrow(subset(df_Galapagos, df_Galapagos$X25 %in% c("0.5", "1", "THA") & df_Galapagos$X13 %in% "1"))/nrow(df_Galapagos)*100
+   pin_perc_tha_gal <- nrow(subset(df_Galapagos, df_Galapagos$X25 %in% c("0.5", "1", "THA") & df_Galapagos$X14 %in% "1"))/nrow(df_Galapagos)*100
+   pinz_perc_tha_gal <- nrow(subset(df_Galapagos, df_Galapagos$X25 %in% c("0.5", "1", "THA") & df_Galapagos$X15 %in% "1"))/nrow(df_Galapagos)*100
+   sanc_perc_tha_gal <- nrow(subset(df_Galapagos, df_Galapagos$X25 %in% c("0.5", "1", "THA") & df_Galapagos$X16 %in% "1"))/nrow(df_Galapagos)*100
+   scz_perc_tha_gal <- nrow(subset(df_Galapagos, df_Galapagos$X25 %in% c("0.5", "1", "THA") & df_Galapagos$X17 %in% "1"))/nrow(df_Galapagos)*100
+   sf_perc_tha_gal <- nrow(subset(df_Galapagos, df_Galapagos$X25 %in% c("0.5", "1", "THA") & df_Galapagos$X18 %in% "1"))/nrow(df_Galapagos)*100
+   s_perc_tha_gal <- nrow(subset(df_Galapagos, df_Galapagos$X25 %in% c("0.5", "1", "THA") & df_Galapagos$X19 %in% "1"))/nrow(df_Galapagos)*100
+   
+   
+   perc_tha_gal <- c(esp_perc_tha_gal, fer_perc_tha_gal, flo_perc_tha_gal,
+                 gen_perc_tha_gal,isa_perc_tha_gal,mar_perc_tha_gal,
+                 pin_perc_tha_gal,pinz_perc_tha_gal,sanc_perc_tha_gal,
+                 scz_perc_tha_gal,sf_perc_tha_gal,s_perc_tha_gal)
+   degrees_gal <- (degrees_gal-min(degrees_gal))/(max(degrees_gal)-min(degrees_gal))
+   
+   plot(degrees_gal, perc_tha_gal)
+```
+
+##### Canaries
+
+```{r}
+# m = matrix
+
+df_Canaries <- subset(df_Canaries, df_Canaries$X3 %in% c("1", "habitat<500m")) # We filter only lowland species
+df_Canaries <- subset(df_Canaries, df_Canaries$X4 %in% c("End", "NS", "NP", "status"))   # From lowland species, we filter only native (and endemic) species
+
+
+hierro_perc_tha_can <- nrow(subset(df_Canaries, df_Canaries$X15 %in% c("0.5", "1", "thalassochory") & df_Canaries$X6 %in% "1"))/nrow(df_Canaries)*100
+palma_perc_tha_can <- nrow(subset(df_Canaries, df_Canaries$X15 %in% c("0.5", "1", "thalassochory") & df_Canaries$X7 %in% "1"))/nrow(df_Canaries)*100
+gom_perc_tha_can <- nrow(subset(df_Canaries, df_Canaries$X15 %in% c("0.5", "1", "thalassochory") & df_Canaries$X8 %in% "1"))/nrow(df_Canaries)*100
+ten_perc_tha_can <- nrow(subset(df_Canaries, df_Canaries$X15 %in% c("0.5", "1", "thalassochory") & df_Canaries$X9 %in% "1"))/nrow(df_Canaries)*100
+gc_perc_tha_can <- nrow(subset(df_Canaries, df_Canaries$X15 %in% c("0.5", "1", "thalassochory") & df_Canaries$X10 %in% "1"))/nrow(df_Canaries)*100
+fuert_perc_tha_can <- nrow(subset(df_Canaries, df_Canaries$X15 %in% c("0.5", "1", "thalassochory") & df_Canaries$X11 %in% "1"))/nrow(df_Canaries)*100
+lanz_perc_tha_can <- nrow(subset(df_Canaries, df_Canaries$X15 %in% c("0.5", "1", "thalassochory") & df_Canaries$X12 %in% "1"))/nrow(df_Canaries)*100
+
+
+perc_tha_can <- c(hierro_perc_tha_can, fuert_perc_tha_can, gc_perc_tha_can, gom_perc_tha_can, palma_perc_tha_can, lanz_perc_tha_can, ten_perc_tha_can)
+
+degrees_can <- (degrees_can-min(degrees_can))/(max(degrees_can)-min(degrees_can))
+
+plot(degrees_can, perc_tha_can)
+
+```
+
+
+##### Azores
+
+```{r}
+# m = matrix
+
+SMR_perc_tha_can <- nrow(subset(df_Azores, df_Azores$X7 %in% c("0.33", "0.5", "1", "THA") & df_Azores$X10 %in% "1"))/nrow(df_Azores)*100 
+SMG_perc_tha_can <- nrow(subset(df_Azores, df_Azores$X7 %in% c("0.33", "0.5", "1", "THA") & df_Azores$X11 %in% "1"))/nrow(df_Azores)*100 
+TER_perc_tha_can <- nrow(subset(df_Azores, df_Azores$X7 %in% c("0.33", "0.5", "1", "THA") & df_Azores$X12 %in% "1"))/nrow(df_Azores)*100 
+GRA_perc_tha_can <- nrow(subset(df_Azores, df_Azores$X7 %in% c("0.33", "0.5", "1", "THA") & df_Azores$X13 %in% "1"))/nrow(df_Azores)*100 
+SJG_perc_tha_can <- nrow(subset(df_Azores, df_Azores$X7 %in% c("0.33", "0.5", "1", "THA") & df_Azores$X14 %in% "1"))/nrow(df_Azores)*100 
+PIC_perc_tha_can <- nrow(subset(df_Azores, df_Azores$X7 %in% c("0.33", "0.5", "1", "THA") & df_Azores$X15 %in% "1"))/nrow(df_Azores)*100 
+FAI_perc_tha_can <- nrow(subset(df_Azores, df_Azores$X7 %in% c("0.33", "0.5", "1", "THA") & df_Azores$X16 %in% "1"))/nrow(df_Azores)*100 
+FLO_perc_tha_can <- nrow(subset(df_Azores, df_Azores$X7 %in% c("0.33", "0.5", "1", "THA") & df_Azores$X17 %in% "1"))/nrow(df_Azores)*100 
+COR_perc_tha_can <- nrow(subset(df_Azores, df_Azores$X7 %in% c("0.33", "0.5", "1", "THA") & df_Azores$X18 %in% "1"))/nrow(df_Azores)*100 
+
+
+degrees_az
+
+perc_tha_az <- c(COR_perc_tha_can, FAI_perc_tha_can, FLO_perc_tha_can, GRA_perc_tha_can, PIC_perc_tha_can, SJG_perc_tha_can, SMG_perc_tha_can, SMG_perc_tha_can, TER_perc_tha_can)
+
+
+
+
+plot(degrees_az, perc_tha_az)
+
+```
+
+
+
+```{r}
+degrees <- c(degrees_gal[-11], degrees_can, degrees_az)
+archipelago <- (c(rep("Galapagos", times = length(degrees_gal[-11])),
+              rep("Canaries", times = length(degrees_can)),
+              rep("Azores", times = length(degrees_az))))
+perc_tha <- c(perc_tha_gal[-11], perc_tha_can, perc_tha_az)
+
+df_degree_tha <- data.frame(archipelago,degrees,perc_tha)
+
+
+
+library(ggpubr)
+
+df_degree_tha$archipelago <- factor(df_degree_tha$archipelago, levels = c("Galapagos", "Canaries", "Azores"))
+
+
+
+plot_degree_tha <- ggscatter(df_degree_tha, x = "degrees", y = "perc_tha",color="archipelago", size=3,
+                               add = "reg.line", conf.int = TRUE, 
+                               cor.coef = TRUE, cor.method = "pearson",
+                               xlab = "Weighted degree of geographic proximity", ylab = "% littoral and thalassochorous plants",
+                               add.params = list(color = "gold4", fill = "lightgray"))+
+  scale_color_manual(values = c("blue", "red", "green"))
+
+
+plot_degree_geo
+
+ggsave("plot_degree_tha_geo.png", height = 5, width = 6)
+
+```
+
+
+```{r}
+
+```
+
+
 
 

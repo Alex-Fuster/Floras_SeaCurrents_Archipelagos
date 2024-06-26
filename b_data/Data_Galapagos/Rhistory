@@ -1,0 +1,512 @@
+}
+dif / wind.speed
+dif <- (abs(wind.direction - target))
+dif[dif>180 & !is.na(dif)]<- 360 - dif[dif>180 & !is.na(dif)] #Modified from the original function
+if (type=="passive"){
+dif[dif >= 90 & !is.na(dif)] <- Inf # check
+dif[is.na(dif)] <- Inf #Modified from the original function
+dif[dif < 90] <- 2 * dif[dif < 90]
+dif[dif==0] <- 0.1
+}
+else {
+dif[dif < 90] <- 2 * dif[dif < 90]  # Need to be modified
+dif[dif==0] <- 0.1
+}
+wind.speed[is.na(wind.speed)] <- 0
+dif / wind.speed
+}
+for(i in 1:length(files)){
+cat("File ", i, "\n")  # I added this to keep track of the files that is being analysed
+#letÃÂ´s read u and v from the netcdf raster (.nc extension)
+# This reads the raster with a fuction from the netCDF package. This function allows for getting the names of bands on other specific properties of netCDF that are lacking in the raster package
+nc <- nc_open(files[i])
+if(length(which(abs(nc$var$water_u$dim[[1]]$vals) > 180)) >= 1){  #depending on their coords, some rasters need to be rotated but doesnÃÂ´t seem to be the case for the Galapagos
+rr_u <- rotate(raster(files[i], level = 1, varname = "water_u", band = 1))
+rr_v <- rotate(raster(files[i], level = 1, varname = "water_v", band = 1))
+} else {
+rr_u <- raster(files[i], level = 1, varname = "water_u", band = 1)
+rr_v <- raster(files[i], level = 1, varname = "water_v", band = 1)
+}
+# we already have currents u (rr_u) and v (rr_v), lets add it to their stack - uncomment if you want to save these in a stack, as I said was optional
+# stack_u <- stack(stack_u, rr_u)
+# stack_v <- stack(stack_v, rr_v)
+# It's time to use them to calculate direction and speed
+sea_dir <- atan2(rr_u, rr_v) #from u and v components, calculatess direction
+rad2deg <- function(rad) {(rad * 180) / (pi)}
+sea_dir <- rad2deg(sea_dir)
+sea_dir[sea_dir < 0] <- 360 + sea_dir[sea_dir < 0]
+names(sea_dir) <- "direction"
+sea_spe <- sqrt( (rr_u * rr_u) + (rr_v * rr_v)) #and speed
+names(sea_spe) <- "speed"
+# LetÃÂ´s make a stack with direction and speed, that is what rWind needs to calculate conductance
+day_stack <- stack(sea_dir, sea_spe)
+# We now use rWind to calculate the Conductance matrix
+conductance <- flow.dispersion(day_stack, fun=cost.FMGS, type = "passive", output = "transitionLayer")
+# LetÃÂ´s save the conductance matrix of this day in a list. IÃÂ´ll use the date as the name of the element within the list (each position in a list can get a name)
+conduct_list[[i]] <- conductance
+names(conduct_list)[i] <- files[i] %>% str_replace("_.nc", "")
+# And letÃÂ´s put the day_stack in the list
+day_stacks_list[[i]] <- day_stack
+names(day_stacks_list)[i] <- files[i] %>% str_replace("_.nc", "")
+nc_close(nc)
+}
+library(ncdf4)
+library(date)
+library(lubridate) #to make a sequence of dates
+library(curl)
+library(raster)
+library(rWind)
+library(rworldmap) #plot, add the map
+library(rworldxtra)
+library(shape)
+library(tidyverse) # I added this to use %>% , which I like as a way to write R code that itÃÂ´s easier to read
+library(gdistance)  # we will need this function to calculate shortest paths between two points
+library(ncdf4)
+library(date)
+library(lubridate) #to make a sequence of dates
+library(curl)
+library(raster)
+library(rWind)
+library(rworldmap) #plot, add the map
+library(rworldxtra)
+library(shape)
+library(tidyverse) # I added this to use %>% , which I like as a way to write R code that itÃÂ´s easier to read
+library(gdistance)  # we will need this function to calculate shortest paths between two points
+AtoB
+cost_table
+View(cost_table)
+cost_list
+points_table
+View(AtoB)
+cost_table <- costDistance(conduct_list[[i]], as.matrix(points_table))
+cost_table
+AtoB<- shortestPath(conduct_list[[1]],   #IÂ´m using the raster of the first day as an example here
+pntA, pntB,
+output = "SpatialLines")
+pntA <- c(-89.69314, -0.865) # point at the west coast of San Cristobal
+pntB <- c(-91.14062, -1.028551) # point at South Isabella
+#IÂ´ll write both points (source and destination) as a table
+points_table <- data.frame(lon = c(-89.69314, -91.14062),
+lat = c(-0.865, -1.028551))
+rownames(points_table) <- c("pntA", "pntB")
+# This function calculates the least cost path using conductance matrix. It will find the routes that take you from A to B with the smallest cost.
+AtoB<- shortestPath(conduct_list[[1]],   #IÂ´m using the raster of the first day as an example here
+pntA, pntB,
+output = "SpatialLines")
+View(day_stack)
+for(i in 1:length(files)){
+cat("File ", i, "\n")  # I added this to keep track of the files that is being analysed
+#letÃÂ´s read u and v from the netcdf raster (.nc extension)
+# This reads the raster with a fuction from the netCDF package. This function allows for getting the names of bands on other specific properties of netCDF that are lacking in the raster package
+nc <- nc_open(files[i])
+if(length(which(abs(nc$var$water_u$dim[[1]]$vals) > 180)) >= 1){  #depending on their coords, some rasters need to be rotated but doesnÃÂ´t seem to be the case for the Galapagos
+rr_u <- rotate(raster(files[i], level = 1, varname = "water_u", band = 1))
+rr_v <- rotate(raster(files[i], level = 1, varname = "water_v", band = 1))
+} else {
+rr_u <- raster(files[i], level = 1, varname = "water_u", band = 1)
+rr_v <- raster(files[i], level = 1, varname = "water_v", band = 1)
+}
+# we already have currents u (rr_u) and v (rr_v), lets add it to their stack - uncomment if you want to save these in a stack, as I said was optional
+# stack_u <- stack(stack_u, rr_u)
+# stack_v <- stack(stack_v, rr_v)
+# It's time to use them to calculate direction and speed
+sea_dir <- atan2(rr_u, rr_v) #from u and v components, calculatess direction
+rad2deg <- function(rad) {(rad * 180) / (pi)}
+sea_dir <- rad2deg(sea_dir)
+sea_dir[sea_dir < 0] <- 360 + sea_dir[sea_dir < 0]
+names(sea_dir) <- "direction"
+sea_spe <- sqrt( (rr_u * rr_u) + (rr_v * rr_v)) #and speed
+names(sea_spe) <- "speed"
+# LetÃÂ´s make a stack with direction and speed, that is what rWind needs to calculate conductance
+day_stack <- stack(sea_dir, sea_spe)
+# We now use rWind to calculate the Conductance matrix
+conductance <- flow.dispersion(day_stack, type = "passive", output = "transitionLayer")
+# LetÃÂ´s save the conductance matrix of this day in a list. IÃÂ´ll use the date as the name of the element within the list (each position in a list can get a name)
+conduct_list[[i]] <- conductance
+names(conduct_list)[i] <- files[i] %>% str_replace("_.nc", "")
+# And letÃÂ´s put the day_stack in the list
+day_stacks_list[[i]] <- day_stack
+names(day_stacks_list)[i] <- files[i] %>% str_replace("_.nc", "")
+nc_close(nc)
+}
+cost_table
+cost_table %>%
+filter(origin == "pntA") %>%  # Estoy buscando con origen en A
+arrange(cost) %>%      # ordeno descendiente
+slice(1)                      # me quedo con la primera fila solo
+pntA <- c(-89.69314, -0.865) # point at the west coast of San Cristobal
+pntB <- c(-91.14062, -1.028551) # point at South Isabella
+#IÂ´ll write both points (source and destination) as a table
+points_table <- data.frame(lon = c(-89.69314, -91.14062),
+lat = c(-0.865, -1.028551))
+rownames(points_table) <- c("pntA", "pntB")
+# This function calculates the least cost path using conductance matrix. It will find the routes that take you from A to B with the smallest cost.
+AtoB<- shortestPath(conduct_list[[1]],   #IÂ´m using the raster of the first day as an example here
+pntA, pntB,
+output = "SpatialLines")
+BtoA<- shortestPath(conduct_list[[1]],
+pntB,
+pntA,
+output = "SpatialLines")
+# letÂ´s make a plot to check that this looks ok
+library(fields)
+image.plot(day_stacks_list[[1]]$speed,    # background plot of speed raster for this day (the first, as an example)
+main = "least cost paths by current direction and speed",
+col = terrain.colors(10), xlab = "Longitude", ylab = "Lattitude", zlim = c(0, 7))
+lines(getMap(resolution = "low"), lwd = 4)    # adds lines around islands
+points(pntA, pch = 19, cex = 3.4, col = "red")   #adds pntA
+points(pntB, pch = 19, cex = 3.4, col = "blue")  #adds pntB
+lines(AtoB, col = "red", lwd = 4, lty = 2)   #draws line a to b
+lines(BtoA, col = "blue", lwd = 4, lty = 2)  #b to a
+# I will create an empty list where I will store connectivity results. In the first position, we will have the table for the conductance rasters (from direction and speed) of day 1, in the second from day 2...
+cost_list <- list()
+for (i in 1:length(conduct_list)){
+cost_table <- costDistance(conduct_list[[i]], as.matrix(points_table)) %>%    # this is the function that does it
+as_tibble %>%     # instead of a matrix, I save it as a table
+set_names(rownames(points_table))    # with corrent column names
+cost_list[[i]] <- cost_table   # move the result to the list
+names(cost_list)[i] <- names(conduct_list)[i]    # and give it a proper name
+}
+cost_list    #there is one table in each position of the list, and we have as many positions as days
+cost_table <-
+cost_list %>%
+map2_dfr(.y = names(cost_list) %>% str_replace_all("galapagos_", ""),
+~.x %>%
+gather(-pntB, key = "pntA", value = "cost") %>%
+mutate(pntB = "pntB") %>% rename(origin = pntB, destination = pntA) %>%
+bind_rows(.x %>%
+gather(-pntA, key = "pntB", value = "cost") %>%
+mutate(pntA = "pntA") %>% rename(origin = pntA, destination = pntB)) %>%
+filter(cost != 0) %>%     # estas son las filas que son cero, las que comparan un punto con Ã©l mismo
+mutate(date = .y))         # con esto se aÃ±ade la fecha
+cost_table
+pntA1 <- c(-89.621982, -0.862051) # point at the west coast of San Cristobal
+pntB1 <- c(-91.127644, -1.064254) # point at South Isabella
+#IÂ´ll write both points (source and destination) as a table
+points_table <- data.frame(lon = c(-89.621982, -91.127644),
+lat = c(-0.862051, -1.064254))
+rownames(points_table) <- c("pntA1", "pntB1")
+# This function calculates the least cost path using conductance matrix. It will find the routes that take you from A to B with the smallest cost.
+AtoB1<- shortestPath(conduct_list[[1]],   #IÂ´m using the raster of the first day as an example here
+pntA1, pntB1,
+output = "SpatialLines")
+BtoA1<- shortestPath(conduct_list[[1]],
+pntB1,
+pntA1,
+output = "SpatialLines")
+# letÂ´s make a plot to check that this looks ok
+library(fields)
+image.plot(day_stacks_list[[1]]$speed,    # background plot of speed raster for this day (the first, as an example)
+main = "least cost paths by current direction and speed",
+col = terrain.colors(10), xlab = "Longitude", ylab = "Lattitude", zlim = c(0, 7))
+lines(getMap(resolution = "low"), lwd = 4)    # adds lines around islands
+points(pntA1, pch = 19, cex = 3.4, col = "red")   #adds pntA
+points(pntB1, pch = 19, cex = 3.4, col = "blue")  #adds pntB
+lines(AtoB1, col = "red", lwd = 4, lty = 2)   #draws line a to b
+lines(BtoA1, col = "blue", lwd = 4, lty = 2)  #b to a
+# I will create an empty list where I will store connectivity results. In the first position, we will have the table for the conductance rasters (from direction and speed) of day 1, in the second from day 2...
+cost_list <- list()
+for (i in 1:length(conduct_list)){
+cost_table <- costDistance(conduct_list[[i]], as.matrix(points_table)) %>%    # this is the function that does it
+as_tibble %>%     # instead of a matrix, I save it as a table
+set_names(rownames(points_table))    # with corrent column names
+cost_list[[i]] <- cost_table   # move the result to the list
+names(cost_list)[i] <- names(conduct_list)[i]    # and give it a proper name
+}
+cost_list    #there is one table in each position of the list, and we have as many positions as days
+View(cost_table)
+View(cost_table)
+View(conduct_list[[1]])
+save.image("C:/Users/Alex/Desktop/Article_Currents/Currents-THA/environment.RData")
+writeRaster(conduct_list[[1]],"C:/Users/Alex/Desktop/Article_Currents/Currents-THA/conduct.asc")
+library(ncdf4)
+library(date)
+library(lubridate) #to make a sequence of dates
+library(curl)
+library(raster)
+library(rWind)
+library(rworldmap) #plot, add the map
+library(rworldxtra)
+library(shape)
+library(tidyverse) # I added this to use %>% , which I like as a way to write R code that itÃÂ´s easier to read
+library(gdistance)  # we will need this function to calculate shortest paths between two points
+writeRaster(conduct_list[[1]],"C:/Users/Alex/Desktop/Article_Currents/Currents-THA/conduct.asc")
+writeRaster(conduct_list[[1]],filename="C:/Users/Alex/Desktop/Article_Currents/Currents-THA/conduct.asc")
+writeRaster(day_stacks_list[[1]]$speed,filename="C:/Users/Alex/Desktop/Article_Currents/Currents-THA/conduct.asc")
+library(ncdf4)
+library(date)
+library(lubridate) #to make a sequence of dates
+library(curl)
+library(raster)
+library(rWind)
+library(rworldmap) #plot, add the map
+library(rworldxtra)
+library(shape)
+library(tidyverse) # I added this to use %>% , which I like as a way to write R code that itÃÂ´s easier to read
+library(gdistance)  # we will need this function to calculate shortest paths between two points
+View(points_table)
+write.table("C:/Users/Alex/Desktop/Article_Currents/Currents-THA/points-coord.xlsx", row.names=TRUE)
+points_table1<-write.table("C:/Users/Alex/Desktop/Article_Currents/Currents-THA/points-coord.xlsx", row.names=TRUE)
+View(points_table1)
+points_table1<-write.table("C:/Users/Alex/Desktop/Article_Currents/Currents-THA/points-coord.csv", row.names=TRUE)
+points_table1
+points_table1<-write.csv("C:/Users/Alex/Desktop/Article_Currents/Currents-THA/points-coord.csv", row.names=TRUE)
+points_table1
+points_table1<-write.csv(file="C:/Users/Alex/Desktop/Article_Currents/Currents-THA/points-coord.csv", sep= ",", row.names=TRUE)
+Points <- read.csv("points-coord.csv",header=TRUE,
+sep=";")
+Points <- read.csv("C:/Users/Alex/Desktop/Article_Currents/Currents-THA/points-coord.csv",header=TRUE,
+sep=";")
+View(Points)
+Points <- read.csv("C:/Users/Alex/Desktop/Article_Currents/Currents-THA/points-coord.csv",header=TRUE,
+sep=",")
+View(Points)
+colnames(X)<-NULL
+colnames("X")<-NULL
+colnames(X)<-NULL
+colnames(Points)<-NULL
+View(Points)
+Points <- read.csv("C:/Users/Alex/Desktop/Article_Currents/Currents-THA/points-coord.csv",header=TRUE,
+sep=",")
+View(Points)
+View(cost_list)
+# I will create an empty list where I will store connectivity results. In the first position, we will have the table for the conductance rasters (from direction and speed) of day 1, in the second from day 2...
+cost_list <- list()
+cost_list <- list()
+for (i in 1:length(conduct_list)){
+cost_table <- costDistance(conduct_list[[i]], as.matrix(Points)) %>%    # this is the function that does it
+as_tibble %>%     # instead of a matrix, I save it as a table
+set_names(rownames(Points))    # with corrent column names
+cost_list[[i]] <- cost_table   # move the result to the list
+names(cost_list)[i] <- names(conduct_list)[i]    # and give it a proper name
+}
+View(Points)
+points <- Points[,-1]
+rownames(points) <- points[,1]
+View(points)
+Points1 <- Points[,-0]
+rownames(Points1) <- Points[,1]
+Points1 <- Points[,-0]
+rownames(Points1) <- Points1[,1]
+Points_table <- read.csv("C:/Users/Alex/Desktop/Article_Currents/Currents-THA/points-coord.csv",header=TRUE,
+sep=",")
+#IÂ´ll write both points (source and destination) as a table
+#points_table <- data.frame(lon = c(-89.69314, -91.14062),
+#lat = c(-0.865, -1.028551))
+#rownames(points_table) <- c("pntA", "pntB")
+Points_table1 <- Points_table[,-0]
+rownames(Points_table1) <- Points_table1[,1]
+View(Points_table1)
+Points_table <- read.csv("C:/Users/Alex/Desktop/Article_Currents/Currents-THA/points-coord.csv",header=TRUE,
+sep=",")
+View(Points_table)
+rownames(Points_table) <- Points_table1[,1]
+rownames(Points_table) <- Points_table[,1]
+View(Points_table)
+points<-Points_table[,-1]
+View(points)
+cost_list <- list()
+for (i in 1:length(conduct_list)){
+cost_table <- costDistance(conduct_list[[i]], as.matrix(points)) %>%    # this is the function that does it
+as_tibble %>%     # instead of a matrix, I save it as a table
+set_names(rownames(points))    # with corrent column names
+cost_list[[i]] <- cost_table   # move the result to the list
+names(cost_list)[i] <- names(conduct_list)[i]    # and give it a proper name
+}
+View(points)
+View(points_table)
+points <- read.csv("C:/Users/Alex/Desktop/Article_Currents/Currents-THA/points-coord.csv",header=TRUE,
+sep=",")
+rownames(points) <- points[,1]
+points<-points[,-1]
+View(points)
+cost_list <- list()
+for (i in 1:length(conduct_list)){
+cost_table <- costDistance(conduct_list[[i]], as.matrix(points)) %>%    # this is the function that does it
+as_tibble %>%     # instead of a matrix, I save it as a table
+set_names(rownames(points))    # with corrent column names
+cost_list[[i]] <- cost_table   # move the result to the list
+names(cost_list)[i] <- names(conduct_list)[i]    # and give it a proper name
+}
+head(cost_list)   #there is one table in each position of the list, and we have as many positions as days
+head(cost_list)   #there is one table in each position of the list, and we have as many positions as days
+cost_table1 <-
+cost_list %>%
+map2_dfr(.y = names(cost_list) %>% str_replace_all("galapagos_", ""),
+~.x %>%
+gather(-Española, "SanCristobal_W", "SanCristobal_E", "Floreana_W","Floreana_E","" value = "cost"))
+head(cost_list)   #there is one table in each position of the list, and we have as many positions as days
+cost_table <-
+cost_list %>%
+map2_dfr(.y = names(cost_list) %>% str_replace_all("galapagos_", ""),
+~.x %>%
+gather(-SanCristobal_W, key = "Española", value = "cost") %>%
+mutate(SanCristobal_W = "SanCristobal_W") %>% rename(origin = SanCristobal_W, destination = Española) %>%
+bind_rows(.x %>%
+gather(-Española, key = "SanCristobal_W", value = "cost") %>%
+mutate(Española = "Española") %>% rename(origin = Española, destination = SanCristobal_W)) %>%
+filter(cost != 0) %>%     # estas son las filas que son cero, las que comparan un punto con Ã©l mismo
+mutate(date = .y))         # con esto se aÃ±ade la fecha
+library(ncdf4)
+library(date)
+library(lubridate) #to make a sequence of dates
+library(curl)
+library(raster)
+library(rWind)
+library(rworldmap) #plot, add the map
+library(rworldxtra)
+library(shape)
+library(tidyverse) # I added this to use %>% , which I like as a way to write R code that itÃÂ´s easier to read
+library(gdistance)  # we will need this function to calculate shortest paths between two points
+cost_table <-
+cost_list %>%
+map2_dfr(.y = names(cost_list) %>% str_replace_all("galapagos_", ""),
+~.x %>%
+gather(-SanCristobal_W, key = "Española", value = "cost") %>%
+mutate(SanCristobal_W = "SanCristobal_W") %>% rename(origin = SanCristobal_W, destination = Española) %>%
+bind_rows(.x %>%
+gather(-Española, key = "SanCristobal_W", value = "cost") %>%
+mutate(Española = "Española") %>% rename(origin = Española, destination = SanCristobal_W)) %>%
+filter(cost != 0) %>%     # estas son las filas que son cero, las que comparan un punto con Ã©l mismo
+mutate(date = .y))         # con esto se aÃ±ade la fecha
+cost_table
+head(cost_table)
+cost_table <-
+cost_list %>%
+map2_dfr(.y = names(cost_list) %>% str_replace_all("galapagos_", ""),
+~.x %>%
+gather(-Española, key = "SanCristobal_W", value = "cost") %>%
+mutate(Española = "Española") #%>% rename(origin = Española, destination = SanCristobal_W) %>%
+#bind_rows(.x %>%
+#gather(-pntA, key = "pntB", value = "cost") %>%
+#mutate(pntA = "pntA") %>% rename(origin = pntA, destination = pntB)) %>%
+filter(cost != 0) %>%     # estas son las filas que son cero, las que comparan un punto con Ã©l mismo
+cost_table <-
+cost_list %>%
+map2_dfr(.y = names(cost_list) %>% str_replace_all("galapagos_", ""),
+~.x %>%
+gather(-Española, key = "SanCristobal_W", value = "cost") %>%
+mutate(Española = "Española")) #%>% rename(origin = Española, destination = SanCristobal_W) %>%
+#bind_rows(.x %>%
+#gather(-pntA, key = "pntB", value = "cost") %>%
+#mutate(pntA = "pntA") %>% rename(origin = pntA, destination = pntB)) %>%
+filter(cost != 0) %>%     # estas son las filas que son cero, las que comparan un punto con Ã©l mismo
+mutate(date = .y))
+cost_table <-
+cost_list %>%
+map2_dfr(.y = names(cost_list) %>% str_replace_all("galapagos_", ""),
+~.x %>%
+gather(-Española, key = "SanCristobal_W", value = "cost") %>%
+mutate(Española = "Española")) %>% filter(cost != 0) %>%     # estas son las filas que son cero, las que comparan un punto con Ã©l mismo
+mutate(date = .y)
+library(ncdf4)
+library(date)
+library(lubridate) #to make a sequence of dates
+library(curl)
+library(raster)
+library(rWind)
+library(rworldmap) #plot, add the map
+library(rworldxtra)
+library(shape)
+library(tidyverse) # I added this to use %>% , which I like as a way to write R code that itÃÂ´s easier to read
+library(gdistance)  # we will need this function to calculate shortest paths between two points
+points <- read_csv("G:/My Drive/Biologia/Documentos/Alex Fuster/points-coord.csv")
+points <- read_csv("C:/Users/Alex/Desktop/Article_Currents/Currents-THA/points-coord.csv")
+points <- read_csv("C:/Users/Alex/Desktop/Article_Currents/Currents-THA/points-coord.csv") %>%
+mutate(ID = paste0("pnt", 1:nrow(.)))   # I'm just adding a column with a numeric ID for each point
+View(points)
+points <- read_csv("C:/Users/Alex/Desktop/Article_Currents/Currents-THA/points-coord.csv") %>%
+mutate(ID = paste0("pnt", 1:nrow(.)))   # I'm just adding a column with a numeric ID for each point
+View(points)
+pointsm <- points %>%
+dplyr::select(long, lat) %>%
+as.data.frame
+rownames(pointsm) <- points$ID
+View(pointsm)
+points
+pointsm
+pnt_pairs <- expand.grid(row.names(pointsm), row.names(pointsm))
+pnt_pairs
+View(pnt_pairs)
+pnt_pairs <- pnt_pairs %>%
+mutate(remove = if_else(Var1 == Var2, 1, 0)) %>%
+filter(remove == 0) %>%
+dplyr::select(-remove)
+head(pnt_pairs)
+cost_table <- data.frame()
+for (i in 1:length(conduct_list)){
+for(j in 1:nrow(pnt_pairs)){
+# Let's do an origin and a destination
+pnt_j <- pnt_pairs[j,] %>%
+rename(origin = Var1,
+destination = Var2)
+# We know which origin and destination we are focusing on now, let's get their coords
+pnt_coords <- pointsm[row.names(pointsm) == pnt_j$origin,] %>%
+rbind(pointsm[row.names(pointsm) == pnt_j$destination,])
+# Let's calculate costDistance
+cost_matrix <- costDistance(conduct_list[[i]], as.matrix(pnt_coords)) %>%    # this is the function that does it
+as.data.frame %>%     # instead of a matrix, I save it as a table
+set_names(rownames(pnt_coords))    # with corrent column names
+# Convert to long format
+cost_table <- cost_table %>%
+bind_rows(
+tibble(origin = c(row.names(cost_matrix)[1], row.names(cost_matrix)[2]),
+destination = c(names(cost_matrix)[2], names(cost_matrix)[1]),
+cost = c(as.numeric(cost_matrix[1,2]), as.numeric(cost_matrix[2,1])),
+date = names(conduct_list)[i] %>%
+gsub("./galapagos_", "", .)))
+# cost_list[[i]] <- cost_table   # move the result to the list
+# names(cost_list)[i] <- names(conduct_list)[i]    # and give it a proper name
+}
+}
+points <- read_csv("C:/Users/Alex/Desktop/Article_Currents/Currents-THA/points-coord.csv") %>%
+mutate(ID = paste0("pnt", 1:nrow(.)))   # I'm just adding a column with a numeric ID for each point
+points
+pointsm <- points %>%
+dplyr::select(long, lat) %>%
+as.data.frame
+rownames(pointsm) <- points$ID
+pointsm
+points <- read_csv("C:/Users/Alex/Desktop/Article_Currents/Currents-THA/points-coord.csv") %>%
+mutate(ID = paste0("pnt", 1:nrow(.)))   # I'm just adding a column with a numeric ID for each point
+points
+pointsm <- points %>%
+dplyr::select(long, lat) %>%
+as.data.frame
+rownames(pointsm) <- points$ID
+pointsm
+View(pointsm)
+pnt_pairs <- expand.grid(row.names(pointsm), row.names(pointsm))
+# Remove those that have the same point as origin and destination
+pnt_pairs <- pnt_pairs %>%
+mutate(remove = if_else(Var1 == Var2, 1, 0)) %>%
+filter(remove == 0) %>%
+dplyr::select(-remove)   # we don't need that column remove any more
+head(pnt_pairs)
+View(pnt_pairs)
+cost_table <- data.frame()
+for (i in 1:length(conduct_list)){
+for(j in 1:nrow(pnt_pairs)){
+# Let's do an origin and a destination
+pnt_j <- pnt_pairs[j,] %>%
+rename(origin = Var1,
+destination = Var2)
+# We know which origin and destination we are focusing on now, let's get their coords
+pnt_coords <- pointsm[row.names(pointsm) == pnt_j$origin,] %>%
+rbind(pointsm[row.names(pointsm) == pnt_j$destination,])
+# Let's calculate costDistance
+cost_matrix <- costDistance(conduct_list[[i]], as.matrix(pnt_coords)) %>%    # this is the function that does it
+as.data.frame %>%     # instead of a matrix, I save it as a table
+set_names(rownames(pnt_coords))    # with corrent column names
+# Convert to long format
+cost_table <- cost_table %>%
+bind_rows(
+tibble(origin = c(row.names(cost_matrix)[1], row.names(cost_matrix)[2]),
+destination = c(names(cost_matrix)[2], names(cost_matrix)[1]),
+cost = c(as.numeric(cost_matrix[1,2]), as.numeric(cost_matrix[2,1])),
+date = names(conduct_list)[i] %>%
+gsub("./galapagos_", "", .)))
+# cost_list[[i]] <- cost_table   # move the result to the list
+# names(cost_list)[i] <- names(conduct_list)[i]    # and give it a proper name
+}
+}
