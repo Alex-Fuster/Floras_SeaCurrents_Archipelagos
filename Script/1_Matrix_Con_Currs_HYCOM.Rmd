@@ -26,6 +26,19 @@ source("Functions.R")
 ```
 
 
+parameters for plotting
+
+```{r}
+my_theme<-theme(axis.text=element_text(size=12),
+        axis.title = element_text(size = 14),
+        legend.text=element_text(size=10),
+        legend.title = element_text(size=12),
+        plot.title = element_text(face="bold",size=14,margin=margin(0,0,20,0),hjust = 0.5),
+        axis.title.y = element_text(hjust = 0.5),
+        axis.title.x = element_text(hjust = 0.5))
+```
+
+
 
 # Download HYCOM data
 
@@ -299,6 +312,35 @@ median_min_mat_Azores<-Calculate_median_minimum5percent(arr_Azores)
 
 ```
 
+
+### Verification of the method and correlation with minimum values
+
+
+
+```{r}
+
+#saveRDS(min_matrix_Galapagos, "min_matrix_Galapagos.RDS")
+
+min_matrix_Galapagos <- apply(array(unlist(cost_list_Galapagos), c(46, 46, 4769)), c(1, 2), min)
+min_matrix_Canaries <- apply(array(unlist(cost_list_Canaries), c(46, 46, 4769)), c(1, 2), min)
+min_matrix_Azores <- apply(array(unlist(cost_list_Azores), c(46, 46, 4769)), c(1, 2), min)
+
+Corr_min_Galapagos <-Correlation_minMatrix_medianMinMatrix(
+  median_minimum_matrix=median_min_mat_Galapagos, min_matrix = min_matrix_Galapagos)
+
+Corr_min_Canaries <-Correlation_minMatrix_medianMinMatrix(
+  median_minimum_matrix=median_min_mat_Canaries, min_matrix = min_matrix_Canaries)
+
+Corr_min_Azores <-Correlation_minMatrix_medianMinMatrix(
+  median_minimum_matrix=median_min_mat_Azores, min_matrix = min_matrix_Azores)
+
+
+print(Corr_min_Galapagos,Corr_min_Canaries,Corr_min_Azores)
+```
+
+
+
+
 Add names
 
 ```{r}
@@ -320,17 +362,20 @@ median_min_mat_Galapagos <- read_rds("median_min_mat_Galapagos_June24.rds")
 ```
 
 
-### Compute matrix minimum connectivity for single points
+## Compute matrix minimum connectivity for single points
 
 ```{r}
 
-single_point_min_Galap <- compute_mat_min_conn_points(median_min_mat_Galapagos)
-single_point_min_Can <- compute_mat_min_conn_points(median_min_mat_Canaries)
-single_point_min_Az <- compute_mat_min_conn_points(median_min_mat_Azores)
+single_point_min_Galap <- compute_mat_min_weighted(median_min_mat_Galapagos)
+single_point_min_Can <- compute_mat_min_weighted(median_min_mat_Canaries)
+single_point_min_Az <- compute_mat_min_weighted(median_min_mat_Azores)
 
 ```
 
-## Plot matrix
+
+
+
+## Plot weighted network
 
 ```{r}
 
@@ -400,46 +445,36 @@ V(tg)$out_degree <- strength(tg, mode = "out", weights = E(tg)$inv_weight)
 
 
 # Plot the graph using ggraph with spatial coordinates and color nodes based on in-degree
-ggraph(tg, layout = 'manual', x = V(tg)$long, y = V(tg)$lat) + 
-  geom_edge_link(aes(width = norm_inv_weight, edge_alpha = norm_inv_weight), arrow = arrow(length = unit(3, 'mm')), end_cap = circle(3, 'mm')) +
-  geom_node_point(aes(color = in_degree), size = 6) +
-  scale_edge_width(range = c(0.5, 2)) + # Adjust the range for better visualization
+netplot_indegree_gal <- ggraph(tg, layout = 'manual', x = V(tg)$long, y = V(tg)$lat) + 
+  geom_edge_link(aes(width = norm_inv_weight, edge_alpha = norm_inv_weight), arrow = arrow(length = unit(3, 'mm')), end_cap = circle(3, 'mm'), show.legend = FALSE) +
+  geom_node_point(aes(color = in_degree), size = 8) +
+  scale_edge_width(range = c(0.2, 1), name = "Normalized Connectivity") + # Adjust the range for better visualization
   scale_color_viridis(name = "In-Degree", option = "turbo") + # Use viridis color scale
  geom_node_text(aes(label = name), repel = TRUE, 
                  nudge_y = 0.1, 
                 nudge_x = -0.04, size = 5, segment.size = 0.15) +
-  theme_void() + 
-  theme(legend.position = "bottom")
+  theme_classic() + 
+  labs(x = "long",
+       y = "lat",
+       edge_width = "Normalized connectivity",
+       edge_alpha = NULL)+
+   guides(color = guide_colorbar(barwidth = 8, barheight = 1,
+                                title.position = "top", label.position = "bottom",
+                                title.hjust = 0.5,
+                                ticks = FALSE,
+                                breaks = quantile(V(tg)$in_degree, probs = c(0, 0.5, 1)))) + # Customize legend breaks and labels
+  theme(legend.position = "bottom")+
+  my_theme
+
+ggsave(here::here("c_output/figures/network_indegree_gal.png"), height = 8, width = 9)
+
 ```
 
 
 
 
 
-### Verification of the method and correlation with minimum values
 
-
-
-```{r}
-
-#saveRDS(min_matrix_Galapagos, "min_matrix_Galapagos.RDS")
-
-min_matrix_Galapagos <- apply(array(unlist(cost_list_Galapagos), c(46, 46, 4769)), c(1, 2), min)
-min_matrix_Canaries <- apply(array(unlist(cost_list_Canaries), c(46, 46, 4769)), c(1, 2), min)
-min_matrix_Azores <- apply(array(unlist(cost_list_Azores), c(46, 46, 4769)), c(1, 2), min)
-
-Corr_min_Galapagos <-Correlation_minMatrix_medianMinMatrix(
-  median_minimum_matrix=median_min_mat_Galapagos, min_matrix = min_matrix_Galapagos)
-
-Corr_min_Canaries <-Correlation_minMatrix_medianMinMatrix(
-  median_minimum_matrix=median_min_mat_Canaries, min_matrix = min_matrix_Canaries)
-
-Corr_min_Azores <-Correlation_minMatrix_medianMinMatrix(
-  median_minimum_matrix=median_min_mat_Azores, min_matrix = min_matrix_Azores)
-
-
-print(Corr_min_Galapagos,Corr_min_Canaries,Corr_min_Azores)
-```
 
 
 
@@ -467,19 +502,104 @@ values between each pair of points:
 #### Matrix-median of minimum values
 
 ```{r}
-mat_medianMin_sym_Galapagos<-Make_matrix_medianMin_symmetric(median_min_mat_Galapagos)
+mat_medianMin_sym_Galapagos<-Make_matrix_medianMin_symmetric(single_point_min_Galap)
+
 mat_medianMin_sym_Canaries<-Make_matrix_medianMin_symmetric(median_min_mat_Canaries)
 mat_medianMin_sym_Azores<-Make_matrix_medianMin_symmetric(median_min_mat_Azores)
 
-write.csv(mat_medianMin_sym_Galapagos, "../../Matrices/Galapagos/
-          Matrices-Currents_Galap/matrix_median_min.csv", row.names = FALSE)
+#write.csv(mat_medianMin_sym_Galapagos, "../../Matrices/Galapagos/Matrices-Currents_Galap/matrix_median_min.csv", row.names = FALSE)
 
-write.csv(mat_medianMin_sym_Canaries, "matrix_median_min_can.csv", row.names = FALSE)
+#write.csv(mat_medianMin_sym_Canaries, "matrix_median_min_can.csv", row.names = FALSE)
 
-write.csv(mat_medianMin_sym_Azores, "../../Matrices/Azores/
-          Matrices-Currents_Azores/matrix_median_min.csv", row.names = FALSE)
+#write.csv(mat_medianMin_sym_Azores, "../../Matrices/Azores/Matrices-Currents_Azores/matrix_median_min.csv", row.names = FALSE)
 
 ```
+
+```{r}
+# Assuming your adjacency matrix is named 'single_point_min_Galap'
+# Convert the matrix to an igraph object
+g <- graph_from_adjacency_matrix(mat_medianMin_sym_Galapagos, mode = "undirected", weighted = TRUE)
+
+# Handle zero weights to avoid division by zero
+#E(g)$weight[E(g)$weight == 0] <- NA
+
+# Create a data frame from the igraph object
+node_list <- data.frame(name = V(g)$name)
+
+# Merge the coordinates with the node list
+node_list <- merge(node_list, coord_centroids_gal, by.x = "name", by.y = "island", all.x = TRUE)
+
+# Ensure no missing coordinates
+node_list <- na.omit(node_list)
+
+# Ensure the graph vertices match the coordinates names
+V(g)$name <- as.character(V(g)$name)
+node_list$name <- as.character(node_list$name)
+
+# Convert the igraph object to a tidygraph object
+tg <- as_tbl_graph(g)
+
+# Add coordinates to the tidygraph object
+tg <- tg %>%
+  activate(nodes) %>%
+  left_join(node_list, by = c("name" = "name"))
+
+# Invert the weights: higher values become lower and vice versa
+E(tg)$inv_weight <- 1 / E(tg)$weight
+
+# Normalize the inverted weights for better visualization
+max_inv_weight <- max(E(tg)$inv_weight, na.rm = TRUE)
+E(tg)$norm_inv_weight <- E(tg)$inv_weight / max_inv_weight
+
+# Plot the graph using ggraph with spatial coordinates
+ggraph(tg, layout = 'manual', x = V(tg)$long, y = V(tg)$lat) + 
+  geom_edge_link(aes(width = norm_inv_weight, edge_alpha = norm_inv_weight)) +
+  geom_node_point(size = 5, color = 'blue') +
+  geom_node_text(aes(label = name), repel = TRUE, size = 5) +
+  scale_edge_width(range = c(0.5, 2)) + # Adjust the range for better visualization
+  theme_void() + 
+  theme(legend.position = "none")
+```
+
+
+```{r}
+tg_weighted <- tg
+E(tg_weighted)$weight <- 1 / E(tg_weighted)$inv_weight  # Adjusting weights based on inverse weights
+
+# Calculate total degree
+V(tg_weighted)$degree <- strength(tg_weighted, mode = "all",
+                                weights = E(tg)$inv_weight)
+
+# Plot the graph using ggraph with spatial coordinates and color nodes based on total degree
+netplot_degree_gal <- ggraph(tg_weighted, layout = 'manual', x = V(tg)$long, y = V(tg)$lat) + 
+  geom_edge_link(aes(width = norm_inv_weight), arrow = arrow(length = unit(3, 'mm')), end_cap = circle(3, 'mm'), show.legend = FALSE) +
+  geom_node_point(aes(color = degree), size = 8) +
+  scale_edge_width(range = c(0.2, 1), name = "Normalized Connectivity") + # Adjust the range for better visualization
+  scale_color_viridis(name = "Total Degree", option = "turbo") + # Use viridis color scale
+  geom_node_text(aes(label = name), repel = TRUE, 
+                 nudge_y = 0.1, 
+                 nudge_x = -0.04, size = 5, segment.size = 0.15) +
+  theme_classic() + 
+  labs(x = "Longitude",
+       y = "Latitude",
+       edge_width = "Normalized connectivity") +
+  guides(color = guide_colorbar(barwidth = 8, barheight = 1,
+                                title.position = "top", label.position = "bottom",
+                                title.hjust = 0.5,
+                                ticks = FALSE,
+                                breaks = quantile(V(tg_weighted)$degree, probs = c(0, 0.5, 1)))) + # Customize legend breaks and labels
+  theme(legend.position = "bottom") +
+  my_theme
+
+netplot_degree_gal
+
+ggsave(here::here("c_output/figures/network_wdegree_undirected_gal.png"), height = 8, width = 9)
+```
+
+
+
+
+
 
 
 
