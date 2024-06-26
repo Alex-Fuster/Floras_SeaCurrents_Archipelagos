@@ -408,12 +408,12 @@ Calculate_percent_norm_from_normMatrix <- function(normality_matrix) {
 #-------------  Calculate matrix with the median of the 5% minimum values
 
 
-Calculate_median_minimum5percent <- function(array) {
+Calculate_median_minimum5percent <- function(array, n_points) {
   
-  median_minimums_matrix <- matrix(nrow=46, ncol=46) # matrix that will include the median of the minimum values
+  median_minimums_matrix <- matrix(nrow=n_points, ncol=n_points) # matrix that will include the median of the minimum values
   
-  for (i in 1:46) {
-    for (j in 1:46) {
+  for (i in 1:n_points) {
+    for (j in 1:n_points) {
       sorted_values <- sort(array[i,j,]) # the values from each column and row are sorted in ascending order
       x <- round(length(sorted_values)*0.05,0) # 'x' indicates how many values are the 5% of the total number of values (excluding NAs values)
       median_minimums_matrix[i,j] <- median(sorted_values[1:x]) # taken 5% of the values and done the median of these values
@@ -531,6 +531,159 @@ compute_mat_min_weighted <- function(matrix_conn) {
 
 
 
+# Plot weighted directed network
+
+plot_directed_network <- function(directed_matrix, centroids, node_size, range_edge_width) {
+  
+  # Convert the matrix to an igraph object
+  g <- graph_from_adjacency_matrix(directed_matrix, mode = "directed", weighted = TRUE)
+  
+  # Handle zero weights to avoid division by zero
+  #E(g)$weight[E(g)$weight == 0] <- NA
+  
+  # Create a data frame from the igraph object
+  node_list <- data.frame(name = V(g)$name)
+  
+  # Merge the coordinates with the node list
+  node_list <- merge(node_list, centroids, by.x = "name", by.y = "island", all.x = TRUE)
+  
+  # Ensure no missing coordinates
+  node_list <- na.omit(node_list)
+  
+  # Ensure the graph vertices match the coordinates names
+  V(g)$name <- as.character(V(g)$name)
+  node_list$name <- as.character(node_list$name)
+  
+  # Convert the igraph object to a tidygraph object
+  tg <- as_tbl_graph(g)
+  
+  # Add coordinates to the tidygraph object
+  tg <- tg %>%
+    activate(nodes) %>%
+    left_join(node_list, by = c("name" = "name"))
+  
+  # Invert the weights: higher values become lower and vice versa
+  E(tg)$inv_weight <- 1 / E(tg)$weight
+  
+  # Normalize the inverted weights for better visualization
+  max_inv_weight <- max(E(tg)$inv_weight, na.rm = TRUE)
+  E(tg)$norm_inv_weight <- E(tg)$inv_weight / max_inv_weight
+  
+  
+  # Calculate in-degree and out-degree based on the inverted weights
+  V(tg)$in_degree <- strength(tg, mode = "in", weights = E(tg)$inv_weight)
+  V(tg)$out_degree <- strength(tg, mode = "out", weights = E(tg)$inv_weight)
+  
+  
+  # Plot the graph using ggraph with spatial coordinates and color nodes based on in-degree
+  netplot_indegree <- ggraph(tg, layout = 'manual', x = V(tg)$long, y = V(tg)$lat) + 
+    geom_edge_link(aes(width = norm_inv_weight, edge_alpha = norm_inv_weight), arrow = arrow(length = unit(3, 'mm')), end_cap = circle(3, 'mm'), show.legend = FALSE) +
+    geom_node_point(aes(color = in_degree), size = node_size) +
+    scale_edge_width(range = range_edge_width, name = "Normalized Connectivity") + # Adjust the range for better visualization
+    scale_color_viridis(name = "In-Degree", option = "turbo") + # Use viridis color scale
+    geom_node_text(aes(label = name), repel = TRUE, 
+                   nudge_y = 0.1, 
+                   nudge_x = -0.04, size = 5, segment.size = 0.15) +
+    theme_classic() + 
+    labs(x = "long",
+         y = "lat",
+         edge_width = "Normalized connectivity",
+         edge_alpha = NULL)+
+    guides(color = guide_colorbar(barwidth = 8, barheight = 1,
+                                  title.position = "top", label.position = "bottom",
+                                  title.hjust = 0.5,
+                                  ticks = FALSE,
+                                  breaks = quantile(V(tg)$in_degree, probs = c(0, 0.5, 1)))) + # Customize legend breaks and labels
+    theme(legend.position = "bottom")+
+    my_theme
+  
+  return(netplot_indegree)
+  
+}
+
+
+
+# Plot weighted undirected network
+
+
+
+plot_undirected_network <- function(directed_matrix, centroids, node_size) {
+  
+  # Assuming your adjacency matrix is named 'single_point_min_Galap'
+  # Convert the matrix to an igraph object
+  g <- graph_from_adjacency_matrix(directed_matrix, mode = "undirected", weighted = TRUE)
+  
+  # Handle zero weights to avoid division by zero
+  #E(g)$weight[E(g)$weight == 0] <- NA
+  
+  # Create a data frame from the igraph object
+  node_list <- data.frame(name = V(g)$name)
+  
+  # Merge the coordinates with the node list
+  node_list <- merge(node_list, centroids, by.x = "name", by.y = "island", all.x = TRUE)
+  
+  # Ensure no missing coordinates
+  node_list <- na.omit(node_list)
+  
+  # Ensure the graph vertices match the coordinates names
+  V(g)$name <- as.character(V(g)$name)
+  node_list$name <- as.character(node_list$name)
+  
+  # Convert the igraph object to a tidygraph object
+  tg <- as_tbl_graph(g)
+  
+  # Add coordinates to the tidygraph object
+  tg <- tg %>%
+    activate(nodes) %>%
+    left_join(node_list, by = c("name" = "name"))
+  
+  # Invert the weights: higher values become lower and vice versa
+  E(tg)$inv_weight <- 1 / E(tg)$weight
+  
+  # Normalize the inverted weights for better visualization
+  max_inv_weight <- max(E(tg)$inv_weight, na.rm = TRUE)
+  E(tg)$norm_inv_weight <- E(tg)$inv_weight / max_inv_weight
+  
+  # Calculate total degree
+  V(tg)$degree <- strength(tg, mode = "all",
+                           weights = E(tg)$inv_weight)
+  
+  # Plot the graph using ggraph with spatial coordinates and color nodes based on total degree
+  netplot_degree <- ggraph(tg, layout = 'manual', x = V(tg)$long, y = V(tg)$lat) + 
+    geom_edge_link(aes(width = norm_inv_weight), show.legend = FALSE) +
+    geom_node_point(aes(color = degree), size = node_size) +
+    scale_edge_width(range = range(sqrt(E(tg)$norm_inv_weight)), name = "Normalized Connectivity") + # Adjust the range for better visualization
+    scale_color_viridis(name = "Total Degree", option = "turbo") + # Use viridis color scale
+    geom_node_text(aes(label = name), repel = TRUE, 
+                   nudge_y = 0.1, 
+                   nudge_x = -0.04, size = 5, segment.size = 0.15) +
+    theme_classic() + 
+    labs(x = "Longitude",
+         y = "Latitude",
+         edge_width = "Normalized connectivity") +
+    guides(color = guide_colorbar(barwidth = 8, barheight = 1,
+                                  title.position = "top", label.position = "bottom",
+                                  title.hjust = 0.5,
+                                  ticks = FALSE,
+                                  breaks = quantile(V(tg)$degree, probs = c(0, 0.5, 1)))) + # Customize legend breaks and labels
+    theme(legend.position = "bottom") +
+    my_theme
+  
+  return(netplot_degree)
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+################################################
 
 
 #------------- Load floristic matrix, order rows and columns, and convert to distance matrix

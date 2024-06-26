@@ -1,0 +1,144 @@
+---
+title: "Compute network plots of current connectivities"
+---
+
+
+```{r}
+library(MASS)
+library(tidyverse) 
+library(gdistance)
+library(fields)
+library(scales)
+library(igraph)
+library(ggraph)
+library(tidygraph)
+library(ggrepel)
+source("Functions.R")
+```
+
+
+
+Read directed matrices
+
+```{r}
+mat_median_min_singlepoints_gal <- readRDS(here::here("c_output/current_conn_matrices/mat_median_min_singlepoints_gal.rds"))
+mat_median_min_singlepoints_can <- readRDS(here::here("c_output/current_conn_matrices/mat_median_min_singlepoints_can.rds"))
+mat_median_min_singlepoints_az <- readRDS(here::here("c_output/current_conn_matrices/mat_median_min_singlepoints_az.rds"))
+
+```
+
+
+Read undirected matrices
+
+```{r}
+
+mat_medianMin_sym_Galapagos <- readRDS(here::here("c_output/current_conn_matrices/mat_medianMin_sym_Galapagos.rds"))
+mat_medianMin_sym_Canaries <- readRDS(here::here("c_output/current_conn_matrices/mat_medianMin_sym_Canaries.rds"))
+mat_medianMin_sym_Azores <- readRDS(here::here("c_output/current_conn_matrices/mat_medianMin_sym_Azores.rds"))
+```
+
+
+## Plot networks
+
+parameters for plotting
+
+```{r}
+my_theme<-theme(axis.text=element_text(size=12),
+        axis.title = element_text(size = 14),
+        legend.text=element_text(size=10),
+        legend.title = element_text(size=12),
+        plot.title = element_text(face="bold",size=14,margin=margin(0,0,20,0),hjust = 0.5),
+        axis.title.y = element_text(hjust = 0.5),
+        axis.title.x = element_text(hjust = 0.5))
+```
+
+
+
+```{r}
+coord_centroids_gal <- read.csv(here::here("b_data/Data_Galapagos/centroids_network_plot.csv"))
+coord_centroids_can <- read.csv(here::here("b_data/Data_Canaries/centroids_network_plot.csv"))
+coord_centroids_az <- read.csv(here::here("b_data/Data_Azores/centroids_network_plot.csv"))
+```
+
+
+
+Galapagos
+
+```{r}
+# directed
+
+plot_directed_network(directed_matrix = mat_median_min_singlepoints_gal,
+                      centroids = coord_centroids_gal,
+                      node_size = 8,
+                      range_edge_width = c(0.2, 1))
+
+ggsave(here::here("c_output/figures/network_directed_gal.png"), height = 8, width = 9)
+
+# undirected
+
+plot_undirected_network(directed_matrix = mat_medianMin_sym_Galapagos,
+                      centroids = coord_centroids_gal,
+                      node_size = 8)
+
+ggsave(here::here("c_output/figures/network_undirected_gal.png"), height = 8, width = 9)
+```
+
+
+Canaries
+
+```{r}
+
+# directed
+
+plot_directed_network(directed_matrix = mat_median_min_singlepoints_can,
+                      centroids = coord_centroids_can,
+                      node_size = 8,
+                      range_edge_width = c(0.2, 1))
+
+ggsave(here::here("c_output/figures/network_directed_can.png"), height = 8, width = 9)
+
+# undirected
+
+plot_undirected_network(directed_matrix = mat_medianMin_sym_Canaries,
+                      centroids = coord_centroids_can,
+                      node_size = 8)
+
+ggsave(here::here("c_output/figures/network_undirected_can.png"), height = 8, width = 9)
+
+```
+
+
+Azores
+
+```{r}
+
+# directed
+
+plot_directed_network(directed_matrix = mat_median_min_singlepoints_az,
+                      centroids = coord_centroids_az,
+                      node_size = 8,
+                      range_edge_width = c(0.2, 1))
+
+ggsave(here::here("c_output/figures/network_directed_az.png"), height = 8, width = 9)
+
+# undirected
+
+plot_undirected_network(directed_matrix = mat_medianMin_sym_Azores,
+                      centroids = coord_centroids_az,
+                      node_size = 8)
+
+ggsave(here::here("c_output/figures/network_undirected_az.png"), height = 8, width = 9)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
