@@ -401,4 +401,26 @@ mat_medianMin_sym_Azores<-Make_matrix_medianMin_symmetric(mat_median_min_singlep
 
 
 
+# Compute total connectivity
 
+
+- total conn = 1/total weight
+
+We use the mat_medianMin_sym_Galapagos matrix as it has the minimum possible cost values between
+
+```{r}
+total_cost_gal <- sum(mat_medianMin_sym_Galapagos[upper.tri(mat_medianMin_sym_Galapagos, diag = FALSE)])
+total_conn_gal <- 1/total_cost_gal
+
+total_cost_can <- sum(mat_medianMin_sym_Canaries[upper.tri(mat_medianMin_sym_Canaries, diag = FALSE)])
+total_conn_can <- 1/total_cost_can
+
+total_cost_az <- sum(mat_medianMin_sym_Azores[upper.tri(mat_medianMin_sym_Azores, diag = FALSE)])
+total_conn_az <- 1/total_cost_az
+
+print(paste(total_conn_gal, total_conn_can, total_conn_az))
+```
+
+As predicted, more connectivity by currents in the Canaries, followed by the Galapagos, and the Azores having less.
+
+How to interpret the units?

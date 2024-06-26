@@ -1,4 +1,4 @@
-Family,Genus ,Species,habitats<500m,Sub-Origin,Taxon_Status,#Islands,Espanola,Fernandina,Floreana,Genovesa,Isabela,Marchena,Pinta,Pinzon,San_Cristobal,Santa_Cruz,Santa_Fe,Santiago,#Introductions,Fruit_type,UNS,END,EPI,THA,ANE,Used_for_the_AoB_paper,littoral
+Family,Genus ,Species,habitats_lessthan500m,origin,Taxon_Status,#Islands,Espanola,Fernandina,Floreana,Genovesa,Isabela,Marchena,Pinta,Pinzon,San_Cristobal,Santa_Cruz,Santa_Fe,Santiago,Introductions,Fruit_type,UNS,END,EPI,THA,ANE,Used_for_the_AoB_paper,littoral
 Malvaceae,Abutilon,depauperatum,1,En,8,12,1,1,1,1,1,1,1,1,1,1,1,1,1,Schizocarp,1,0,0,0,0,,
 Mimosaceae,Acacia,insulae-iacobi,,Id,1,3,,,,,,,,,1,1,,1,3,Pod,0.5,0,0,0.5,0,,
 Mimosaceae,Acacia,macracantha,1,Id,1,6,,,1,,1,,,1,1,1,,1,3,Pod,0.5,0,0,0.5,0,,
@@ -453,9 +453,3 @@ Leguminosae,Zornia,,,,,,,,,,,,,,,,,,,,,,1,,, ,
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,,,,
 ,,nombre,,,,,,,,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,,,,,,,,,,
-,,,,,,,,,,,,,,,,,,,,,,,,,,,

@@ -441,6 +441,14 @@ Correlation_minMatrix_medianMinMatrix <- function(median_minimum_matrix, min_mat
 
 
 Make_matrix_medianMin_symmetric <- function(median_min_mat) {
+  
+  # Set a large number to temporarily replace Inf
+  large_number <- max(median_min_mat[is.finite(median_min_mat)]) + 1e10
+  
+  # Replace Inf with large number
+  median_min_mat[is.infinite(median_min_mat)] <- large_number
+  
+  
   idx<-median_min_mat<=t(median_min_mat) # matrix TRUE/FALSE 
   #if it's for the minimum
   
