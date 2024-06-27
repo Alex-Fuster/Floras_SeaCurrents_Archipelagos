@@ -61,6 +61,24 @@ df_Azores <- as.data.frame(data_Azores)
 ```
 
 
+Change island names Azores
+
+```{r}
+df_Azores <- df_Azores %>% 
+  rename(
+    Corvo = COR,
+    Faial = FAI,
+    Flores = FLO,
+    Graciosa = GRA,
+    Pico = PIC,
+    SantaMaria = SMR,
+    SaoJorge = SJG,
+    SaoMiguel = SMG,
+    Terceira = TER
+  )
+```
+
+
 
 ## Smooth the data frame
 
@@ -227,11 +245,8 @@ saveRDS(dist_mat_all_nolitt_can, here::here("c_output/floristic_dist_matrices/di
 
 # Azores
 
-Already lowland species
+> Already lowland species
 
-```{r}
-df_Azores
-```
 
 Filter THA or no-THA
 
@@ -254,6 +269,8 @@ df_Azores_nolitt <- subset(df_Azores, is.na(littoral))[,c(2,10:18)]
 
 
 ## Compute distance matrices and save them
+
+
 
 Azores THA
 
