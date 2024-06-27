@@ -118,6 +118,11 @@ Filter lowland
 
 df_Galapagos_lowland <- subset(df_Galapagos, df_Galapagos$habitats_lessthan500m %in% "1")
 
+df_Galapagos_sensitivity <- df_Galapagos_lowland[,c(2,9:20)] 
+df_Galapagos_sensitivity[is.na(df_Galapagos_sensitivity)] <- 0
+
+saveRDS(df_Galapagos_sensitivity, here::here("c_output/sensitivity/df_Galapagos_sensitivity.rds"))
+
 ```
 
 
@@ -181,6 +186,11 @@ Filter lowland
 ```{r}
 
 df_Canaries_lowland <- subset(df_Canaries, df_Canaries$habitats_lessthan500m %in% "1")
+
+df_Canaries_sensitivity <- df_Canaries_lowland[,c(1,6:12)] 
+df_Canaries_sensitivity[is.na(df_Canaries_sensitivity)] <- 0
+
+saveRDS(df_Canaries_sensitivity, here::here("c_output/sensitivity/df_Canaries_sensitivity.rds"))
 
 ```
 
@@ -246,6 +256,14 @@ saveRDS(dist_mat_all_nolitt_can, here::here("c_output/floristic_dist_matrices/di
 # Azores
 
 > Already lowland species
+
+
+```{r}
+df_Azores_sensitivity <- df_Azores[,c(2,10:18)] 
+df_Azores_sensitivity[is.na(df_Azores_sensitivity)] <- 0
+
+saveRDS(df_Azores_sensitivity, here::here("c_output/sensitivity/df_Azores_sensitivity.rds"))
+```
 
 
 Filter THA or no-THA

@@ -960,3 +960,58 @@ Create_dataframe_IslName_perc_N_degree <- function(Archipelago_name_vector,islan
 }
 
 
+
+
+## Peform sensitivity analysis
+
+# this function compute the procrustes correlation between subsets of flora with increasing number of species to test whether the correlation changes with the sample size
+
+perform_sensitivity_analysis <- function(df_flora, matrix_curr, min, max) {
+  
+  # Define a range of species counts
+  species_counts <- seq(min, (max-3), by = 1) 
+  
+  # Initialize empty lists to store results
+  procrustes_correlations <- numeric(length(species_counts))
+  procrustes_summaries <- vector("list", length(species_counts))
+  
+  for (i in seq_along(species_counts)) {
+    
+    
+    # Subset your species data to the current number of species
+    subset_species_data <- df_flora[(min+i):nrow(df_flora),]
+    
+    # Build distance matrices
+    dist_mat_flora <- as.matrix(compute_dist_mat_bray(subset_species_data))
+    dist_mat_flora <- dist_mat_flora[order(rownames(dist_mat_flora)), order(colnames(dist_mat_flora))]
+    
+    
+    procrustes_list <- perform_procrustes_analysis(matrix_curr, dist_mat_flora)
+    
+    
+    # Store Procrustes correlation
+    procrustes_correlations[i] <- procrustes_list$procrustes_corr$t0
+    
+    # Store Procrustes summary
+    procrustes_summaries[[i]] <- summary(procrustes_list$procrustes_summary)
+    
+  }
+  
+  # Create a data frame for plotting
+  sensitivity_analysis_df <- data.frame(
+    SpeciesCount = species_counts,
+    ProcrustesCorrelation = procrustes_correlations
+  )
+  
+  # Plot the sensitivity analysis using ggplot2
+  plot <- ggplot(sensitivity_analysis_df, aes(x = SpeciesCount, y = ProcrustesCorrelation)) +
+    geom_line() +
+    geom_point() +
+    labs(title = "Sensitivity Analysis of Procrustes Correlation vs. Number of Species",
+         x = "Number of Species",
+         y = "Procrustes Correlation") +
+    theme_minimal()
+  
+  return(plot)
+  
+}
