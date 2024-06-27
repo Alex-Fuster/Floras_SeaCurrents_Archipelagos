@@ -1,0 +1,291 @@
+---
+title: "Floristic Distances of Galapagos' Islands"
+---
+
+
+This script reads floristic data from each archipelago, filters and arranges it to save floristic mastrices for:
+
+- All plants
+- Thalassochorous plants
+- Littoral plants
+- Littoral exclusive plants - living in the littoral zone only
+- Fleshy fruited plants
+
+**Calculate dissimilarities**
+
+Dissimilarity Index (DI) measures the relative separation (high dissimilarity) or closeness (low dissimilarity) between two richness of islands It is a symmetrical measure so that this interpretation can apply to either richness 
+
+- A DI of 0 indicates conditions of total closeness under which richness and their species are distributed in the same proportions across all islands. 
+- A DI of 1 indicates conditions of total segregation such that the species are located in completely different islands than other species. 
+
+
+**Bray-Curtis**
+
+It is a simetrical index, it means that takes into account double-zero attributes (co-absences). Bray-Curtis treats in exactly the same way co-absences as any other pair of values
+and should be used when the zero state is a valid basis for comparing two objects in the similarity calculation (Greenacre, 2008; Todeschini et al., 2012).
+
+The Formula is 1 - 2* (sum of the lesser values for species both samples share) / total number of species counted at both sites. It is an inverse index due to '1-'. . This measure is very reasonable if we want to take into account ABSENCES of species in our data. However, it does not satisfy the triangle inequality axiom, and hence is not a true distance. It means that the sum of the dissimilarities between islands A and B and islands A and C is not necessarily greater than between islands B and C (Oksanen et al., 2020) (Greenacre, 2008; Post-ResearchGate.
+
+This dissimilarity index ranges from zero, when species are similar among sites, to unity, when no single species is shared among them (Castro-Urgal, R. & Traveset, A., 2014).
+
+In our data, absences are true absences because these species haven't been found in the islands that are marked as absences. Moreover, our matrix have 71% of absences and 29% of presences. So there are probably quite co-absences between islands that we think have to be taken into account to compare islands.
+
+
+
+
+```{r}
+library('readr')
+library('tidyverse')
+library('tidyr')
+library('permute')
+library('lattice')
+library('vegan')
+library(dplyr)
+source("Functions.R")
+```
+
+
+
+### Open Data
+
+```{r}
+data_Galapagos <- read_csv(here::here("b_data/Data_Galapagos/data_galapagos.csv"), col_names = TRUE, trim_ws = TRUE)
+data_Canaries <- read_csv(here::here("b_data/Data_Canaries/data_canaries.csv"), col_names = TRUE, trim_ws = TRUE)
+data_Azores <- read_csv(here::here("b_data/Data_Azores/data_azores.csv"), col_names = TRUE)
+
+df_Galapagos <- as.data.frame(data_Galapagos)
+df_Canaries <- as.data.frame(data_Canaries)
+df_Azores <- as.data.frame(data_Azores)
+
+
+```
+
+
+
+## Smooth the data frame
+
+```{r}
+#df_Galapagos[is.na(df_Galapagos)] <- 0
+df_Galapagos <- unite(df_Galapagos, name_species, c(Genus, Species), remove=FALSE)
+
+```
+
+
+
+
+
+# Filter floristic data to obtain florisitc matrices
+
+This part requires specific filtering because each floristic dataset is different and we need to take into account specific considerations for certain species in each archipelago
+
+
+## Galapagos
+
+
+Correct names
+
+```{r}
+df_Galapagos$name_species <- gsub('Sesuvium_edmondstonei', 'Sesuvium_edmonstonei', df_Galapagos$name_species)
+# Sesuvium edmondstonei has been probably misspelled by the data set. There is a specie called Sesuvium edmonstonei, correctly descrived by Wiggins & Porter (1971), native from Galapagos Islands (Title of vols. 1-6 (1791-1802) Transactions of the Linnean Society; for series 2 see Trans. Linn. Soc. London) (it can also be checked on http://powo.science.kew.org/taxon/235141-2). So we have changed the data set to correct the species spelling.
+
+df_Galapagos$name_species <- gsub('Pycreus_polystachyos', 'Cyperus_polystachyos', df_Galapagos$name_species)
+# The specie Pycreus polystachyos, found in our data, is a synonim of Cyperus polystachyos, found in Wiggins & Porter (1971). The taxonomical correct name is Cyperus polystachyos Rottb., Descr. Pl. Rar. 21 (1772), because it is ancient than Pycreus polystachyos P.Beauv., Fl. Oware 2: 48, t. 86 (1816). So we have changed Pycreus polystachyos to Cyperus polystachyos on our data.
+
+```
+
+
+Filter lowland
+
+```{r}
+
+df_Galapagos_lowland <- subset(df_Galapagos, df_Galapagos$habitats_lessthan500m %in% "1")
+
+```
+
+
+Filter THA or no-THA
+
+```{r}
+
+df_Galapagos_lowland_THA <- subset(df_Galapagos_lowland, df_Galapagos_lowland$THA %in% c("0.5", "1"))[,c(2,9:20)] 
+df_Galapagos_lowland_noTHA <- subset(df_Galapagos_lowland, df_Galapagos_lowland$THA %in% "0")[,c(2,9:20)] 
+
+```
+
+
+Filter Littoral or no-Littoral
+
+```{r}
+df_Galapagos_litt <- subset(df_Galapagos, df_Galapagos$littoral %in% c("exclusive", "presence"))[,c(2,9:20)]
+df_Galapagos_nolitt <- subset(df_Galapagos, is.na(littoral))[,c(2,9:20)]
+
+```
+
+
+## Compute distance matrices and save them
+
+Galapagos THA
+
+```{r}
+
+df_Galapagos_lowland_THA[is.na(df_Galapagos_lowland_THA)] <- 0
+df_Galapagos_lowland_noTHA[is.na(df_Galapagos_lowland_noTHA)] <- 0
+
+dist_mat_lowland_THA_gal <- compute_dist_mat_bray(df_Galapagos_lowland_THA)
+saveRDS(dist_mat_lowland_THA_gal, here::here("c_output/floristic_dist_matrices/dist_mat_lowland_THA_gal.rds"))
+dist_mat_lowland_noTHA_gal <- compute_dist_mat_bray(df_Galapagos_lowland_noTHA)
+saveRDS(dist_mat_lowland_noTHA_gal, here::here("c_output/floristic_dist_matrices/dist_mat_lowland_noTHA_gal.rds"))
+
+```
+
+Galapagos Litt
+
+```{r}
+df_Galapagos_litt[is.na(df_Galapagos_litt)] <- 0
+df_Galapagos_nolitt[is.na(df_Galapagos_nolitt)] <- 0
+
+
+dist_mat_all_litt_gal <- compute_dist_mat_bray(df_Galapagos_litt)
+saveRDS(dist_mat_all_litt_gal, here::here("c_output/floristic_dist_matrices/dist_mat_all_litt_gal.rds"))
+
+dist_mat_all_nolitt_gal <- compute_dist_mat_bray(df_Galapagos_nolitt)
+saveRDS(dist_mat_all_nolitt_gal, here::here("c_output/floristic_dist_matrices/dist_mat_all_nolitt_gal.rds"))
+```
+
+
+
+
+## Canaries
+
+
+Filter lowland
+
+```{r}
+
+df_Canaries_lowland <- subset(df_Canaries, df_Canaries$habitats_lessthan500m %in% "1")
+
+```
+
+
+Filter THA or no-THA
+
+```{r}
+
+# discard those without the assessment of syndrome
+
+df_Canaries_lowland_subset <- subset(df_Canaries_lowland, !is.na(sindrome))
+
+df_Canaries_lowland_THA <- subset(df_Canaries_lowland_subset, df_Canaries_lowland_subset$thalassochory %in% c("0.5", "1"))[,c(1,6:12)] 
+df_Canaries_lowland_noTHA <- subset(df_Canaries_lowland_subset, is.na(thalassochory))[,c(1,6:12)] 
+
+```
+
+
+Filter Littoral or no-Littoral
+
+```{r}
+
+df_Canaries_litt <- subset(df_Canaries, df_Canaries$littoral %in% c("exclusive", "presence"))[,c(1,6:12)]
+df_Canaries_nolitt <- subset(df_Canaries, is.na(littoral))[,c(1,6:12)] 
+
+```
+
+
+## Compute distance matrices and save them
+
+Canaries THA
+
+```{r}
+
+df_Canaries_lowland_THA[is.na(df_Canaries_lowland_THA)] <- 0
+df_Canaries_lowland_noTHA[is.na(df_Canaries_lowland_noTHA)] <- 0
+
+dist_mat_lowland_THA_can <- compute_dist_mat_bray(df_Canaries_lowland_THA)
+saveRDS(dist_mat_lowland_THA_can, here::here("c_output/floristic_dist_matrices/dist_mat_lowland_THA_can.rds"))
+dist_mat_lowland_noTHA_can <- compute_dist_mat_bray(df_Canaries_lowland_noTHA)
+saveRDS(dist_mat_lowland_noTHA_can, here::here("c_output/floristic_dist_matrices/dist_mat_lowland_noTHA_can.rds"))
+
+```
+
+Canaries Litt
+
+```{r}
+df_Canaries_litt[is.na(df_Canaries_litt)] <- 0
+df_Canaries_nolitt[is.na(df_Canaries_nolitt)] <- 0
+
+
+dist_mat_all_litt_can <- compute_dist_mat_bray(df_Canaries_litt)
+saveRDS(dist_mat_all_litt_can, here::here("c_output/floristic_dist_matrices/dist_mat_all_litt_can.rds"))
+
+dist_mat_all_nolitt_can <- compute_dist_mat_bray(df_Canaries_nolitt)
+saveRDS(dist_mat_all_nolitt_can, here::here("c_output/floristic_dist_matrices/dist_mat_all_nolitt_can.rds"))
+```
+
+
+
+
+
+# Azores
+
+Already lowland species
+
+```{r}
+df_Azores
+```
+
+Filter THA or no-THA
+
+```{r}
+
+df_Azores_lowland_THA <- subset(df_Azores, df_Azores$THA %in% c("0.5", "1", "0.33"))[,c(2,10:18)] 
+df_Azores_lowland_noTHA <- subset(df_Azores, is.na(THA))[,c(2,10:18)] 
+
+```
+
+
+Filter Littoral or no-Littoral
+
+```{r}
+
+df_Azores_litt <- subset(df_Azores, df_Azores$littoral %in% c("1"))[,c(2,10:18)] 
+df_Azores_nolitt <- subset(df_Azores, is.na(littoral))[,c(2,10:18)]  
+
+```
+
+
+## Compute distance matrices and save them
+
+Azores THA
+
+```{r}
+
+dist_mat_lowland_THA_az <- compute_dist_mat_bray(df_Azores_lowland_THA)
+saveRDS(dist_mat_lowland_THA_az, here::here("c_output/floristic_dist_matrices/dist_mat_lowland_THA_az.rds"))
+dist_mat_lowland_noTHA_az <- compute_dist_mat_bray(df_Azores_lowland_noTHA)
+saveRDS(dist_mat_lowland_noTHA_az, here::here("c_output/floristic_dist_matrices/dist_mat_lowland_noTHA_az.rds"))
+
+```
+
+Azores Litt
+
+```{r}
+dist_mat_all_litt_az <- compute_dist_mat_bray(df_Azores_litt)
+saveRDS(dist_mat_all_litt_az, here::here("c_output/floristic_dist_matrices/dist_mat_all_litt_az.rds"))
+
+dist_mat_all_nolitt_az <- compute_dist_mat_bray(df_Azores_nolitt)
+saveRDS(dist_mat_all_nolitt_az, here::here("c_output/floristic_dist_matrices/dist_mat_all_nolitt_az.rds"))
+```
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+

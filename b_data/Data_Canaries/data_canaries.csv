@@ -1,4 +1,4 @@
-name_species,family,habitat<500m,status,littoral,El_Hierro,La_Palma,La_Gomera,Tenerife,Gran_Canaria,Fuerteventura,Lanzarote,#islands,sindrome,thalassochory
+name_species,family,habitats_lessthan500m,status,littoral,El_Hierro,La_Palma,La_Gomera,Tenerife,Gran_Canaria,Fuerteventura,Lanzarote,n_islands,sindrome,thalassochory
 Allagopappus_canariensis,Asteraceae,1,End,,0,0,1,1,1,0,0,3,ANE,
 Allagopappus_viscosissimus,Asteraceae,1,End,,0,0,0,0,1,0,0,1,ANE,
 Andryala_pinnatifida,Asteraceae,1,End,,1,1,1,1,1,1,1,7,ANE,

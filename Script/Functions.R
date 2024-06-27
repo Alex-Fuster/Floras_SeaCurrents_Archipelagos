@@ -473,32 +473,26 @@ Make_minMatrix_symmetric <- function(min_matrix) {
 
 
 
-Calculate_distmatrix_and_save <- function(matrix, file_path) {
-  matrix <- t(matrix) # Transpose rows for columns
-  rownames(matrix) <- c() # Delete names of the rows
-  matrix[1, 1] <- NA # Delete the name of the first row
+compute_dist_mat_bray <- function(df) {
   
-  colnames(matrix) <- as.character(unlist(matrix[1,])) # Put first row as header
-  matrix = matrix[-1, ] # delete the first row
+ 
   
-  rownames(matrix) <- matrix[,1] # Put first column as 'row header'
-  matrix <- matrix[order(as.numeric(row.names(matrix)), decreasing=FALSE),] # Put first column as 'row header'
-  matrix <- matrix[,-1]  # Delete the first column
+  # Transpose the dataframe: islands as rows, species as columns
+  df_transposed <- as.data.frame(t(df[,-1])) # Exclude the name_species column
   
-  matrix_df <- as.data.frame(matrix) # Transform to 'data.frame'
+  # Assign proper column names (species names) to the transposed dataframe
+  colnames(df_transposed) <- df$name_species
   
-  matrix_df[] <- lapply(matrix_df, function(x) as.numeric(as.character(x))) # all columns as numeric
+  # Ensure row names are the island names
+  rownames(df_transposed) <- colnames(df)[-1]
   
-  floristic_distance_bray <- vegdist(x = matrix_df, method="bray", binary=TRUE, diag=FALSE, upper=FALSE, na.rm = FALSE) 
+  # Compute the Bray-Curtis distance matrix
+  distance_matrix <- vegdist(df_transposed, method = "bray")
   
-  write.table(as.matrix(floristic_distance_bray), file = file_path,
-              append = FALSE, quote = TRUE, sep = " ",
-              eol = "\n", na = "NA", dec = ".", row.names = TRUE,
-              col.names = TRUE, qmethod = c("escape", "double"),
-              fileEncoding = "")
+  
+  return(distance_matrix)
   
 }
-
 
 
 
@@ -739,22 +733,113 @@ load_order_convert_csv_to_distanceMat <- function(filepath) {
 
 
 
-#------------- Run Procrustes test between distance matrices
+#------------- Run Procrustes test between matrices
 
-Compute_Protest_distMat <- function(distMat_rot, distMat_base, k) {
-  add1 <-  !(is.euclid(distMat_base))
-  test1<-cmdscale(distMat_base, k = k, eig = TRUE, add = add1)
-  ord1<-ordiplot(test1, type = "text", main = "PCoA Bray Distances")
+perform_procrustes_analysis <- function(dist_mat1, dist_mat2, k = 2) {
+  # Convert matrices to dist objects
+  dist1 <- as.dist(dist_mat1)
+  dist2 <- as.dist(dist_mat2)
   
+  # Perform PCoA with the specified number of dimensions
+  pcoa1 <- cmdscale(dist1, k = k)
+  pcoa2 <- cmdscale(dist2, k = k)
   
-  add2 <-  !(is.euclid(distMat_rot))
-  test2<-cmdscale(distMat_rot, k = k, eig = TRUE, add = add2)
-  ord2<-ordiplot(test2, type = "text", main = "PCoA Bray Distances")
+  # Perform Procrustes analysis
+  procrustes_result <- procrustes(pcoa1, pcoa2)
   
-  protest <- protest(ord1,ord2,  symmetric = TRUE, scores = "sites", permutations=100000)
+  # Perform protest to get the Procrustes correlation
+  procrustes_corr <- protest(pcoa1, pcoa2)
   
-  return(protest)
+  # Prepare the result list
+  result <- list(
+    pcoa_THA = pcoa1,
+    pcoa_Galapagos = pcoa2,
+    procrustes_result = procrustes_result,
+    procrustes_summary = summary(procrustes_result),
+    procrustes_corr = procrustes_corr
+  )
+  
+  return(result)
 }
+
+
+
+# Plot procrustes kind 2
+
+
+plot_procrustes_kind2 <- function(path_output, tha, notha, litt, nolitt) {
+  
+  png(here::here(path_output), width = 25, height = 26, units = "cm", res = 600)  # Adjust width, height, and resolution as needed
+  # Set up the layout for 2x2 plots
+  par(mfrow = c(2, 2),  mar = c(5, 5, 4, 1) + 1.3)
+  
+  # Plot A: Procrustes plot for Thalassochorous
+  plot(tha$procrustes_result, kind = 2, type = "text", cex = 1, main = "Thalassochorous", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "")
+  axis(side = 1, at = 1:nrow(tha$procrustes_result$Yrot), 
+       labels = rownames(tha$procrustes_result$Yrot), tick = TRUE, las = 2)
+  text(0.5, 0.95, "A", font = 2, cex = 1.5, adj = 0.5)  # Add label A
+  
+  # Plot B: Procrustes plot for Non-thalassochorous
+  plot(notha$procrustes_result, kind = 2, type = "text", cex = 1, main = "Non-thalassochorous", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "")
+  axis(side = 1, at = 1:nrow(notha$procrustes_result$Yrot), 
+       labels = rownames(notha$procrustes_result$Yrot), tick = TRUE, las = 2)
+  text(0.5, 0.95, "B", font = 2, cex = 1.5, adj = 0.5)  # Add label B
+  
+  # Plot C: Procrustes plot for Littoral
+  plot(litt$procrustes_result, kind = 2, type = "text", cex = 1, main = "Littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "")
+  axis(side = 1, at = 1:nrow(litt$procrustes_result$Yrot), 
+       labels = rownames(litt$procrustes_result$Yrot), tick = TRUE, las = 2)
+  text(0.5, 0.95, "C", font = 2, cex = 1.5, adj = 0.5)  # Add label C
+  
+  # Plot D: Procrustes plot for Non-littoral
+  plot(nolitt$procrustes_result, kind = 2, type = "text", cex = 1, main = "Non-littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "")
+  axis(side = 1, at = 1:nrow(nolitt$procrustes_result$Yrot), 
+       labels = rownames(nolitt$procrustes_result$Yrot), tick = TRUE, las = 2)
+  text(0.5, 0.95, "D", font = 2, cex = 1.5, adj = 0.5)  # Add label D
+  
+  dev.off()
+  
+}
+
+
+plot_procrustes_kind1 <- function(path_output, tha, notha, litt, nolitt) {
+  
+  png(here::here(path_output), width = 25, height = 26, units = "cm", res = 600)  # Adjust width, height, and resolution as needed
+  # Set up the layout for 2x2 plots
+  par(mfrow = c(2, 2),  mar = c(5, 5, 4, 1))
+  
+  # Plot A: Procrustes plot for Thalassochorous
+  plot(tha$procrustes_result, kind = 1, type = "text", cex = 1, main = "Thalassochorous", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "")
+  
+  # Plot B: Procrustes plot for Non-thalassochorous
+  plot(notha$procrustes_result, kind = 1, type = "text", cex = 1, main = "Non-thalassochorous", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "")
+  
+  # Plot C: Procrustes plot for Littoral
+  plot(litt$procrustes_result, kind = 1, type = "text", cex = 1, main = "Littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "")
+  
+  # Plot D: Procrustes plot for Non-littoral
+  plot(nolitt$procrustes_result, kind = 1, type = "text", cex = 1, main = "Non-littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "")
+
+  
+  dev.off()
+  
+}
+
+
+
+
+
+
+
+
 
 
 
