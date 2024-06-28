@@ -1,10 +1,140 @@
 ---
-title: "Island centrality and percentage floras"
+title: "Degree and percentage flora"
+output: html_notebook
 ---
 
-%THA ~ in_degree
-
-%Litt ~ in_degree
 
 
+```{r}
+library('readr')
+library('tidyverse')
+library('tidyr')
+library('permute')
+library('lattice')
+library('vegan')
+library(dplyr)
+source("Functions.R")
+```
+
+
+
+### Open Data
+
+```{r}
+data_Galapagos <- read_csv(here::here("b_data/Data_Galapagos/data_galapagos.csv"), col_names = TRUE, trim_ws = TRUE)
+data_Canaries <- read_csv(here::here("b_data/Data_Canaries/data_canaries.csv"), col_names = TRUE, trim_ws = TRUE)
+data_Azores <- read_csv(here::here("b_data/Data_Azores/data_azores.csv"), col_names = TRUE)
+
+df_Galapagos <- as.data.frame(data_Galapagos)
+df_Canaries <- as.data.frame(data_Canaries)
+df_Azores <- as.data.frame(data_Azores)
+
+
+```
+
+
+Change island names Azores
+
+```{r}
+df_Azores <- df_Azores %>% 
+  rename(
+    Corvo = COR,
+    Faial = FAI,
+    Flores = FLO,
+    Graciosa = GRA,
+    Pico = PIC,
+    SantaMaria = SMR,
+    SaoJorge = SJG,
+    SaoMiguel = SMG,
+    Terceira = TER
+  )
+```
+
+
+
+## Smooth the data frame
+
+```{r}
+#df_Galapagos[is.na(df_Galapagos)] <- 0
+df_Galapagos <- unite(df_Galapagos, name_species, c(Genus, Species), remove=FALSE)
+
+```
+
+
+
+
+
+# Filter floristic data to obtain florisitc matrices
+
+This part requires specific filtering because each floristic dataset is different and we need to take into account specific considerations for certain species in each archipelago
+
+
+## Galapagos
+
+
+Correct names
+
+```{r}
+df_Galapagos$name_species <- gsub('Sesuvium_edmondstonei', 'Sesuvium_edmonstonei', df_Galapagos$name_species)
+# Sesuvium edmondstonei has been probably misspelled by the data set. There is a specie called Sesuvium edmonstonei, correctly descrived by Wiggins & Porter (1971), native from Galapagos Islands (Title of vols. 1-6 (1791-1802) Transactions of the Linnean Society; for series 2 see Trans. Linn. Soc. London) (it can also be checked on http://powo.science.kew.org/taxon/235141-2). So we have changed the data set to correct the species spelling.
+
+df_Galapagos$name_species <- gsub('Pycreus_polystachyos', 'Cyperus_polystachyos', df_Galapagos$name_species)
+# The specie Pycreus polystachyos, found in our data, is a synonim of Cyperus polystachyos, found in Wiggins & Porter (1971). The taxonomical correct name is Cyperus polystachyos Rottb., Descr. Pl. Rar. 21 (1772), because it is ancient than Pycreus polystachyos P.Beauv., Fl. Oware 2: 48, t. 86 (1816). So we have changed Pycreus polystachyos to Cyperus polystachyos on our data.
+
+```
+
+
+Filter lowland
+
+```{r}
+
+df_Galapagos_lowland <- subset(df_Galapagos, df_Galapagos$habitats_lessthan500m %in% "1")
+
+```
+
+
+## compute % littoral and % tha
+
+```{r}
+# Define the columns for islands
+island_cols <- c("Espanola", "Fernandina", "Floreana", "Genovesa", "Isabela", "Marchena", "Pinta", "Pinzon", "San_Cristobal", "Santa_Cruz", "Santa_Fe")
+
+# Initialize a dataframe to store the results
+results <- data.frame(
+  Island = character(),
+  Percent_Thalassochorous = numeric(),
+  Percent_Littoral = numeric(),
+  Total_Species = integer(),
+  stringsAsFactors = FALSE
+)
+
+# Iterate over each island
+for (island in island_cols) {
+  # Subset the species present in the island
+  species_in_island <- df_Galapagos_lowland[complete.cases(df_Galapagos_lowland[, island]), ]
+  
+  # Calculate the total number of species in the island
+  total_species <- nrow(species_in_island)
+  
+  # Calculate the percentage of thalassochorous species
+  thalassochorous_species <- species_in_island[species_in_island$THA %in% c(0.5, 1), ]
+  percent_thalassochorous <- (nrow(thalassochorous_species) / total_species) * 100
+  
+  # Calculate the percentage of littoral species
+  littoral_species <- species_in_island[species_in_island$littoral %in% c("exclusive", "presence"), ]
+  percent_littoral <- (nrow(littoral_species) / total_species) * 100
+  
+  # Add the results to the dataframe
+  results <- rbind(results, data.frame(
+    Island = island,
+    Percent_Thalassochorous = percent_thalassochorous,
+    Percent_Littoral = percent_littoral,
+    Total_Species = total_species,
+    stringsAsFactors = FALSE
+  ))
+}
+
+
+
+```
 

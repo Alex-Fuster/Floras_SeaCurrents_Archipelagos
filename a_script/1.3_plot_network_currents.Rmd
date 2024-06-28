@@ -64,6 +64,87 @@ coord_centroids_az <- read.csv(here::here("b_data/Data_Azores/centroids_network_
 
 Galapagos
 
+
+function to try to plot the % litt
+
+```{r}
+
+plot_undirected_network <- function(directed_matrix, centroids, node_size, percent_littoral) {
+  
+  # Assuming your adjacency matrix is named 'single_point_min_Galap'
+  # Convert the matrix to an igraph object
+  g <- graph_from_adjacency_matrix(directed_matrix, mode = "undirected", weighted = TRUE)
+  
+  # Handle zero weights to avoid division by zero
+  #E(g)$weight[E(g)$weight == 0] <- NA
+  
+  # Create a data frame from the igraph object
+  node_list <- data.frame(name = V(g)$name)
+  
+  # Merge the coordinates with the node list
+  node_list <- merge(node_list, centroids, by.x = "name", by.y = "island", all.x = TRUE)
+  
+  # Merge with percent_littoral dataframe
+  node_list <- merge(node_list, percent_littoral, by.x = "name", by.y = "island", all.x = TRUE)
+  
+  # Ensure no missing coordinates
+  node_list <- na.omit(node_list)
+  
+  # Ensure the graph vertices match the coordinates names
+  V(g)$name <- as.character(V(g)$name)
+  node_list$name <- as.character(node_list$name)
+  
+  # Convert the igraph object to a tidygraph object
+  tg <- as_tbl_graph(g)
+  
+  # Add coordinates to the tidygraph object
+  tg <- tg %>%
+    activate(nodes) %>%
+    left_join(node_list, by = c("name" = "name"))
+  
+  # Invert the weights: higher values become lower and vice versa
+  E(tg)$inv_weight <- 1 / E(tg)$weight
+  
+  # Normalize the inverted weights for better visualization
+  #max_inv_weight <- max(E(tg)$inv_weight, na.rm = TRUE)
+  #E(tg)$norm_inv_weight <- E(tg)$inv_weight / max_inv_weight
+  
+  E(tg)$norm_inv_weight <- E(tg)$inv_weight
+  
+  # Calculate total degree
+  V(tg)$degree <- strength(tg, mode = "all",
+                           weights = E(tg)$inv_weight)
+  
+  # Plot the graph using ggraph with spatial coordinates and color nodes based on total degree
+  netplot_degree <- ggraph(tg, layout = 'manual', x = V(tg)$long, y = V(tg)$lat) + 
+    geom_edge_link(aes(width = norm_inv_weight), show.legend = FALSE) +
+    geom_node_point(aes(color = Percent_Littoral), size = node_size) +  # Color nodes based on Percent_Littoral
+    scale_edge_width(range = range(sqrt(E(tg)$norm_inv_weight)), name = "Normalized Connectivity") + # Adjust the range for better visualization
+    scale_color_viridis(name = "% littoral species", option = "turbo") + # Use viridis color scale
+    geom_node_text(aes(label = name), repel = TRUE, 
+                   nudge_y = 0.1, 
+                   nudge_x = -0.04, size = 5, segment.size = 0.15) +
+    theme_classic() + 
+    labs(x = "Longitude",
+         y = "Latitude",
+         edge_width = "Normalized connectivity") +
+    guides(color = guide_colorbar(barwidth = 8, barheight = 1,
+                                  title.position = "top", label.position = "bottom",
+                                  title.hjust = 0.5,
+                                  ticks = FALSE,
+                                  breaks = seq(0, 100, by = 20))) + # Customize legend breaks and labels
+    theme(legend.position = "bottom") +
+    my_theme
+  
+  return(netplot_degree)
+  
+}
+
+```
+
+
+
+
 ```{r}
 # directed
 
@@ -76,9 +157,17 @@ ggsave(here::here("c_output/figures/network_directed_gal.png"), height = 8, widt
 
 # undirected
 
+df_percent_flora_gal <- df_percent_flora_gal %>% 
+  rename(island = Island)
+
+df_percent_flora_gal$island[df_percent_flora_gal$island == "San_Cristobal"] <- "SanCristobal"
+df_percent_flora_gal$island[df_percent_flora_gal$island == "Santa_Cruz"] <- "SantaCruz"
+df_percent_flora_gal$island[df_percent_flora_gal$island == "Santa_Fe"] <- "SantaFe"
+
 plot_undirected_network(directed_matrix = mat_medianMin_sym_Galapagos,
                       centroids = coord_centroids_gal,
-                      node_size = 8)
+                      node_size = 8,
+                      percent_littoral = df_percent_flora_gal[,c(1,3)])
 
 ggsave(here::here("c_output/figures/network_undirected_gal.png"), height = 8, width = 9)
 ```
