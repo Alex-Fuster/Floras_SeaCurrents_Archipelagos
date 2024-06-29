@@ -221,6 +221,12 @@ save objects
 #saveRDS(costlist_clean_Galapagos, here::here("c_output/cost_list/costlist_clean_Galapagos.rds"))
 #saveRDS(costlist_clean_Canary, here::here("c_output/cost_list/costlist_clean_Canary.rds"))
 #saveRDS(costlist_clean_Azores, here::here("c_output/cost_list/costlist_clean_Azores.rds"))
+
+#costlist_clean_Galapagos <- readRDS(here::here("c_output/cost_list/costlist_clean_Galapagos.rds"))
+#costlist_clean_Canary <- readRDS(here::here("c_output/cost_list/costlist_clean_Canary.rds"))
+#costlist_clean_Azores <- readRDS(here::here("c_output/cost_list/costlist_clean_Azores.rds"))
+                                    
+                                    
 ```
 
 
@@ -325,6 +331,11 @@ colnames(mat_median_min_multipoints_can) = Canaries_points$id
 rownames(mat_median_min_multipoints_az) = Azores_points$id
 colnames(mat_median_min_multipoints_az) = Azores_points$id
 
+
+diag(mat_median_min_multipoints_gal) <- 0
+diag(mat_median_min_multipoints_can) <- 0
+diag(mat_median_min_multipoints_az) <- 0
+
 ```
 
 
@@ -371,6 +382,10 @@ mat_median_min_singlepoints_gal <- compute_mat_min_weighted(mat_median_min_multi
 mat_median_min_singlepoints_can <- compute_mat_min_weighted(mat_median_min_multipoints_can)
 mat_median_min_singlepoints_az <- compute_mat_min_weighted(mat_median_min_multipoints_az)
 
+diag(mat_median_min_singlepoints_gal) <- 0
+diag(mat_median_min_singlepoints_can) <- 0
+diag(mat_median_min_singlepoints_az) <- 0
+
 ```
 
 
@@ -389,6 +404,10 @@ mat_median_min_singlepoints_az <- compute_mat_min_weighted(mat_median_min_multip
 mat_medianMin_sym_Galapagos<-Make_matrix_medianMin_symmetric(mat_median_min_singlepoints_gal)
 mat_medianMin_sym_Canaries<-Make_matrix_medianMin_symmetric(mat_median_min_singlepoints_can)
 mat_medianMin_sym_Azores<-Make_matrix_medianMin_symmetric(mat_median_min_singlepoints_az)
+
+diag(mat_medianMin_sym_Galapagos) <- 0
+diag(mat_medianMin_sym_Canaries) <- 0
+diag(mat_medianMin_sym_Azores) <- 0
 
 ```
 
