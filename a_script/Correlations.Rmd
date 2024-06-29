@@ -306,7 +306,7 @@ df_long <- melt(df_cor_curr_factors, id.vars = "Island", variable.name = "Variab
 plot_cor_currents_factors <- ggplot(df_long, aes(x = Variable, y = Island)) +
   geom_tile(aes(fill = Correlation), color = "white") +
   geom_text(aes(label = round(Correlation, 2)), color = "white", size = 4) +
-  scale_fill_viridis_c(option = "turbo") +
+  scale_fill_viridis_c(option = "turbo", limits = c(0, 1)) +  # Set limits for the color scale
   theme_classic() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
         axis.text.y = element_text(size = 10)) +
@@ -410,7 +410,7 @@ df_long <- melt(df_cor, id.vars = c("Island", "Flora"), variable.name = "Variabl
 plot_cor_floras <- ggplot(df_long, aes(x = Variable, y = Flora)) +
   geom_tile(aes(fill = Correlation), color = "white") +
   geom_text(aes(label = round(Correlation, 2)), color = "white", size = 4) +
-  scale_fill_viridis_c(option = "turbo") +
+  scale_fill_viridis_c(option = "turbo", limits = c(0, 1)) +
   facet_wrap(~ Island) +
   theme_classic() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
@@ -423,6 +423,42 @@ plot_cor_floras
 
 ggsave(here::here("c_output/figures/corr_floras_heatmap.png"), height = 4, width = 8)
 ```
+
+
+
+```{r}
+
+
+plot_cor_currents_factors1 <- ggarrange(
+  NULL,
+  plot_cor_currents_factors,
+  NULL,
+  nrow = 1,
+  ncol = 3,
+  widths = c(0.9, 1.8, 0.9)
+)
+
+plot_cor_currents_factors1 <- annotate_figure(
+  plot_cor_currents_factors1,
+  top = text_grob("", size = 16)
+)
+
+ggarrange(
+  plot_cor_floras,
+plot_cor_currents_factors1,
+
+nrow = 2,
+ncol = 1,
+
+labels = LETTERS[1:2]
+
+)
+
+
+ggsave(here::here("c_output/figures/correlations_all.png"), height = 8, width = 8)
+
+```
+
 
 
 

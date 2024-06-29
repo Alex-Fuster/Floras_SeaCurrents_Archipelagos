@@ -219,57 +219,51 @@ df_percent_flora_az <- results
 Raw plots % littoral
 
 
+
 ```{r}
 
 
-# Reorder Island factor based on Percentage in descending order
-df_percent_flora_gal_long$Island <- factor(df_percent_flora_gal_long$Island, 
-                                           levels = df_percent_flora_gal_long$Island[order(df_percent_flora_gal_long$Percentage, decreasing = TRUE)])
 
-df_percent_flora_can_long$Island <- factor(df_percent_flora_can_long$Island, 
-                                           levels = df_percent_flora_can_long$Island[order(df_percent_flora_can_long$Percentage, decreasing = TRUE)])
-
-df_percent_flora_az_long$Island <- factor(df_percent_flora_az_long$Island, 
-                                          levels = df_percent_flora_az_long$Island[order(df_percent_flora_az_long$Percentage, decreasing = TRUE)])
-
-
-ymax = max(c(df_percent_flora_gal_long$Percentage, df_percent_flora_can_long$Percentage, df_percent_flora_az_long$Percentage))
+ymax_perc = max(c(df_percent_flora_gal$Percent_Littoral, df_percent_flora_can$Percent_Littoral, df_percent_flora_az$Percent_Littoral))
 
 
 # Create plots with reordered dataframes
-plot_gal <- ggplot(df_percent_flora_gal_long, aes(x = Island, y = Percentage)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.9), width = 0.7, fill = "#1f78b4") +
-  geom_text(data = df_percent_flora_gal_long, aes(x = Island, y = ymax + 0.5, 
-                                            label =  Total_Species),
-            color = "black", size = 4, vjust = -0.5) +
-  labs(x = NULL,
+plot_gal <- ggplot(df_percent_flora_gal, aes(x = reorder(Island, -Percent_Littoral), y = Percent_Littoral)) +
+  geom_bar(stat = "identity", fill = "gray25") +  # Create the bar plot
+  geom_text(aes(label = Total_Species), 
+            vjust = -0.5, 
+            color = "black", 
+            size = 4) +  # Add text labels for Total_Species at the top of each bar
+  labs(x = NULL, 
        y = "% littoral species") +
-  theme_classic() +
-  ylim(0, ymax+0.5)+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ylim(0, ymax_perc+0.5)+
+  theme_classic() +  # Use a classic theme
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  +# Rotate x-axis labels for better readability
   my_theme
 
-plot_can <- ggplot(df_percent_flora_can_long, aes(x = Island, y = Percentage)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.9), width = 0.7, fill = "#33a02c") +
-  geom_text(data = df_percent_flora_can_long, aes(x = Island, y = ymax + 0.5, 
-                                            label =  Total_Species),
-            color = "black", size = 4, vjust = -0.5) +
-  labs(x = NULL,
+plot_can <- ggplot(df_percent_flora_can, aes(x = reorder(Island, -Percent_Littoral), y = Percent_Littoral)) +
+  geom_bar(stat = "identity", fill = "gray25") +  # Create the bar plot
+  geom_text(aes(label = Total_Species), 
+            vjust = -0.5, 
+            color = "black", 
+            size = 4) +  # Add text labels for Total_Species at the top of each bar
+  labs(x = NULL, 
        y = "% littoral species") +
-  theme_classic() +
-  ylim(0, ymax+0.5)+
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  my_theme
+  ylim(0, ymax_perc+0.5)+
+  theme_classic() +  # Use a classic theme
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate x-axis labels for better readability
+my_theme
 
-plot_az <- ggplot(df_percent_flora_az_long, aes(x = Island, y = Percentage)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.9), width = 0.7, fill = "#e31a1c") +
-  geom_text(data = df_percent_flora_az_long, aes(x = Island, y = ymax + 0.5, 
-                                            label =  Total_Species),
-            color = "black", size = 4, vjust = -0.5) +
-  labs(x = NULL,
+plot_az <- ggplot(df_percent_flora_az, aes(x = reorder(Island, -Percent_Littoral), y = Percent_Littoral)) +
+  geom_bar(stat = "identity", fill = "gray25") +  # Create the bar plot
+  geom_text(aes(label = Total_Species), 
+            vjust = -0.5, 
+            color = "black", 
+            size = 4) +  # Add text labels for Total_Species at the top of each bar
+  labs(x = NULL, 
        y = "% littoral species") +
-  theme_classic() +
-  ylim(0, ymax+0.5)+
+  ylim(0, ymax_perc+0.5)+
+  theme_classic() +  # Use a classic theme
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   my_theme
 
@@ -287,7 +281,7 @@ plot_percent_litt_islands <- ggarrange(
 
 plot_percent_litt_islands
 
-ggsave(here::here("c_output/figures/plot_percent_litt_islands.png"), height = 15, width = 7)
+#ggsave(here::here("c_output/figures/plot_percent_litt_islands.png"), height = 13, width = 6)
 
 ```
 
@@ -394,7 +388,13 @@ df_percent_degree_all <- rbind(df_percent_degree_gal, df_percent_degree_can, df_
 df_percent_degree_all <- df_percent_degree_all %>% 
   rename(island = name)
 
+options(scipen = 999)
+
 df_percent_degree_all
+
+
+#write.csv(df_percent_degree_all, here::here("c_output/tables/island_centrality_currents.csv"))
+
 
 ```
 
@@ -409,7 +409,7 @@ cor_centrality_can <- cor(df_percent_degree_all[which(df_percent_degree_all$arch
 cor_centrality_az <- cor(df_percent_degree_all[which(df_percent_degree_all$archipelago == "Azores"), c("in_degree", "out_degree", "closeness", "hubs", "authorities")])
 
 
-plot_cor_centrality_measures <- ggpairs(df_percent_degree_all[,-c(1:3)], aes(color = archipelago),
+plot_cor_centrality_measures <- ggpairs(df_percent_degree_all[,-c(1:2)], aes(color = archipelago),
         columns = 1:6,  # Specify the columns to plot
         lower = 'blank', diag = 'blank',
         upper = list(continuous = wrap("cor", size = 3))) + 
@@ -420,7 +420,7 @@ plot_cor_centrality_measures <- ggpairs(df_percent_degree_all[,-c(1:3)], aes(col
 
 plot_cor_centrality_measures
 
-#ggsave(here::here("c_output/figures/plot_cor_centrality_measures.png"), height = 7, width = 8)
+ggsave(here::here("c_output/figures/plot_cor_centrality_measures.png"), height = 7, width = 8)
 
 ```
 
@@ -533,7 +533,7 @@ plot_perc_litt_centrality <- ggarrange(
 
 plot_perc_litt_centrality
 
-ggsave(here::here("c_output/figures/plot_perc_litt_centrality.png"), height = 9, width = 9)
+#ggsave(here::here("c_output/figures/plot_perc_litt_centrality.png"), height = 9, width = 9)
 
 ```
 
@@ -551,14 +551,13 @@ function to plot the % litt in undirected networks
 ## Undirected networks and % littoral flora
 
 ```{r}
+
+
+
 # Galapagos
 
 df_percent_flora_gal <- df_percent_flora_gal %>% 
   rename(island = Island)
-
-df_percent_flora_gal$island[df_percent_flora_gal$island == "San_Cristobal"] <- "SanCristobal"
-df_percent_flora_gal$island[df_percent_flora_gal$island == "Santa_Cruz"] <- "SantaCruz"
-df_percent_flora_gal$island[df_percent_flora_gal$island == "Santa_Fe"] <- "SantaFe"
 
 plot_network_litt_gal <- plot_network_littoral(weighted_matrix = mat_medianMin_sym_Galapagos,
                       centroids = coord_centroids_gal,
@@ -568,7 +567,7 @@ plot_network_litt_gal <- plot_network_littoral(weighted_matrix = mat_medianMin_s
 
 plot_network_litt_gal
 
-#ggsave(here::here("c_output/figures/network_littoral_gal.png"), height = 8, width = 9)
+ggsave(here::here("c_output/figures/network_littoral_gal.png"), height = 8, width = 9)
 
 
 # Canaries
@@ -584,7 +583,7 @@ plot_network_litt_can <- plot_network_littoral(weighted_matrix = mat_medianMin_s
 
 plot_network_litt_can
 
-#ggsave(here::here("c_output/figures/network_littoral_can.png"), height = 8, width = 9)
+ggsave(here::here("c_output/figures/network_littoral_can.png"), height = 8, width = 9)
 
 
 # Azores
@@ -615,17 +614,13 @@ plot_network_litt_all <- ggarrange(
   plot_network_litt_can + xlab(""),
   plot_network_litt_az+ xlab(""),
   
-  common.legend = TRUE,
-  
   labels = LETTERS[1:3],
-  
-  legend = "top",
   
   ncol = 1,
   nrow = 3
 )
 
-ggsave(here::here("c_output/figures/plot_network_litt_all.png"), height = 12, width = 8)
+#ggsave(here::here("c_output/figures/plot_network_litt_all.png"), height = 12, width = 8)
 
 
 
@@ -824,7 +819,7 @@ plot_network_regr_degree <- ggarrange(
 
 plot_network_regr_degree
 
-ggsave(here::here("c_output/figures/plot_network_regr_degree.png"), height = 12, width = 12)
+#ggsave(here::here("c_output/figures/plot_network_regr_degree.png"), height = 12, width = 12)
 
 
 ```
