@@ -266,12 +266,6 @@ my_theme<-theme(axis.text=element_text(size=12),
 
 
 
-```{r}
-coord_centroids_gal <- read.csv(here::here("b_data/Data_Galapagos/centroids_network_plot.csv"))
-coord_centroids_can <- read.csv(here::here("b_data/Data_Canaries/centroids_network_plot.csv"))
-coord_centroids_az <- read.csv(here::here("b_data/Data_Azores/centroids_network_plot.csv"))
-```
-
 
 
 
@@ -404,6 +398,15 @@ plot_cor_centrality_measures
 
 
 ## Plot correlations % flora and centrality measures
+
+
+```{r}
+coord_centroids_gal <- read.csv(here::here("b_data/Data_Galapagos/centroids_network_plot.csv"))
+coord_centroids_can <- read.csv(here::here("b_data/Data_Canaries/centroids_network_plot.csv"))
+coord_centroids_az <- read.csv(here::here("b_data/Data_Azores/centroids_network_plot.csv"))
+```
+
+
 
 ```{r}
 back_transform_log <- function(x) {
