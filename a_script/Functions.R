@@ -544,24 +544,23 @@ plot_network_littoral <- function(weighted_matrix, centroids, node_size, percent
   # Convert the matrix to an igraph object
   g <- graph_from_adjacency_matrix(weighted_matrix, mode = "undirected", weighted = TRUE)
   
-  # Handle zero weights to avoid division by zero
-  #E(g)$weight[E(g)$weight == 0] <- NA
   
   # Create a data frame from the igraph object
-  node_list <- data.frame(name = V(g)$name)
+  node_list <- data.frame(name = V(g)$name)%>% 
+    rename(island = name)
   
   # Merge the coordinates with the node list
-  node_list <- merge(node_list, centroids, by.x = "name", by.y = "island", all.x = TRUE)
+  node_list <- merge(node_list, centroids, by = "island")
   
   # Merge with percent_littoral dataframe
-  node_list <- merge(node_list, percent_littoral, by.x = "name", by.y = "island", all.x = TRUE)
+  node_list <- merge(node_list, percent_littoral, by = "island")
   
   # Ensure no missing coordinates
   node_list <- na.omit(node_list)
   
   # Ensure the graph vertices match the coordinates names
   V(g)$name <- as.character(V(g)$name)
-  node_list$name <- as.character(node_list$name)
+  node_list$name <- as.character(node_list$island)
   
   # Convert the igraph object to a tidygraph object
   tg <- as_tbl_graph(g)
@@ -606,12 +605,12 @@ plot_network_littoral <- function(weighted_matrix, centroids, node_size, percent
     labs(x = "Longitude",
          y = "Latitude",
          edge_width = "Normalized connectivity") +
-    guides(color = guide_colorbar(barwidth = 8, barheight = 1,
-                                  title.position = "top", label.position = "bottom",
+    guides(color = guide_colorbar(barwidth = 1, barheight = 8,
+                                  title.position = "top", label.position = "left",
                                   title.hjust = 0.5,
                                   ticks = FALSE,
                                   breaks = seq(0, 100, by = 20))) + # Customize legend breaks and labels
-    theme(legend.position = "bottom") +
+    theme(legend.position = "right") +
     my_theme
   
   return(netplot_degree)
