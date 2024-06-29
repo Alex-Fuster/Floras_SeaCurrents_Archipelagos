@@ -21,6 +21,19 @@ source("Functions.R")
 ```
 
 
+parameters for plotting
+
+```{r}
+my_theme<-theme(axis.text=element_text(size=12),
+        axis.title = element_text(size = 14),
+        legend.text=element_text(size=10),
+        legend.title = element_text(size=12),
+        plot.title = element_text(face="bold",size=14,margin=margin(0,0,20,0),hjust = 0.5),
+        axis.title.y = element_text(hjust = 0.5),
+        axis.title.x = element_text(hjust = 0.5))
+```
+
+
 
 Read directed matrices
 
@@ -44,7 +57,7 @@ mat_medianMin_sym_Azores <- readRDS(here::here("c_output/current_conn_matrices/m
 
 
 
-## compute % thalassochorous and % littoral species in floras
+## compute % littoral species in floras
 
 ```{r}
 data_Galapagos <- read_csv(here::here("b_data/Data_Galapagos/data_galapagos.csv"), col_names = TRUE, trim_ws = TRUE)
@@ -90,7 +103,6 @@ island_cols <- c("Espanola", "Fernandina", "Floreana", "Genovesa", "Isabela", "M
 # Initialize a dataframe to store the results
 results <- data.frame(
   Island = character(),
-  Percent_Thalassochorous = numeric(),
   Percent_Littoral = numeric(),
   Total_Species = integer(),
   stringsAsFactors = FALSE
@@ -104,10 +116,6 @@ for (island in island_cols) {
   # Calculate the total number of species in the island
   total_species <- nrow(species_in_island)
   
-  # Calculate the percentage of thalassochorous species
-  thalassochorous_species <- species_in_island[species_in_island$THA %in% c(0.5, 1), ]
-  percent_thalassochorous <- (nrow(thalassochorous_species) / total_species) * 100
-  
   # Calculate the percentage of littoral species
   littoral_species <- species_in_island[species_in_island$littoral %in% c("exclusive", "presence"), ]
   percent_littoral <- (nrow(littoral_species) / total_species) * 100
@@ -115,7 +123,6 @@ for (island in island_cols) {
   # Add the results to the dataframe
   results <- rbind(results, data.frame(
     Island = island,
-    Percent_Thalassochorous = percent_thalassochorous,
     Percent_Littoral = percent_littoral,
     Total_Species = total_species,
     stringsAsFactors = FALSE
@@ -137,7 +144,6 @@ island_cols <- c("El_Hierro", "La_Palma", "La_Gomera", "Tenerife", "Gran_Canaria
 # Initialize a dataframe to store the results
 results <- data.frame(
   Island = character(),
-  Percent_Thalassochorous = numeric(),
   Percent_Littoral = numeric(),
   Total_Species = integer(),
   stringsAsFactors = FALSE
@@ -151,10 +157,6 @@ for (island in island_cols) {
   # Calculate the total number of species in the island
   total_species <- nrow(species_in_island)
   
-  # Calculate the percentage of thalassochorous species
-  thalassochorous_species <- species_in_island[species_in_island$thalassochory %in% c(0.5, 1), ]
-  percent_thalassochorous <- (nrow(thalassochorous_species) / total_species) * 100
-  
   # Calculate the percentage of littoral species
   littoral_species <- species_in_island[species_in_island$littoral %in% c("exclusive", "presence"), ]
   percent_littoral <- (nrow(littoral_species) / total_species) * 100
@@ -162,7 +164,6 @@ for (island in island_cols) {
   # Add the results to the dataframe
   results <- rbind(results, data.frame(
     Island = island,
-    Percent_Thalassochorous = percent_thalassochorous,
     Percent_Littoral = percent_littoral,
     Total_Species = total_species,
     stringsAsFactors = FALSE
@@ -184,7 +185,6 @@ island_cols <- c("SantaMaria", "SaoMiguel", "Terceira", "Graciosa", "SaoJorge", 
 # Initialize a dataframe to store the results
 results <- data.frame(
   Island = character(),
-  Percent_Thalassochorous = numeric(),
   Percent_Littoral = numeric(),
   Total_Species = integer(),
   stringsAsFactors = FALSE
@@ -198,10 +198,6 @@ for (island in island_cols) {
   # Calculate the total number of species in the island
   total_species <- nrow(species_in_island)
   
-  # Calculate the percentage of thalassochorous species
-  thalassochorous_species <- species_in_island[species_in_island$THA %in% c("0.5", "1", "0.33"), ]
-  percent_thalassochorous <- (nrow(thalassochorous_species) / total_species) * 100
-  
   # Calculate the percentage of littoral species
   littoral_species <- species_in_island[species_in_island$littoral %in% "1", ]
   percent_littoral <- (nrow(littoral_species) / total_species) * 100
@@ -209,7 +205,6 @@ for (island in island_cols) {
   # Add the results to the dataframe
   results <- rbind(results, data.frame(
     Island = island,
-    Percent_Thalassochorous = percent_thalassochorous,
     Percent_Littoral = percent_littoral,
     Total_Species = total_species,
     stringsAsFactors = FALSE
@@ -221,29 +216,79 @@ df_percent_flora_az <- results
 ```
 
 
-Raw plots % tha and % littoral
+Raw plots % littoral
 
 
 ```{r}
 
 
-# Convert df_percent_flora_az to long format for ggplot
-df_percent_flora_az_long <- reshape2::melt(df_percent_flora_az, id.vars = c("Island", "Total_Species"), 
-                                           variable.name = "Species_Type", 
-                                           value.name = "Percentage")
+# Reorder Island factor based on Percentage in descending order
+df_percent_flora_gal_long$Island <- factor(df_percent_flora_gal_long$Island, 
+                                           levels = df_percent_flora_gal_long$Island[order(df_percent_flora_gal_long$Percentage, decreasing = TRUE)])
 
-# Create the barplot
-ggplot(df_percent_flora_az_long, aes(x = Island, y = Percentage, fill = Species_Type)) +
-  geom_bar(stat = "identity", position = position_dodge(width = 0.9), width = 0.7) +
-  geom_text(data = df_percent_flora_az_long, aes(x = Island, y = max(df_percent_flora_az_long$Percentage) + 2, 
+df_percent_flora_can_long$Island <- factor(df_percent_flora_can_long$Island, 
+                                           levels = df_percent_flora_can_long$Island[order(df_percent_flora_can_long$Percentage, decreasing = TRUE)])
+
+df_percent_flora_az_long$Island <- factor(df_percent_flora_az_long$Island, 
+                                          levels = df_percent_flora_az_long$Island[order(df_percent_flora_az_long$Percentage, decreasing = TRUE)])
+
+
+ymax = max(c(df_percent_flora_gal_long$Percentage, df_percent_flora_can_long$Percentage, df_percent_flora_az_long$Percentage))
+
+
+# Create plots with reordered dataframes
+plot_gal <- ggplot(df_percent_flora_gal_long, aes(x = Island, y = Percentage)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9), width = 0.7, fill = "#1f78b4") +
+  geom_text(data = df_percent_flora_gal_long, aes(x = Island, y = ymax + 0.5, 
                                             label =  Total_Species),
             color = "black", size = 4, vjust = -0.5) +
-  labs(title = "Azores",
-       x = NULL,
-       y = "Percentage",
-       fill = "Flora") +
+  labs(x = NULL,
+       y = "% littoral species") +
   theme_classic() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  ylim(0, ymax+0.5)+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  my_theme
+
+plot_can <- ggplot(df_percent_flora_can_long, aes(x = Island, y = Percentage)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9), width = 0.7, fill = "#33a02c") +
+  geom_text(data = df_percent_flora_can_long, aes(x = Island, y = ymax + 0.5, 
+                                            label =  Total_Species),
+            color = "black", size = 4, vjust = -0.5) +
+  labs(x = NULL,
+       y = "% littoral species") +
+  theme_classic() +
+  ylim(0, ymax+0.5)+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  my_theme
+
+plot_az <- ggplot(df_percent_flora_az_long, aes(x = Island, y = Percentage)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9), width = 0.7, fill = "#e31a1c") +
+  geom_text(data = df_percent_flora_az_long, aes(x = Island, y = ymax + 0.5, 
+                                            label =  Total_Species),
+            color = "black", size = 4, vjust = -0.5) +
+  labs(x = NULL,
+       y = "% littoral species") +
+  theme_classic() +
+  ylim(0, ymax+0.5)+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  my_theme
+
+
+plot_percent_litt_islands <- ggarrange(
+  plot_gal,
+  plot_can,
+  plot_az,
+  
+  labels = LETTERS[1:3],
+  
+  nrow = 3,
+  ncol = 1
+)
+
+plot_percent_litt_islands
+
+ggsave(here::here("c_output/figures/plot_percent_litt_islands.png"), height = 15, width = 7)
+
 ```
 
 
@@ -252,24 +297,8 @@ ggplot(df_percent_flora_az_long, aes(x = Island, y = Percentage, fill = Species_
 
 ## Plot networks
 
-parameters for plotting
 
-```{r}
-my_theme<-theme(axis.text=element_text(size=12),
-        axis.title = element_text(size = 14),
-        legend.text=element_text(size=10),
-        legend.title = element_text(size=12),
-        plot.title = element_text(face="bold",size=14,margin=margin(0,0,20,0),hjust = 0.5),
-        axis.title.y = element_text(hjust = 0.5),
-        axis.title.x = element_text(hjust = 0.5))
-```
-
-
-
-
-
-
-# % flora ~ Degree
+# % littoral ~ Degree
 
 We use the inverted weights to consider the degree strenghts, as we are taking into account the sea currents network.
 
@@ -285,7 +314,7 @@ compute_df_percent_flora_degree <- function(mat_min_conn_currents, df_percent) {
   node_list <- data.frame(name = V(g)$name)
   
    # Merge the coordinates with the node list
-  node_list <- merge(node_list, df_percent[,c("Island", "Percent_Littoral", "Percent_Thalassochorous")], by.x = "name", by.y = "Island", all.x = TRUE)
+  node_list <- merge(node_list, df_percent[,c("Island", "Percent_Littoral")], by.x = "name", by.y = "Island", all.x = TRUE)
   
   # Ensure the graph vertices match the island names
   V(g)$name <- as.character(V(g)$name)
@@ -397,7 +426,7 @@ plot_cor_centrality_measures
 
 
 
-## Plot correlations % flora and centrality measures
+## Plot correlations % littoral and centrality measures
 
 
 ```{r}
@@ -428,19 +457,19 @@ max_perc_litt <- max(df_percent_degree_all$Percent_Littoral)
 # Galapagos 
 
 plot_litt_degree_gal <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Galapagos",], aes(x = in_degree, y = Percent_Littoral)) +
-  geom_point(size = 3, color = "#1f78b4") + # Add points
-  geom_smooth(method = "lm", se = FALSE, color = "#1f78b4") + # Add trend lines
-  labs(x = "In-degree centrality from\n sea currents network", y = "% littoral plants in lowland") +
+  geom_point(size = 5, fill = "gray40", colour="white",pch=21, size=2) + # Add points
+  geom_smooth(method = "lm", se = FALSE, color = "black") + # Add trend lines
+  labs(x = "In-degree centrality", y = "% littoral plants in lowland") +
   ylim(0,max_perc_litt+1)+
   theme_classic() + # Use a minimal theme
   my_theme
 
 
 plot_litt_authority_gal <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Galapagos",], aes(x = log(authorities), y = Percent_Littoral)) +
-  geom_point(size = 3, color = "#1f78b4") + # Add points
-  geom_smooth(method = "lm", se = FALSE, color = "#1f78b4") + # Add trend lines
+  geom_point(size = 5, fill = "gray40", colour="white",pch=21, size=2) + # Add points
+  geom_smooth(method = "lm", se = FALSE, color = "black") + # Add trend lines
       scale_x_continuous(labels = function(x) sprintf("%.2f", back_transform_log(x))) +
-  labs(x = "Authority centrality from\n sea currents network", y = "% littoral plants in lowland") +
+  labs(x = "Authority centrality", y = "% littoral plants in lowland") +
   ylim(0,max_perc_litt+1)+
   theme_classic() + # Use a minimal theme
   my_theme
@@ -449,20 +478,20 @@ plot_litt_authority_gal <- ggplot(df_percent_degree_all[df_percent_degree_all$ar
 # Canaries 
 
 plot_litt_degree_can <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Canaries",], aes(x = log(in_degree), y = Percent_Littoral)) +
-  geom_point(size = 3, color = "#33a02c") + # Add points
-  geom_smooth(method = "lm", se = FALSE, color = "#33a02c") + # Add trend lines
+  geom_point(size = 5, fill = "gray40", colour="white",pch=21, size=2) + # Add points
+  geom_smooth(method = "lm", se = FALSE, color = "black") + # Add trend lines
    scale_x_continuous(labels = function(x) sprintf("%.2f", back_transform_log(x))) +
-  labs(x = "In-degree centrality from\n sea currents network", y = "% littoral plants in lowland") +
+  labs(x = "In-degree centrality", y = "% littoral plants in lowland") +
   ylim(0,max_perc_litt+1)+
   theme_classic() + # Use a minimal theme
   my_theme
 
 
 plot_litt_authority_can <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Canaries",], aes(x = log(authorities), y = Percent_Littoral)) +
-  geom_point(size = 3, color = "#33a02c") + # Add points
-  geom_smooth(method = "lm", se = FALSE, color = "#33a02c") + # Add trend lines
+  geom_point(size = 5, fill = "gray40", colour="white",pch=21, size=2) + # Add points
+  geom_smooth(method = "lm", se = FALSE, color = "black") + # Add trend lines
       scale_x_continuous(labels = function(x) sprintf("%.3f", back_transform_log(x))) +
-  labs(x = "Authority centrality from\n sea currents network", y = "% littoral plants in lowland") +
+  labs(x = "Authority centrality", y = "% littoral plants in lowland") +
   ylim(0,max_perc_litt+1)+
   theme_classic() + # Use a minimal theme
   my_theme
@@ -471,22 +500,23 @@ plot_litt_authority_can <- ggplot(df_percent_degree_all[df_percent_degree_all$ar
 # Azores 
 
 plot_litt_degree_az <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Azores",], aes(x = in_degree, y = Percent_Littoral)) +
-  geom_point(size = 3, color = "#e31a1c") + # Add points
-  geom_smooth(method = "lm", se = FALSE, color = "#e31a1c") + # Add trend lines
-  labs(x = "In-degree centrality from\n sea currents network", y = "% littoral plants in lowland") +
+  geom_point(size = 5, fill = "gray40", colour="white",pch=21, size=2) + # Add points
+  geom_smooth(method = "lm", se = FALSE, color = "black") + # Add trend lines
+  labs(x = "In-degree centrality", y = "% littoral plants in lowland") +
   ylim(0,max_perc_litt+1)+
   theme_classic() + # Use a minimal theme
   my_theme
 
 
 plot_litt_authority_az <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Azores",], aes(x = log(authorities), y = Percent_Littoral)) +
-  geom_point(size = 3, color = "#e31a1c") + # Add points
-  geom_smooth(method = "lm", se = FALSE, color = "#e31a1c") + # Add trend lines
+  geom_point(size = 5, fill = "gray40", colour="white",pch=21, size=2) + # Add points
+  geom_smooth(method = "lm", se = FALSE, color = "black") + # Add trend lines
       scale_x_continuous(labels = function(x) sprintf("%.2f", back_transform_log(x))) +
-  labs(x = "Authority centrality from\n sea currents network", y = "% littoral plants in lowland") +
+  labs(x = "Authority centrality", y = "% littoral plants in lowland") +
   ylim(0,max_perc_litt+1)+
   theme_classic() + # Use a minimal theme
   my_theme
+
 
 
 
@@ -503,107 +533,9 @@ plot_perc_litt_centrality <- ggarrange(
 
 plot_perc_litt_centrality
 
-#ggsave(here::here("c_output/figures/plot_perc_litt_centrality.png"), height = 9, width = 9)
+ggsave(here::here("c_output/figures/plot_perc_litt_centrality.png"), height = 9, width = 9)
 
 ```
-
-
-% Thalassochory & centrality
-
-```{r}
-
-# maximum %
-
-max_perc_tha <- max(df_percent_degree_all$Percent_Thalassochorous)
-
-
-# Galapagos 
-
-plot_tha_degree_gal <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Galapagos",], aes(x = in_degree, y = Percent_Thalassochorous)) +
-  geom_point(size = 3, color = "#1f78b4") + # Add points
-  geom_smooth(method = "lm", se = FALSE, color = "#1f78b4") + # Add trend lines
-  labs(x = "In-degree centrality from\n sea currents network", y = "% thalassochorous plants in lowland") +
-  ylim(0,max_perc_tha+1)+
-  theme_classic() + # Use a minimal theme
-  my_theme
-
-
-plot_tha_authority_gal <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Galapagos",], aes(x = log(authorities), y = Percent_Thalassochorous)) +
-  geom_point(size = 3, color = "#1f78b4") + # Add points
-  geom_smooth(method = "lm", se = FALSE, color = "#1f78b4") + # Add trend lines
-      scale_x_continuous(labels = function(x) sprintf("%.2f", back_transform_log(x))) +
-  labs(x = "Authority centrality from\n sea currents network", y = "% thalassochorous plants in lowland") +
-  ylim(0,max_perc_tha+1)+
-  theme_classic() + # Use a minimal theme
-  my_theme
-
-
-# Canaries 
-
-plot_tha_degree_can <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Canaries",], aes(x = log(in_degree), y = Percent_Thalassochorous)) +
-  geom_point(size = 3, color = "#33a02c") + # Add points
-  geom_smooth(method = "lm", se = FALSE, color = "#33a02c") + # Add trend lines
-   scale_x_continuous(labels = function(x) sprintf("%.2f", back_transform_log(x))) +
-  labs(x = "In-degree centrality from\n sea currents network", y = "% thalassochorous plants in lowland") +
-  ylim(0,max_perc_tha+1)+
-  theme_classic() + # Use a minimal theme
-  my_theme
-
-
-plot_tha_authority_can <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Canaries",], aes(x = log(authorities), y = Percent_Thalassochorous)) +
-  geom_point(size = 3, color = "#33a02c") + # Add points
-  geom_smooth(method = "lm", se = FALSE, color = "#33a02c") + # Add trend lines
-      scale_x_continuous(labels = function(x) sprintf("%.3f", back_transform_log(x))) +
-  labs(x = "Authority centrality from\n sea currents network", y = "% thalassochorous plants in lowland") +
-  ylim(0,max_perc_tha+1)+
-  theme_classic() + # Use a minimal theme
-  my_theme
-
-
-# Azores 
-
-plot_tha_degree_az <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Azores",], aes(x = in_degree, y = Percent_Thalassochorous)) +
-  geom_point(size = 3, color = "#e31a1c") + # Add points
-  geom_smooth(method = "lm", se = FALSE, color = "#e31a1c") + # Add trend lines
-  labs(x = "In-degree centrality from\n sea currents network", y = "% thalassochorous plants in lowland") +
-  ylim(0,max_perc_tha+1)+
-  theme_classic() + # Use a minimal theme
-  my_theme
-
-
-plot_tha_authority_az <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Azores",], aes(x = log(authorities), y = Percent_Thalassochorous)) +
-  geom_point(size = 3, color = "#e31a1c") + # Add points
-  geom_smooth(method = "lm", se = FALSE, color = "#e31a1c") + # Add trend lines
-      scale_x_continuous(labels = function(x) sprintf("%.2f", back_transform_log(x))) +
-  labs(x = "Authority centrality from\n sea currents network", y = "% thalassochorous plants in lowland") +
-  ylim(0,max_perc_tha+1)+
-  theme_classic() + # Use a minimal theme
-  my_theme
-
-
-
-plot_perc_tha_centrality <- ggarrange(
-  plot_tha_degree_gal+ labs(title = ""), plot_tha_degree_can + ylab(NULL)+ labs(title = ""), plot_tha_degree_az + ylab(NULL)+ labs(title = ""),
-  plot_tha_authority_gal+ labs(title = ""), plot_tha_authority_can + ylab(NULL)+ labs(title = ""), plot_tha_authority_az + ylab(NULL)+ labs(title = ""),
-  
-  ncol = 3,
-  nrow = 2,
-  
-  labels = LETTERS[1:6]
-)
-
-
-plot_perc_tha_centrality
-
-#ggsave(here::here("c_output/figures/plot_perc_tha_centrality.png"), height = 9, width = 9)
-
-```
-
-
-
-run model?
-
-
 
 
 
@@ -628,11 +560,13 @@ df_percent_flora_gal$island[df_percent_flora_gal$island == "San_Cristobal"] <- "
 df_percent_flora_gal$island[df_percent_flora_gal$island == "Santa_Cruz"] <- "SantaCruz"
 df_percent_flora_gal$island[df_percent_flora_gal$island == "Santa_Fe"] <- "SantaFe"
 
-plot_network_littoral(weighted_matrix = mat_medianMin_sym_Galapagos,
+plot_network_litt_gal <- plot_network_littoral(weighted_matrix = mat_medianMin_sym_Galapagos,
                       centroids = coord_centroids_gal,
                       node_size = 8,
-                      percent_littoral = df_percent_flora_gal[,c(1,3)],
+                      percent_littoral = df_percent_flora_gal[,c(1,2)],
                       scale = "none")
+
+plot_network_litt_gal
 
 #ggsave(here::here("c_output/figures/network_littoral_gal.png"), height = 8, width = 9)
 
@@ -642,11 +576,13 @@ plot_network_littoral(weighted_matrix = mat_medianMin_sym_Galapagos,
 df_percent_flora_can <- df_percent_flora_can %>% 
   rename(island = Island)
 
-plot_network_littoral(weighted_matrix = mat_medianMin_sym_Canaries,
+plot_network_litt_can <- plot_network_littoral(weighted_matrix = mat_medianMin_sym_Canaries,
                       centroids = coord_centroids_can,
                       node_size = 8,
-                      percent_littoral = df_percent_flora_can[,c(1,3)],
+                      percent_littoral = df_percent_flora_can[,c(1,2)],
                       scale = "log_scale")
+
+plot_network_litt_can
 
 #ggsave(here::here("c_output/figures/network_littoral_can.png"), height = 8, width = 9)
 
@@ -656,15 +592,48 @@ plot_network_littoral(weighted_matrix = mat_medianMin_sym_Canaries,
 df_percent_flora_az <- df_percent_flora_az %>% 
   rename(island = Island)
 
-plot_network_littoral(weighted_matrix = mat_medianMin_sym_Azores,
+plot_network_litt_az <- plot_network_littoral(weighted_matrix = mat_medianMin_sym_Azores,
                       centroids = coord_centroids_az,
                       node_size = 8,
-                      percent_littoral = df_percent_flora_az[,c(1,3)],
+                      percent_littoral = df_percent_flora_az[,c(1,2)],
                       scale = "sqrt_scale")
+
+plot_network_litt_az
 
 #ggsave(here::here("c_output/figures/network_littoral_az.png"), height = 8, width = 9)
 
 ```
+
+
+Plot combined network littoral
+
+```{r}
+
+
+plot_network_litt_all <- ggarrange(
+  plot_network_litt_gal,
+  plot_network_litt_can + xlab(""),
+  plot_network_litt_az+ xlab(""),
+  
+  common.legend = TRUE,
+  
+  labels = LETTERS[1:3],
+  
+  legend = "top",
+  
+  ncol = 1,
+  nrow = 3
+)
+
+ggsave(here::here("c_output/figures/plot_network_litt_all.png"), height = 12, width = 8)
+
+
+
+```
+
+
+
+
 
 
 
@@ -698,7 +667,7 @@ Plots
 
 # Galapagos
 
-plot_network_in_degree(weighted_matrix = mat_medianMin_sym_Galapagos, 
+plot_network_degree_gal <- plot_network_in_degree(weighted_matrix = mat_medianMin_sym_Galapagos, 
                        centroids = coord_centroids_gal, 
                        df_degree = df_degree_gal,
                        node_size = 8,
@@ -706,6 +675,7 @@ plot_network_in_degree(weighted_matrix = mat_medianMin_sym_Galapagos,
                       scale_edge = "none",
                       scale_degree = "none")
 
+plot_network_degree_gal
 
 #ggsave(here::here("c_output/figures/network_degree_gal.png"), height = 8, width = 9)
 
@@ -714,13 +684,20 @@ plot_network_in_degree(weighted_matrix = mat_medianMin_sym_Galapagos,
 # Canaries
 
 
-plot_network_in_degree(weighted_matrix = mat_medianMin_sym_Canaries, 
+plot_network_degree_can <- plot_network_in_degree(weighted_matrix = mat_medianMin_sym_Canaries, 
                        centroids = coord_centroids_can, 
                        df_degree = df_degree_can,
                        node_size = 8,
                       percent_littoral = df_percent_flora_can[,c(1,3)],
                       scale_edge = "log_scale",
-                      scale_degree = "log_scale")
+                      scale_degree = "log_scale")+
+    scale_color_viridis(
+    name = "In-degree centrality", 
+    option = "turbo", 
+    labels = function(x) sprintf("%.2f", back_transform_log(x),3))
+  
+
+plot_network_degree_can
 
 
 #ggsave(here::here("c_output/figures/network_degree_can.png"), height = 8, width = 9)
@@ -729,13 +706,15 @@ plot_network_in_degree(weighted_matrix = mat_medianMin_sym_Canaries,
 # Azores
 
 
-plot_network_in_degree(weighted_matrix = mat_medianMin_sym_Azores, 
+plot_network_degree_az <- plot_network_in_degree(weighted_matrix = mat_medianMin_sym_Azores, 
                        centroids = coord_centroids_az, 
                        df_degree = df_degree_az,
                        node_size = 8,
                       percent_littoral = df_percent_flora_az[,c(1,3)],
                       scale_edge = "sqrt_scale",
                       scale_degree = "none")
+
+plot_network_degree_az
 
 
 #ggsave(here::here("c_output/figures/network_degree_az.png"), height = 8, width = 9)
@@ -745,6 +724,110 @@ plot_network_in_degree(weighted_matrix = mat_medianMin_sym_Azores,
 
 
 
+
+Plot combined network & regression degree
+
+```{r}
+
+
+plot_regr_centrality_gal <- ggarrange(
+  
+  plot_litt_degree_gal + ylab(NULL), NULL,
+plot_litt_authority_gal+ ylab(NULL), NULL,
+nrow = 2,
+ncol = 2,
+
+widths = c(1.6, 1)
+)
+
+plot_regr_centrality_gal <- annotate_figure(
+  plot_regr_centrality_gal,
+  left = text_grob("% littoral species", rot = 90, vjust = 0.5, hjust = 0.5, size = 16)
+)
+
+plot_regr_centrality_can <- ggarrange(
+  
+  plot_litt_degree_can+ ylab(NULL), NULL,
+plot_litt_authority_can+ ylab(NULL), NULL,
+nrow = 2,
+ncol = 2,
+
+widths = c(1.6, 1)
+)
+
+plot_regr_centrality_can <- annotate_figure(
+  plot_regr_centrality_can,
+  left = text_grob("% littoral species", rot = 90, vjust = 0.5, hjust = 0.5, size = 16)
+)
+
+
+plot_regr_centrality_az <- ggarrange(
+  
+  plot_litt_degree_az+ ylab(NULL), NULL,
+plot_litt_authority_az+ ylab(NULL),NULL,
+nrow = 2,
+ncol = 2,
+
+widths = c(1.6, 1)
+)
+
+plot_regr_centrality_az <- annotate_figure(
+  plot_regr_centrality_az,
+  left = text_grob("% littoral species", rot = 90, vjust = 0.5, hjust = 0.5, size = 16)
+)
+
+
+#############################
+
+
+
+
+plot_network_regr_degree <- ggarrange(
+  
+      plot_network_degree_gal + theme(legend.position = "left") +
+    scale_color_viridis(name = "In-degree\n centrality", option = "turbo")+
+    guides(color = guide_colorbar(barwidth = 1, barheight = 8,
+                                  title.position = "top", label.position = "left",
+                                  title.hjust = 0.5,
+                                  ticks = FALSE,
+                                  breaks = seq(0, 100, by = 20))) 
+  , plot_regr_centrality_gal,
+  
+    plot_network_degree_can + theme(legend.position = "left") +
+    scale_color_viridis(
+    name = "In-degree\n centrality", 
+    option = "turbo", 
+    labels = function(x) sprintf("%.2f", back_transform_log(x),3))+
+    guides(color = guide_colorbar(barwidth = 1, barheight = 8,
+                                  title.position = "top", label.position = "left",
+                                  title.hjust = 0.5,
+                                  ticks = FALSE,
+                                  breaks = seq(0, 100, by = 20))) 
+  , plot_regr_centrality_can,
+  
+  plot_network_degree_az + theme(legend.position = "left") +
+    scale_color_viridis(name = "In-degree\n centrality", option = "turbo")+
+    guides(color = guide_colorbar(barwidth = 1, barheight = 8,
+                                  title.position = "top", label.position = "left",
+                                  title.hjust = 0.5,
+                                  ticks = FALSE,
+                                  breaks = seq(0, 100, by = 20))) 
+  , plot_regr_centrality_az,
+  
+  ncol = 2,
+  nrow = 3,
+  
+  labels = LETTERS[1:6],
+  
+  widths = c(2, 1)
+)
+
+plot_network_regr_degree
+
+ggsave(here::here("c_output/figures/plot_network_regr_degree.png"), height = 12, width = 12)
+
+
+```
 
 
 

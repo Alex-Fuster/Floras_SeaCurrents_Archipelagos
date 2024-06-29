@@ -1,0 +1,548 @@
+---
+title: "Mantel test Galapagos - Floristic & Currents conectivity"
+---
+
+In this script, we will convert the obtained floristic and currents matrices (floristic dissimilatiry matrix and oceanic current connectivity matrix) into distance matrices and perform a Procrustes analyses to explore their correlation and answer whether highly sea-current-connected islands more floristicaly similar. 
+
+We will also analyze whether floristic similarities are related to geographic, area, and age distance between islands.
+
+```{r}
+library(ade4)
+library(vegan)
+library(tidyverse)
+library(cluster)
+library(dplyr)
+library(tidyverse)
+library(cluster)
+library(ggplot2)
+library(reshape2)
+library(viridis)
+library(ggpubr)
+source(here::here("a_script/Functions.R"))
+```
+
+Parameters for plotting
+
+```{r}
+my_theme<-theme(axis.text=element_text(size=12),
+        axis.title = element_text(size = 14),
+        legend.text=element_text(size=10),
+        legend.title = element_text(size=12),
+        plot.title = element_text(face="bold",size=14,margin=margin(0,0,20,0),hjust = 0.5),
+        axis.title.y = element_text(hjust = 0.5),
+        axis.title.x = element_text(hjust = 0.5))
+```
+
+
+#### Load floristic distances
+
+
+```{r}
+
+# Galapagos
+
+dist_mat_all_litt_gal <- as.matrix(read_rds(here::here("c_output/floristic_dist_matrices/dist_mat_all_litt_gal.rds")))
+dist_mat_all_nolitt_gal <- as.matrix(read_rds(here::here("c_output/floristic_dist_matrices/dist_mat_all_nolitt_gal.rds")))
+
+# Canaries
+
+dist_mat_all_litt_can <- as.matrix(read_rds(here::here("c_output/floristic_dist_matrices/dist_mat_all_litt_can.rds")))
+dist_mat_all_nolitt_can <- as.matrix(read_rds(here::here("c_output/floristic_dist_matrices/dist_mat_all_nolitt_can.rds")))
+
+# Azores
+
+dist_mat_all_litt_az <- as.matrix(read_rds(here::here("c_output/floristic_dist_matrices/dist_mat_all_litt_az.rds")))
+dist_mat_all_nolitt_az <- as.matrix(read_rds(here::here("c_output/floristic_dist_matrices/dist_mat_all_nolitt_az.rds")))
+
+```
+
+
+
+Order rows and columns and convert matrices to distance objects
+
+```{r}
+
+# Galapagos
+
+
+dist_mat_all_litt_gal <- dist_mat_all_litt_gal[order(rownames(dist_mat_all_litt_gal)), order(colnames(dist_mat_all_litt_gal))]
+dist_mat_all_nolitt_gal <- dist_mat_all_nolitt_gal[order(rownames(dist_mat_all_nolitt_gal)), order(colnames(dist_mat_all_nolitt_gal))]
+
+# Canaries
+
+
+dist_mat_all_litt_can <- dist_mat_all_litt_can[order(rownames(dist_mat_all_litt_can)), order(colnames(dist_mat_all_litt_can))]
+dist_mat_all_nolitt_can <- dist_mat_all_nolitt_can[order(rownames(dist_mat_all_nolitt_can)), order(colnames(dist_mat_all_nolitt_can))]
+
+
+# Azores
+
+
+dist_mat_all_litt_az <- dist_mat_all_litt_az[order(rownames(dist_mat_all_litt_az)), order(colnames(dist_mat_all_litt_az))]
+dist_mat_all_nolitt_az <- dist_mat_all_nolitt_az[order(rownames(dist_mat_all_nolitt_az)), order(colnames(dist_mat_all_nolitt_az))]
+```
+
+
+#### Load current distances
+
+```{r}
+mat_medianMin_sym_Galapagos <- read_rds(here::here("c_output/current_conn_matrices/mat_medianMin_sym_Galapagos.rds"))
+mat_medianMin_sym_Canaries <- read_rds(here::here("c_output/current_conn_matrices/mat_medianMin_sym_Canaries.rds"))
+mat_medianMin_sym_Azores <- read_rds(here::here("c_output/current_conn_matrices/mat_medianMin_sym_Azores.rds"))
+```
+
+
+
+
+#### Load currents geographic matrices and convert to distance objects [TODO]
+
+```{r}
+
+mat_geo_gal <- read.csv(here::here("b_data/Data_Galapagos/geographic_distance_galap.csv"))
+rownames(mat_geo_gal) <- mat_geo_gal[,1]
+mat_geo_gal<-mat_geo_gal[,-1]
+
+mat_geo_can <- read.csv(here::here("b_data/Data_Canaries/geographic_distance_canaries.csv"))
+rownames(mat_geo_can) <- mat_geo_can[,1]
+mat_geo_can<-mat_geo_can[,-1]
+
+mat_geo_az <- read.csv(here::here("b_data/Data_Azores/geographic_distance_azores.csv"))
+rownames(mat_geo_az) <- mat_geo_az[,1]
+mat_geo_az<-mat_geo_az[,-1]
+
+
+```
+
+
+Order names and convert to matrices
+
+```{r}
+mat_geo_gal <- as.matrix(mat_geo_gal[order(rownames(mat_geo_gal)), order(colnames(mat_geo_gal))])
+
+mat_geo_can <- as.matrix(mat_geo_can[order(rownames(mat_geo_can)), order(colnames(mat_geo_can))])
+
+mat_geo_az <- as.matrix(mat_geo_az[order(rownames(mat_geo_az)), order(colnames(mat_geo_az))])
+
+```
+
+
+
+
+#### Load island area matrices and convert to distance objects
+
+Area
+
+```{r}
+df_area<-read.csv(here::here("b_data/Data_Galapagos/area_islands_galap.csv"))
+df_area1<-column_to_rownames(df_area, 'X')
+
+mat_area_gal <-as.matrix(daisy(df_area1, metric="euclidean"))
+
+
+
+df_area<-read.csv(here::here("b_data/Data_Canaries/area_islands_canaries.csv"))
+df_area1<-column_to_rownames(df_area, 'X')
+
+mat_area_can <-as.matrix(daisy(df_area1, metric="euclidean"))
+
+
+df_area<-read.csv(here::here("b_data/Data_Azores/area_islands_azores.csv"))
+df_area1<-column_to_rownames(df_area, 'X')
+
+mat_area_az <-as.matrix(daisy(df_area1, metric="euclidean"))
+```
+
+
+
+Ages
+
+```{r}
+df_age<-read.csv(here::here("b_data/Data_Galapagos/ages_islands_galap.csv"), sep = ";")
+df_age1<-column_to_rownames(df_age, 'island')
+
+mat_age_gal <-as.matrix(daisy(df_age1, metric="euclidean"))
+
+
+
+df_age<-read.csv(here::here("b_data/Data_Canaries/ages_islands_canaries.csv"), sep = ";")
+df_age1<-column_to_rownames(df_age, 'island')
+
+mat_age_can <-as.matrix(daisy(df_age1, metric="euclidean"))
+
+
+df_age<-read.csv(here::here("b_data/Data_Azores/ages_islands_azores.csv"), sep = ";")
+df_age1<-column_to_rownames(df_age, 'island')
+
+mat_age_az <-as.matrix(daisy(df_age1, metric="euclidean"))
+```
+
+
+# Procrustes test
+
+```{r}
+
+# Galapagos
+
+
+procrustes_list_all_litt_gal <- perform_procrustes_analysis(mat_medianMin_sym_Galapagos, dist_mat_all_litt_gal)
+procrustes_list_all_nolitt_gal <- perform_procrustes_analysis(mat_medianMin_sym_Galapagos, dist_mat_all_nolitt_gal)
+
+procrustes_geo_list_all_litt_gal <- perform_procrustes_analysis(mat_geo_gal, dist_mat_all_litt_gal)
+procrustes_geo_list_all_nolitt_gal <- perform_procrustes_analysis(mat_geo_gal, dist_mat_all_nolitt_gal)
+
+procrustes_age_list_all_litt_gal <- perform_procrustes_analysis(mat_age_gal, dist_mat_all_litt_gal)
+procrustes_age_list_all_nolitt_gal <- perform_procrustes_analysis(mat_age_gal, dist_mat_all_nolitt_gal)
+
+procrustes_area_list_all_litt_gal <- perform_procrustes_analysis(mat_area_gal, dist_mat_all_litt_gal)
+procrustes_area_list_all_nolitt_gal <- perform_procrustes_analysis(mat_area_gal, dist_mat_all_nolitt_gal)
+
+
+# Canaries
+
+procrustes_list_all_litt_can <- perform_procrustes_analysis(mat_medianMin_sym_Canaries, dist_mat_all_litt_can)
+procrustes_list_all_nolitt_can <- perform_procrustes_analysis(mat_medianMin_sym_Canaries, dist_mat_all_nolitt_can)
+
+procrustes_geo_list_all_litt_can <- perform_procrustes_analysis(mat_geo_can, dist_mat_all_litt_can)
+procrustes_geo_list_all_nolitt_can <- perform_procrustes_analysis(mat_geo_can, dist_mat_all_nolitt_can)
+
+procrustes_age_list_all_litt_can <- perform_procrustes_analysis(mat_age_can, dist_mat_all_litt_can)
+procrustes_age_list_all_nolitt_can <- perform_procrustes_analysis(mat_age_can, dist_mat_all_nolitt_can)
+
+procrustes_area_list_all_litt_can <- perform_procrustes_analysis(mat_area_can, dist_mat_all_litt_can)
+procrustes_area_list_all_nolitt_can <- perform_procrustes_analysis(mat_area_can, dist_mat_all_nolitt_can)
+
+
+
+# Azores
+
+procrustes_list_all_litt_az <- perform_procrustes_analysis(mat_medianMin_sym_Azores, dist_mat_all_litt_az)
+procrustes_list_all_nolitt_az <- perform_procrustes_analysis(mat_medianMin_sym_Azores, dist_mat_all_nolitt_az)
+
+procrustes_geo_list_all_litt_az <- perform_procrustes_analysis(mat_geo_az, dist_mat_all_litt_az)
+procrustes_geo_list_all_nolitt_az <- perform_procrustes_analysis(mat_geo_az, dist_mat_all_nolitt_az)
+
+procrustes_age_list_all_litt_az <- perform_procrustes_analysis(mat_age_az, dist_mat_all_litt_az)
+procrustes_age_list_all_nolitt_az <- perform_procrustes_analysis(mat_age_az, dist_mat_all_nolitt_az)
+
+procrustes_area_list_all_litt_az <- perform_procrustes_analysis(mat_area_az, dist_mat_all_litt_az)
+procrustes_area_list_all_nolitt_az <- perform_procrustes_analysis(mat_area_az, dist_mat_all_nolitt_az)
+
+```
+
+
+
+Currents - geo - age - are
+
+```{r}
+# Galapagos
+
+procrustes_curr_geo_gal <- perform_procrustes_analysis(mat_geo_gal, mat_medianMin_sym_Galapagos)
+procrustes_curr_age_gal <- perform_procrustes_analysis(mat_age_gal, mat_medianMin_sym_Galapagos)
+procrustes_curr_area_gal <- perform_procrustes_analysis(mat_area_gal, mat_medianMin_sym_Galapagos)
+
+# Canaries
+
+procrustes_curr_geo_can <- perform_procrustes_analysis(mat_geo_can, mat_medianMin_sym_Canaries)
+procrustes_curr_age_can <- perform_procrustes_analysis(mat_age_can, mat_medianMin_sym_Canaries)
+procrustes_curr_area_can <- perform_procrustes_analysis(mat_area_can, mat_medianMin_sym_Canaries)
+
+
+# Azores
+
+procrustes_curr_geo_az <- perform_procrustes_analysis(mat_geo_az, mat_medianMin_sym_Azores)
+procrustes_curr_age_az <- perform_procrustes_analysis(mat_age_az, mat_medianMin_sym_Azores)
+procrustes_curr_area_az <- perform_procrustes_analysis(mat_area_az, mat_medianMin_sym_Azores)
+
+
+df_cor_currents_factors_gal <- data.frame(
+  
+  "Island" = "Galapagos",
+  
+  "Geographic space" = procrustes_curr_geo_gal$procrustes_corr$t0,
+  
+  "Island age" = procrustes_curr_age_gal$procrustes_corr$t0,
+  
+  "Island area" = procrustes_curr_area_gal$procrustes_corr$t0
+)
+
+df_cor_currents_factors_can <- data.frame(
+  
+  "Island" = "Canaries",
+  
+  "Geographic space" = procrustes_curr_geo_can$procrustes_corr$t0,
+  
+  "Island age" = procrustes_curr_age_can$procrustes_corr$t0,
+  
+  "Island area" = procrustes_curr_area_can$procrustes_corr$t0
+)
+
+df_cor_currents_factors_az <- data.frame(
+  
+  "Island" = "Azores",
+  
+  "Geographic space" = procrustes_curr_geo_az$procrustes_corr$t0,
+  
+  "Island age" = procrustes_curr_age_az$procrustes_corr$t0,
+  
+  "Island area" = procrustes_curr_area_az$procrustes_corr$t0
+)
+
+df_cor_curr_factors <- rbind(df_cor_currents_factors_gal, df_cor_currents_factors_can, df_cor_currents_factors_az)
+
+```
+
+Plot results
+
+```{r}
+# Convert Island and Flora columns to factors with specified levels
+df_cor_curr_factors$Island <- factor(df_cor_curr_factors$Island, levels = c("Galapagos", "Canaries", "Azores"))
+
+# Reshape data to long format
+df_long <- melt(df_cor_curr_factors, id.vars = "Island", variable.name = "Variable", value.name = "Correlation")
+
+
+
+# Create the plot
+plot_cor_currents_factors <- ggplot(df_long, aes(x = Variable, y = Island)) +
+  geom_tile(aes(fill = Correlation), color = "white") +
+  geom_text(aes(label = round(Correlation, 2)), color = "white", size = 4) +
+  scale_fill_viridis_c(option = "turbo") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+        axis.text.y = element_text(size = 10)) +
+  labs(fill = "Correlation",
+       y = "Currents connectivity",
+       x = "Factor connectivity")
+
+plot_cor_currents_factors
+
+ggsave(here::here("c_output/figures/corr_currents_factors_heatmap.png"), height = 3, width = 6)
+```
+
+
+
+```{r}
+
+
+df_cor_gal <- data.frame(
+  
+  "Island" = rep("Galapagos", 2),
+  
+  "Flora" = c("Littoral", "Non-littoral"),
+  
+  "Currents" = c(procrustes_list_all_litt_gal$procrustes_corr$t0,
+                 procrustes_list_all_nolitt_gal$procrustes_corr$t0),
+  
+  "Geographic space" = c(procrustes_geo_list_all_litt_gal$procrustes_corr$t0,
+                         procrustes_geo_list_all_nolitt_gal$procrustes_corr$t0),
+  
+  "Island age" = c(procrustes_age_list_all_litt_gal$procrustes_corr$t0,
+                   procrustes_age_list_all_nolitt_gal$procrustes_corr$t0),
+  
+  "Island area" = c(procrustes_area_list_all_litt_gal$procrustes_corr$t0,
+                    procrustes_area_list_all_nolitt_gal$procrustes_corr$t0)
+)
+
+df_cor_can <- data.frame(
+  
+  "Island" = rep("Canaries", 2),
+  
+  "Flora" = c("Littoral", "Non-littoral"),
+  
+  "Currents" = c(procrustes_list_all_litt_can$procrustes_corr$t0,
+                 procrustes_list_all_nolitt_can$procrustes_corr$t0),
+  
+  "Geographic space" = c(procrustes_geo_list_all_litt_can$procrustes_corr$t0,
+                         procrustes_geo_list_all_nolitt_can$procrustes_corr$t0),
+  
+  "Island age" = c(procrustes_age_list_all_litt_can$procrustes_corr$t0,
+                   procrustes_age_list_all_nolitt_can$procrustes_corr$t0),
+  
+  "Island area" = c(procrustes_area_list_all_litt_can$procrustes_corr$t0,
+                    procrustes_area_list_all_nolitt_can$procrustes_corr$t0)
+)
+
+df_cor_az <- data.frame(
+  
+  "Island" = rep("Azores", 2),
+  
+  "Flora" = c("Littoral", "Non-littoral"),
+  
+  "Currents" = c(procrustes_list_all_litt_az$procrustes_corr$t0,
+                 procrustes_list_all_nolitt_az$procrustes_corr$t0),
+  
+  "Geographic space" = c(procrustes_geo_list_all_litt_az$procrustes_corr$t0,
+                         procrustes_geo_list_all_nolitt_az$procrustes_corr$t0),
+  
+  "Island age" = c(procrustes_age_list_all_litt_az$procrustes_corr$t0,
+                   procrustes_age_list_all_nolitt_az$procrustes_corr$t0),
+  
+  "Island area" = c(procrustes_area_list_all_litt_az$procrustes_corr$t0,
+                    procrustes_area_list_all_nolitt_az$procrustes_corr$t0)
+)
+
+
+df_cor <- rbind(df_cor_gal, df_cor_can, df_cor_az)
+
+
+write.csv(df_cor, here::here("c_output/tables/correlation_table_results.csv"))
+
+```
+
+
+
+Plot results
+
+
+
+```{r}
+
+# Convert Island and Flora columns to factors with specified levels
+df_cor$Island <- factor(df_cor$Island, levels = c("Galapagos", "Canaries", "Azores"))
+df_cor$Flora <- factor(df_cor$Flora, levels = c("Non-littoral", "Littoral"))
+
+# Reshape data to long format
+df_long <- melt(df_cor, id.vars = c("Island", "Flora"), variable.name = "Variable", value.name = "Correlation")
+
+
+
+# Create the plot
+plot_cor_floras <- ggplot(df_long, aes(x = Variable, y = Flora)) +
+  geom_tile(aes(fill = Correlation), color = "white") +
+  geom_text(aes(label = round(Correlation, 2)), color = "white", size = 4) +
+  scale_fill_viridis_c(option = "turbo") +
+  facet_wrap(~ Island) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+        axis.text.y = element_text(size = 10)) +
+  labs(fill = "Correlation",
+       y = "Floristic connectivity",
+       x = "Factor connectivity")
+
+plot_cor_floras
+
+ggsave(here::here("c_output/figures/corr_floras_heatmap.png"), height = 4, width = 8)
+```
+
+
+
+## sensitivity analysis
+
+```{r}
+df_Galapagos_sensitivity <- readRDS(here::here("c_output/sensitivity/df_Galapagos_sensitivity.rds"))
+df_Canaries_sensitivity <- readRDS(here::here("c_output/sensitivity/df_Canaries_sensitivity.rds"))
+df_Azores_sensitivity <- readRDS(here::here("c_output/sensitivity/df_Azores_sensitivity.rds"))
+
+
+plot_sensitivity_gal <- perform_sensitivity_analysis(df_Galapagos_sensitivity, mat_medianMin_sym_Galapagos, min = 15, max = nrow(df_Galapagos_sensitivity))
+
+plot_sensitivity_can <- perform_sensitivity_analysis(df_Canaries_sensitivity, mat_medianMin_sym_Canaries, min = 30, max = nrow(df_Canaries_sensitivity))
+
+plot_sensitivity_az <- perform_sensitivity_analysis(df_Azores_sensitivity, mat_medianMin_sym_Azores, min = 15, max = nrow(df_Azores_sensitivity))
+
+
+ggarrange(
+  plot_sensitivity_gal,
+  plot_sensitivity_can,
+  plot_sensitivity_az,
+  
+  ncol = 3,
+  nrow = 1,
+  
+  labels = LETTERS[1:3]
+)
+
+```
+
+
+## Plot Procrustes
+
+```{r}
+
+
+
+# Kind 1
+
+
+  png(here::here("c_output/figures/procrustes_kind1.png"), width = 25, height = 26, units = "cm", res = 600) 
+  par(mfrow = c(3, 2))
+  
+  
+  # Plot A: Procrustes plot for Littoral
+  plot(procrustes_list_all_litt_gal$procrustes_result, kind = 1, type = "text", cex = 1, main = "Littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "")
+  
+  # Plot B: Procrustes plot for Non-littoral
+  plot(procrustes_list_all_nolitt_gal$procrustes_result, kind = 1, type = "text", cex = 1, main = "Non-littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "", ylab = "")
+  
+    # Plot C: Procrustes plot for Littoral
+  plot(procrustes_list_all_litt_can$procrustes_result, kind = 1, type = "text", cex = 1, main = "Littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "")
+  
+  # Plot D: Procrustes plot for Non-littoral
+  plot(procrustes_list_all_nolitt_can$procrustes_result, kind = 1, type = "text", cex = 1, main = "Non-littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "", ylab = "")
+  
+    # Plot A: Procrustes plot for Littoral
+  plot(procrustes_list_all_litt_az$procrustes_result, kind = 1, type = "text", cex = 1, main = "Littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n")
+  
+  # Plot B: Procrustes plot for Non-littoral
+  plot(procrustes_list_all_nolitt_az$procrustes_result, kind = 1, type = "text", cex = 1, main = "Non-littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n", ylab = "")
+
+  
+  dev.off()
+
+
+
+
+
+# Kind 2
+
+
+  png(here::here("c_output/figures/procrustes_kind2.png"), width = 25, height = 26, units = "cm", res = 600) 
+  par(mfrow = c(3, 2))
+  
+  
+  # Plot A: Procrustes plot for Littoral
+  plot(procrustes_list_all_litt_gal$procrustes_result, kind = 2, type = "text", cex = 1, main = "Littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "")
+  axis(side = 1, at = 1:nrow(procrustes_list_all_litt_gal$procrustes_result$Yrot), 
+       labels = rownames(procrustes_list_all_litt_gal$procrustes_result$Yrot), tick = TRUE, las = 2)
+  
+  # Plot B: Procrustes plot for Non-littoral
+  plot(procrustes_list_all_nolitt_gal$procrustes_result, kind = 2, type = "text", cex = 1, main = "Non-littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "", ylab = "")
+    axis(side = 1, at = 1:nrow(procrustes_list_all_nolitt_gal$procrustes_result$Yrot), 
+       labels = rownames(procrustes_list_all_nolitt_gal$procrustes_result$Yrot), tick = TRUE, las = 2)
+  
+    # Plot C: Procrustes plot for Littoral
+  plot(procrustes_list_all_litt_can$procrustes_result, kind = 2, type = "text", cex = 1, main = "Littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "")
+    axis(side = 1, at = 1:nrow(procrustes_list_all_litt_can$procrustes_result$Yrot), 
+       labels = rownames(procrustes_list_all_litt_can$procrustes_result$Yrot), tick = TRUE, las = 2)
+  
+  # Plot D: Procrustes plot for Non-littoral
+  plot(procrustes_list_all_nolitt_can$procrustes_result, kind = 2, type = "text", cex = 1, main = "Non-littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "", ylab = "")
+    axis(side = 1, at = 1:nrow(procrustes_list_all_nolitt_can$procrustes_result$Yrot), 
+       labels = rownames(procrustes_list_all_nolitt_can$procrustes_result$Yrot), tick = TRUE, las = 2)
+  
+    # Plot A: Procrustes plot for Littoral
+  plot(procrustes_list_all_litt_az$procrustes_result, kind = 2, type = "text", cex = 1, main = "Littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n")
+    axis(side = 1, at = 1:nrow(procrustes_list_all_litt_az$procrustes_result$Yrot), 
+       labels = rownames(procrustes_list_all_litt_az$procrustes_result$Yrot), tick = TRUE, las = 2)
+  
+  # Plot B: Procrustes plot for Non-littoral
+  plot(procrustes_list_all_nolitt_az$procrustes_result, kind = 2, type = "text", cex = 1, main = "Non-littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n", ylab = "")
+    axis(side = 1, at = 1:nrow(procrustes_list_all_nolitt_az$procrustes_result$Yrot), 
+       labels = rownames(procrustes_list_all_nolitt_az$procrustes_result$Yrot), tick = TRUE, las = 2)
+
+  
+  dev.off()
+
+```
