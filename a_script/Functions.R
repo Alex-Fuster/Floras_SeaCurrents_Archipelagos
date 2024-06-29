@@ -596,7 +596,7 @@ plot_network_littoral <- function(weighted_matrix, centroids, node_size, percent
   # Plot the graph using ggraph with spatial coordinates and color nodes based on total degree
   netplot_degree <- ggraph(tg, layout = 'manual', x = V(tg)$long, y = V(tg)$lat) + 
     geom_edge_link(aes(width = E(tg)$inv_weight, alpha = E(tg)$inv_weight), show.legend = FALSE) +
-    geom_node_point(aes(color = Percent_Littoral), size = node_size) +  # Color nodes based on Percent_Littoral
+    geom_node_point(aes(color = V(tg)$Percent_Littoral), size = node_size) +  # Color nodes based on Percent_Littoral
     # scale_edge_width(range = range(E(tg)$inv_weight), name = "Normalized Connectivity") + # Adjust the range for better visualization
     scale_color_viridis(name = "% littoral species", option = "turbo") + # Use viridis color scale
     geom_node_text(aes(label = name), repel = TRUE, 
@@ -821,6 +821,65 @@ perform_procrustes_analysis <- function(dist_mat1, dist_mat2, k = 2) {
   
   return(result)
 }
+
+
+
+# Plot procrustes kind 2
+
+
+plot_procrustes_kind2 <- function(path_output, litt, nolitt) {
+  
+  png(here::here(path_output), width = 25, height = 26, units = "cm", res = 600)  # Adjust width, height, and resolution as needed
+  # Set up the layout for 2x2 plots
+  par(mfrow = c(1, 2),  mar = c(5, 5, 4, 1) + 1.3)
+  
+  
+  # Plot A: Procrustes plot for Littoral
+  plot(litt$procrustes_result, kind = 2, type = "text", cex = 1, main = "Littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "")
+  axis(side = 1, at = 1:nrow(litt$procrustes_result$Yrot), 
+       labels = rownames(litt$procrustes_result$Yrot), tick = TRUE, las = 2)
+  text(0.5, 0.95, "C", font = 2, cex = 1.5, adj = 0.5)  # Add label C
+  
+  # Plot B: Procrustes plot for Non-littoral
+  plot(nolitt$procrustes_result, kind = 2, type = "text", cex = 1, main = "Non-littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "")
+  axis(side = 1, at = 1:nrow(nolitt$procrustes_result$Yrot), 
+       labels = rownames(nolitt$procrustes_result$Yrot), tick = TRUE, las = 2)
+  text(0.5, 0.95, "D", font = 2, cex = 1.5, adj = 0.5)  # Add label D
+  
+  dev.off()
+  
+}
+
+
+plot_procrustes_kind1 <- function(path_output, litt, nolitt) {
+  
+  png(here::here(path_output), width = 25, height = 26, units = "cm", res = 600)  # Adjust width, height, and resolution as needed
+  # Set up the layout for 2x2 plots
+  par(mfrow = c(1, 2))
+  
+  
+  # Plot A: Procrustes plot for Littoral
+  plot(litt$procrustes_result, kind = 1, type = "text", cex = 1, main = "Littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "")
+  
+  # Plot B: Procrustes plot for Non-littoral
+  plot(nolitt$procrustes_result, kind = 1, type = "text", cex = 1, main = "Non-littoral", ar.col = "red1", len = 0.2,
+       xaxt = "n", xlab = "")
+
+  
+  dev.off()
+  
+}
+
+
+
+
+
+
+
+
 
 
 
