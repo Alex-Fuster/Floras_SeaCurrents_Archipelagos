@@ -535,7 +535,6 @@ compute_mat_min_weighted <- function(matrix_conn) {
 
 
 
-
 # Plot network with % littoral
 
 plot_network_littoral <- function(weighted_matrix, centroids, node_size, percent_littoral, scale) {
@@ -796,12 +795,12 @@ load_order_convert_csv_to_distanceMat <- function(filepath) {
 
 perform_procrustes_analysis <- function(dist_mat1, dist_mat2, k = 2) {
   # Convert matrices to dist objects
-  dist1 <- as.dist(dist_mat1)
-  dist2 <- as.dist(dist_mat2)
+#  dist1 <- as.dist(dist_mat1)
+#  dist2 <- as.dist(dist_mat2)
   
   # Perform PCoA with the specified number of dimensions
-  pcoa1 <- cmdscale(dist1, k = k)
-  pcoa2 <- cmdscale(dist2, k = k)
+  pcoa1 <- cmdscale(dist_mat1, k = k)
+  pcoa2 <- cmdscale(dist_mat2, k = k)
   
   # Perform Procrustes analysis
   procrustes_result <- procrustes(pcoa1, pcoa2)

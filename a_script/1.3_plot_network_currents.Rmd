@@ -17,6 +17,10 @@ library(ggrepel)
 library(reshape2)
 library(GGally)
 library(ggpubr)
+library(DHARMa)
+library(car)
+library(glmmTMB)
+
 source("Functions.R")
 ```
 
@@ -236,7 +240,7 @@ plot_gal <- ggplot(df_percent_flora_gal, aes(x = reorder(Island, -Percent_Littor
             size = 4) +  # Add text labels for Total_Species at the top of each bar
   labs(x = NULL, 
        y = "% littoral species") +
-  ylim(0, ymax_perc+0.5)+
+  ylim(0, ymax_perc+0.8)+
   theme_classic() +  # Use a classic theme
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  +# Rotate x-axis labels for better readability
   my_theme
@@ -249,7 +253,7 @@ plot_can <- ggplot(df_percent_flora_can, aes(x = reorder(Island, -Percent_Littor
             size = 4) +  # Add text labels for Total_Species at the top of each bar
   labs(x = NULL, 
        y = "% littoral species") +
-  ylim(0, ymax_perc+0.5)+
+  ylim(0, ymax_perc+0.8)+
   theme_classic() +  # Use a classic theme
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate x-axis labels for better readability
 my_theme
@@ -262,7 +266,7 @@ plot_az <- ggplot(df_percent_flora_az, aes(x = reorder(Island, -Percent_Littoral
             size = 4) +  # Add text labels for Total_Species at the top of each bar
   labs(x = NULL, 
        y = "% littoral species") +
-  ylim(0, ymax_perc+0.5)+
+  ylim(0, ymax_perc+0.8)+
   theme_classic() +  # Use a classic theme
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   my_theme
@@ -281,7 +285,7 @@ plot_percent_litt_islands <- ggarrange(
 
 plot_percent_litt_islands
 
-#ggsave(here::here("c_output/figures/plot_percent_litt_islands.png"), height = 13, width = 6)
+#ggsave(here::here("c_output/figures/plot_percent_litt_islands.png"), height = 10, width = 4.5)
 
 ```
 
@@ -420,9 +424,65 @@ plot_cor_centrality_measures <- ggpairs(df_percent_degree_all[,-c(1:2)], aes(col
 
 plot_cor_centrality_measures
 
-ggsave(here::here("c_output/figures/plot_cor_centrality_measures.png"), height = 7, width = 8)
+#ggsave(here::here("c_output/figures/plot_cor_centrality_measures.png"), height = 7, width = 8)
 
 ```
+
+
+
+## Test effect of centrality on % littoral [NOT DONE]
+
+```{r}
+
+# Log-transform the in_degree variable
+df_percent_degree_all <- df_percent_degree_all %>%
+  mutate(log_in_degree = log(in_degree))
+
+# Center the log-transformed in_degree variable
+df_percent_degree_all <- df_percent_degree_all %>%
+  mutate(centered_log_in_degree = log_in_degree - mean(log_in_degree, na.rm = TRUE))
+
+
+#cCompute proportion
+df_percent_degree_all$Percent_Littoral_Prop <- df_percent_degree_all$Percent_Littoral / 100
+
+# Model
+
+model <- glmmTMB(Percent_Littoral_Prop ~ archipelago*centered_log_in_degree, data = df_percent_degree_all, family = beta_family(link = "logit"))
+
+# Result
+
+summary(model)
+
+car::Anova(model)
+
+```
+
+Model diagnostics
+
+```{r}
+simulationOutput_surv_d<-simulateResiduals(model) 
+dharma_plot_surv<-plot(simulationOutput_surv_d)
+surv_dharma<-testResiduals(simulationOutput_surv_d)
+```
+
+
+Save data
+
+```{r}
+# Extract summary information
+summary_info <- summary(model)
+
+# Extract coefficients and their statistics
+coefficients_df <- summary_info$coefficients
+
+# Save coefficients to CSV
+write.csv(coefficients_df$cond, file = here::here("c_output/tables/model_centrality_summary.csv"), row.names = TRUE)
+
+write.csv(as.data.frame(car::Anova(model)), file = here::here("c_output/tables/model_centrality_anova.csv"), row.names = TRUE)
+```
+
+
 
 
 
@@ -550,6 +610,9 @@ function to plot the % litt in undirected networks
 
 ## Undirected networks and % littoral flora
 
+
+Currents
+
 ```{r}
 
 
@@ -620,6 +683,8 @@ plot_network_litt_all <- ggarrange(
   nrow = 3
 )
 
+plot_network_litt_all
+
 #ggsave(here::here("c_output/figures/plot_network_litt_all.png"), height = 12, width = 8)
 
 
@@ -627,6 +692,56 @@ plot_network_litt_all <- ggarrange(
 ```
 
 
+Geo, age, area
+
+```{r}
+# Galapagos
+
+df_percent_flora_gal <- df_percent_flora_gal %>% 
+  rename(island = Island)
+
+plot_network_geo_gal <- plot_network_littoral(weighted_matrix = mat_geo_gal,
+                      centroids = coord_centroids_gal,
+                      node_size = 8,
+                      percent_littoral = df_percent_flora_gal[,c(1,2)],
+                      scale = "none")
+
+plot_network_age_gal <- plot_network_littoral(weighted_matrix = mat_age_gal,
+                      centroids = coord_centroids_gal,
+                      node_size = 8,
+                      percent_littoral = df_percent_flora_gal[,c(1,2)],
+                      scale = "none")
+
+plot_network_area_gal <- plot_network_littoral(weighted_matrix = mat_area_gal,
+                      centroids = coord_centroids_gal,
+                      node_size = 8,
+                      percent_littoral = df_percent_flora_gal[,c(1,2)],
+                      scale = "log")
+
+# Canaries
+
+df_percent_flora_can <- df_percent_flora_can %>% 
+  rename(island = Island)
+
+plot_network_litt_can <- plot_network_littoral(weighted_matrix = mat_medianMin_sym_Canaries,
+                      centroids = coord_centroids_can,
+                      node_size = 8,
+                      percent_littoral = df_percent_flora_can[,c(1,2)],
+                      scale = "log_scale")
+
+
+# Azores
+
+df_percent_flora_az <- df_percent_flora_az %>% 
+  rename(island = Island)
+
+plot_network_litt_az <- plot_network_littoral(weighted_matrix = mat_medianMin_sym_Azores,
+                      centroids = coord_centroids_az,
+                      node_size = 8,
+                      percent_littoral = df_percent_flora_az[,c(1,2)],
+                      scale = "sqrt_scale")
+
+```
 
 
 
@@ -740,6 +855,7 @@ plot_regr_centrality_gal <- annotate_figure(
   left = text_grob("% littoral species", rot = 90, vjust = 0.5, hjust = 0.5, size = 16)
 )
 
+
 plot_regr_centrality_can <- ggarrange(
   
   plot_litt_degree_can+ ylab(NULL), NULL,
@@ -819,7 +935,7 @@ plot_network_regr_degree <- ggarrange(
 
 plot_network_regr_degree
 
-#ggsave(here::here("c_output/figures/plot_network_regr_degree.png"), height = 12, width = 12)
+ggsave(here::here("c_output/figures/plot_network_regr_degree.png"), height = 12, width = 12)
 
 
 ```

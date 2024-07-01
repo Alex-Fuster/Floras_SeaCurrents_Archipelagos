@@ -133,6 +133,15 @@ Filter Littoral or no-Littoral
 df_Galapagos_litt <- subset(df_Galapagos, df_Galapagos$littoral %in% c("exclusive", "presence"))[,c(2,9:20)]
 df_Galapagos_nolitt <- subset(df_Galapagos, is.na(littoral))[,c(2,9:20)]
 
+df_Galapagos_litt1 <- df_Galapagos_litt
+df_Galapagos_nolitt1 <- df_Galapagos_nolitt
+
+df_Galapagos_litt1$name_species <- gsub("_", " ", df_Galapagos_litt1$name_species)
+df_Galapagos_nolitt1$name_species <- gsub("_", " ", df_Galapagos_nolitt1$name_species)
+
+#write.csv(df_Galapagos_litt1, here::here("c_output/tables/list_litt_gal.csv"))
+#write.csv(df_Galapagos_nolitt1, here::here("c_output/tables/list_nolitt_gal.csv"))
+
 ```
 
 
@@ -228,6 +237,18 @@ Filter Littoral or no-Littoral
 df_Canaries_litt <- subset(df_Canaries, df_Canaries$littoral %in% c("exclusive", "presence"))[,c(1,6:12)]
 df_Canaries_nolitt <- subset(df_Canaries, is.na(littoral))[,c(1,6:12)] 
 
+df_Canaries_litt1 <- df_Canaries_litt
+df_Canaries_nolitt1 <- df_Canaries_nolitt
+
+df_Canaries_litt1$name_species <- gsub("_", " ", df_Canaries_litt1$name_species)
+df_Canaries_nolitt1$name_species <- gsub("_", " ", df_Canaries_nolitt1$name_species)
+
+df_Canaries_litt1[df_Canaries_litt1 == 0] <- NA
+df_Canaries_nolitt1[df_Canaries_nolitt1 == 0] <- NA
+
+#write.csv(df_Canaries_litt1, here::here("c_output/tables/list_litt_can.csv"))
+#write.csv(df_Canaries_nolitt1, here::here("c_output/tables/list_nolitt_can.csv"))
+
 ```
 
 
@@ -272,6 +293,19 @@ Filter Littoral or no-Littoral
 
 df_Azores_litt <- subset(df_Azores, df_Azores$littoral %in% c("1"))[,c(2,10:18)] 
 df_Azores_nolitt <- subset(df_Azores, is.na(littoral))[,c(2,10:18)]  
+
+
+df_Azores_litt1 <- df_Azores_litt
+df_Azores_nolitt1 <- df_Azores_nolitt
+
+df_Azores_litt1$name_species <- gsub("_", " ", df_Azores_litt1$name_species)
+df_Azores_nolitt1$name_species <- gsub("_", " ", df_Azores_nolitt1$name_species)
+
+df_Azores_litt1[df_Azores_litt1 == 0] <- NA
+df_Azores_nolitt1[df_Azores_nolitt1 == 0] <- NA
+
+#write.csv(df_Azores_litt1, here::here("c_output/tables/list_litt_az.csv"))
+#write.csv(df_Azores_nolitt1, here::here("c_output/tables/list_nolitt_az.csv"))
 
 ```
 
