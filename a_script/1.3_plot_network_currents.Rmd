@@ -344,14 +344,7 @@ compute_df_percent_flora_degree <- function(mat_min_conn_currents, df_percent) {
   # Closeness
   V(tg)$closeness <- closeness(tg, weights = E(tg)$inv_weight)
   
-  # Hubs (pulls)
-  V(tg)$hubs <- hub.score(tg, weights = E(tg)$inv_weight)$vector
-  
-  # Authorities (sinks)
-  V(tg)$eigen <- authority.score(tg, weights = E(tg)$inv_weight)$vector
-  
-  
-  
+
   df_percent_litt_degree_az <- data.frame(tg)
   
   return(df_percent_litt_degree_az)
@@ -406,15 +399,15 @@ Plot correlations centrality measures
 
 
 ```{r}
-cor_centrality_gal <- cor(df_percent_degree_all[which(df_percent_degree_all$archipelago == "Galapagos"), c("in_degree", "out_degree", "closeness", "hubs", "eigen")])
+df_percent_degree_all <- df_percent_degree_all %>% 
+  rename(In_degree = in_degree,
+         Out_degree = out_degree,
+         Betweenness = betweenness,
+         Closeness = closeness)
 
-cor_centrality_can <- cor(df_percent_degree_all[which(df_percent_degree_all$archipelago == "Canaries"), c("in_degree", "out_degree", "closeness", "hubs", "eigen")])
 
-cor_centrality_az <- cor(df_percent_degree_all[which(df_percent_degree_all$archipelago == "Azores"), c("in_degree", "out_degree", "closeness", "hubs", "eigen")])
-
-
-plot_cor_centrality_measures <- ggpairs(df_percent_degree_all[,-c(1:2)], aes(color = archipelago),
-        columns = 1:6,  # Specify the columns to plot
+plot_cor_centrality_measures <- ggpairs(df_percent_degree_all, aes(color = archipelago),
+        columns = 3:6,  # Specify the columns to plot
         lower = 'blank', diag = 'blank',
         upper = list(continuous = wrap("cor", size = 3))) + 
   scale_color_manual(
@@ -424,9 +417,11 @@ plot_cor_centrality_measures <- ggpairs(df_percent_degree_all[,-c(1:2)], aes(col
 
 plot_cor_centrality_measures
 
-#ggsave(here::here("c_output/figures/plot_cor_centrality_measures.png"), height = 7, width = 8)
+#ggsave(here::here("c_output/figures/plot_cor_centrality_measures.png"), height = 5, width = 6)
 
 ```
+
+
 
 
 

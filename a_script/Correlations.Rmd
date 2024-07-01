@@ -231,95 +231,6 @@ procrustes_area_list_all_nolitt_az <- perform_procrustes_analysis(mat_area_az, d
 
 
 
-Currents - geo - age - are
-
-```{r}
-# Galapagos
-
-procrustes_curr_geo_gal <- perform_procrustes_analysis(mat_geo_gal, mat_medianMin_sym_Galapagos)
-procrustes_curr_age_gal <- perform_procrustes_analysis(mat_age_gal, mat_medianMin_sym_Galapagos)
-procrustes_curr_area_gal <- perform_procrustes_analysis(mat_area_gal, mat_medianMin_sym_Galapagos)
-
-# Canaries
-
-procrustes_curr_geo_can <- perform_procrustes_analysis(mat_geo_can, mat_medianMin_sym_Canaries)
-procrustes_curr_age_can <- perform_procrustes_analysis(mat_age_can, mat_medianMin_sym_Canaries)
-procrustes_curr_area_can <- perform_procrustes_analysis(mat_area_can, mat_medianMin_sym_Canaries)
-
-
-# Azores
-
-procrustes_curr_geo_az <- perform_procrustes_analysis(mat_geo_az, mat_medianMin_sym_Azores)
-procrustes_curr_age_az <- perform_procrustes_analysis(mat_age_az, mat_medianMin_sym_Azores)
-procrustes_curr_area_az <- perform_procrustes_analysis(mat_area_az, mat_medianMin_sym_Azores)
-
-
-df_cor_currents_factors_gal <- data.frame(
-  
-  "Island" = "Galapagos",
-  
-  "Geographic space" = procrustes_curr_geo_gal$procrustes_corr$t0,
-  
-  "Island age" = procrustes_curr_age_gal$procrustes_corr$t0,
-  
-  "Island area" = procrustes_curr_area_gal$procrustes_corr$t0
-)
-
-df_cor_currents_factors_can <- data.frame(
-  
-  "Island" = "Canaries",
-  
-  "Geographic space" = procrustes_curr_geo_can$procrustes_corr$t0,
-  
-  "Island age" = procrustes_curr_age_can$procrustes_corr$t0,
-  
-  "Island area" = procrustes_curr_area_can$procrustes_corr$t0
-)
-
-df_cor_currents_factors_az <- data.frame(
-  
-  "Island" = "Azores",
-  
-  "Geographic space" = procrustes_curr_geo_az$procrustes_corr$t0,
-  
-  "Island age" = procrustes_curr_age_az$procrustes_corr$t0,
-  
-  "Island area" = procrustes_curr_area_az$procrustes_corr$t0
-)
-
-df_cor_curr_factors <- rbind(df_cor_currents_factors_gal, df_cor_currents_factors_can, df_cor_currents_factors_az)
-
-```
-
-Plot results
-
-```{r}
-# Convert Island and Flora columns to factors with specified levels
-df_cor_curr_factors$Island <- factor(df_cor_curr_factors$Island, levels = c("Galapagos", "Canaries", "Azores"))
-
-# Reshape data to long format
-df_long <- melt(df_cor_curr_factors, id.vars = "Island", variable.name = "Variable", value.name = "Correlation")
-
-
-
-# Create the plot
-plot_cor_currents_factors <- ggplot(df_long, aes(x = Variable, y = Island)) +
-  geom_tile(aes(fill = Correlation), color = "white") +
-  geom_text(aes(label = round(Correlation, 2)), color = "white", size = 4) +
-  scale_fill_viridis_c(option = "turbo", limits = c(0, 1)) +  # Set limits for the color scale
-  theme_classic() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
-        axis.text.y = element_text(size = 10)) +
-  labs(fill = "Correlation",
-       y = "Currents connectivity",
-       x = "Factor connectivity")
-
-plot_cor_currents_factors
-
-ggsave(here::here("c_output/figures/corr_currents_factors_heatmap.png"), height = 3, width = 6)
-```
-
-
 
 ```{r}
 
@@ -391,6 +302,76 @@ write.csv(df_cor, here::here("c_output/tables/correlation_table_results.csv"))
 
 
 
+Significance
+
+```{r}
+df_sign_gal <- data.frame(
+  
+  "Island" = rep("Galapagos", 2),
+  
+  "Flora" = c("Littoral", "Non-littoral"),
+  
+  "Currents" = c(procrustes_list_all_litt_gal$procrustes_corr$signif,
+                 procrustes_list_all_nolitt_gal$procrustes_corr$signif),
+  
+  "Geographic space" = c(procrustes_geo_list_all_litt_gal$procrustes_corr$signif,
+                         procrustes_geo_list_all_nolitt_gal$procrustes_corr$signif),
+  
+  "Island age" = c(procrustes_age_list_all_litt_gal$procrustes_corr$signif,
+                   procrustes_age_list_all_nolitt_gal$procrustes_corr$signif),
+  
+  "Island area" = c(procrustes_area_list_all_litt_gal$procrustes_corr$signif,
+                    procrustes_area_list_all_nolitt_gal$procrustes_corr$signif)
+)
+
+df_sign_can <- data.frame(
+  
+  "Island" = rep("Canaries", 2),
+  
+  "Flora" = c("Littoral", "Non-littoral"),
+  
+  "Currents" = c(procrustes_list_all_litt_can$procrustes_corr$signif,
+                 procrustes_list_all_nolitt_can$procrustes_corr$signif),
+  
+  "Geographic space" = c(procrustes_geo_list_all_litt_can$procrustes_corr$signif,
+                         procrustes_geo_list_all_nolitt_can$procrustes_corr$signif),
+  
+  "Island age" = c(procrustes_age_list_all_litt_can$procrustes_corr$signif,
+                   procrustes_age_list_all_nolitt_can$procrustes_corr$signif),
+  
+  "Island area" = c(procrustes_area_list_all_litt_can$procrustes_corr$signif,
+                    procrustes_area_list_all_nolitt_can$procrustes_corr$signif)
+)
+
+df_sign_az <- data.frame(
+  
+  "Island" = rep("Azores", 2),
+  
+  "Flora" = c("Littoral", "Non-littoral"),
+  
+  "Currents" = c(procrustes_list_all_litt_az$procrustes_corr$signif,
+                 procrustes_list_all_nolitt_az$procrustes_corr$signif),
+  
+  "Geographic space" = c(procrustes_geo_list_all_litt_az$procrustes_corr$signif,
+                         procrustes_geo_list_all_nolitt_az$procrustes_corr$signif),
+  
+  "Island age" = c(procrustes_age_list_all_litt_az$procrustes_corr$signif,
+                   procrustes_age_list_all_nolitt_az$procrustes_corr$signif),
+  
+  "Island area" = c(procrustes_area_list_all_litt_az$procrustes_corr$signif,
+                    procrustes_area_list_all_nolitt_az$procrustes_corr$signif)
+)
+
+
+df_sign <- rbind(df_sign_gal, df_sign_can, df_sign_az)
+
+#write.csv(df_sign, here::here("c_output/tables/significance_table_flora_results.csv"))
+
+```
+
+
+
+
 Plot results
 
 
@@ -426,6 +407,150 @@ ggsave(here::here("c_output/figures/corr_floras_heatmap.png"), height = 4, width
 
 
 
+
+Currents - geo - age - are
+
+```{r}
+# Galapagos
+
+procrustes_curr_geo_gal <- perform_procrustes_analysis(mat_geo_gal, mat_medianMin_sym_Galapagos)
+procrustes_curr_age_gal <- perform_procrustes_analysis(mat_age_gal, mat_medianMin_sym_Galapagos)
+procrustes_curr_area_gal <- perform_procrustes_analysis(mat_area_gal, mat_medianMin_sym_Galapagos)
+
+# Canaries
+
+procrustes_curr_geo_can <- perform_procrustes_analysis(mat_geo_can, mat_medianMin_sym_Canaries)
+procrustes_curr_age_can <- perform_procrustes_analysis(mat_age_can, mat_medianMin_sym_Canaries)
+procrustes_curr_area_can <- perform_procrustes_analysis(mat_area_can, mat_medianMin_sym_Canaries)
+
+
+# Azores
+
+procrustes_curr_geo_az <- perform_procrustes_analysis(mat_geo_az, mat_medianMin_sym_Azores)
+procrustes_curr_age_az <- perform_procrustes_analysis(mat_age_az, mat_medianMin_sym_Azores)
+procrustes_curr_area_az <- perform_procrustes_analysis(mat_area_az, mat_medianMin_sym_Azores)
+
+
+df_cor_currents_factors_gal <- data.frame(
+  
+  "Island" = "Galapagos",
+  
+  "Geographic space" = procrustes_curr_geo_gal$procrustes_corr$t0,
+  
+  "Island age" = procrustes_curr_age_gal$procrustes_corr$t0,
+  
+  "Island area" = procrustes_curr_area_gal$procrustes_corr$t0
+)
+
+df_cor_currents_factors_can <- data.frame(
+  
+  "Island" = "Canaries",
+  
+  "Geographic space" = procrustes_curr_geo_can$procrustes_corr$t0,
+  
+  "Island age" = procrustes_curr_age_can$procrustes_corr$t0,
+  
+  "Island area" = procrustes_curr_area_can$procrustes_corr$t0
+)
+
+df_cor_currents_factors_az <- data.frame(
+  
+  "Island" = "Azores",
+  
+  "Geographic space" = procrustes_curr_geo_az$procrustes_corr$t0,
+  
+  "Island age" = procrustes_curr_age_az$procrustes_corr$t0,
+  
+  "Island area" = procrustes_curr_area_az$procrustes_corr$t0
+)
+
+df_cor_curr_factors <- rbind(df_cor_currents_factors_gal, df_cor_currents_factors_can, df_cor_currents_factors_az)
+
+write.csv(df_cor_curr_factors, here::here("c_output/tables/cor_table_islandfactors_results.csv"))
+
+```
+
+
+
+Significance
+
+```{r}
+df_sign_currents_factors_gal <- data.frame(
+  
+  "Island" = "Galapagos",
+  
+  "Geographic space" = procrustes_curr_geo_gal$procrustes_corr$signif,
+  
+  "Island age" = procrustes_curr_age_gal$procrustes_corr$signif,
+  
+  "Island area" = procrustes_curr_area_gal$procrustes_corr$signif
+)
+
+df_sign_currents_factors_can <- data.frame(
+  
+  "Island" = "Canaries",
+  
+  "Geographic space" = procrustes_curr_geo_can$procrustes_corr$signif,
+  
+  "Island age" = procrustes_curr_age_can$procrustes_corr$signif,
+  
+  "Island area" = procrustes_curr_area_can$procrustes_corr$signif
+)
+
+df_sign_currents_factors_az <- data.frame(
+  
+  "Island" = "Azores",
+  
+  "Geographic space" = procrustes_curr_geo_az$procrustes_corr$signif,
+  
+  "Island age" = procrustes_curr_age_az$procrustes_corr$signif,
+  
+  "Island area" = procrustes_curr_area_az$procrustes_corr$signif
+)
+
+df_sign_curr_factors <- rbind(df_sign_currents_factors_gal, df_sign_currents_factors_can, df_sign_currents_factors_az)
+
+write.csv(df_sign_curr_factors, here::here("c_output/tables/sign_table_islandfactors_results.csv"))
+```
+
+
+
+
+
+Plot results
+
+```{r}
+# Convert Island and Flora columns to factors with specified levels
+df_cor_curr_factors$Island <- factor(df_cor_curr_factors$Island, levels = c("Azores", "Canaries", "Galapagos"))
+
+# Reshape data to long format
+df_long <- melt(df_cor_curr_factors, id.vars = "Island", variable.name = "Variable", value.name = "Correlation")
+
+
+
+# Create the plot
+plot_cor_currents_factors <- ggplot(df_long, aes(x = Variable, y = Island)) +
+  geom_tile(aes(fill = Correlation), color = "white") +
+  geom_text(aes(label = round(Correlation, 2)), color = "white", size = 4) +
+  scale_fill_viridis_c(option = "turbo", limits = c(0, 1)) +  # Set limits for the color scale
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+        axis.text.y = element_text(size = 10)) +
+  labs(fill = "Correlation",
+       y = "Currents connectivity",
+       x = "Factor connectivity")
+
+plot_cor_currents_factors
+
+ggsave(here::here("c_output/figures/corr_currents_factors_heatmap.png"), height = 3, width = 6)
+```
+
+
+
+
+
+
+
 ```{r}
 
 
@@ -455,7 +580,7 @@ labels = LETTERS[1:2]
 )
 
 
-ggsave(here::here("c_output/figures/correlations_all.png"), height = 8, width = 8)
+#ggsave(here::here("c_output/figures/correlations_all1.png"), height = 8, width = 8)
 
 ```
 

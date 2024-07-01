@@ -20,6 +20,8 @@ library(shape)
 library(tidyverse) 
 library(gdistance)
 library(fields)
+
+source(here::here("a_script/Functions.R"))
 ```
 
 
@@ -72,16 +74,24 @@ plottitle=paste("Sea current speed and direction in the Galapagos")
 
 
 
+png(filename = here::here("c_output/figures/sea_v_u_gal.png"), width = 800, height = 600)
+
+# Set new extent
 new_extent <- extent(-92.3, -88.6, -1.8, 0.92)
 extent(sea_spe) <- new_extent
 
-Gal_u_v_raster<-plot(sea_spe,main="Sea current speed and direction in Galapagos"
-                     ,col=acol(1000))
-Arrowhead(coordsraster[,1],coordsraster[,2],angle=arrowDir(dirspeed),
-          arr.length = 0.05,arr.type = "curved")
-lines(getMap(resolution = "high"), lwd=1)
+# Plot the raster with sea current speed and direction
+plot(sea_spe, main = "Sea current speed and direction in Galapagos", col = acol(1000), xlab = "Longitude", ylab = "Latitude")
 
-Gal_u_v_raster
+# Add arrowheads for direction
+Arrowhead(coordsraster[,1], coordsraster[,2], angle = arrowDir(dirspeed), arr.length = 0.05, arr.type = "curved")
+
+# Add map lines
+lines(getMap(resolution = "high"), lwd = 1)
+
+dev.off()
+
+
 ```
 
 
@@ -152,13 +162,13 @@ velocity_gal<-image.plot(daystacklist_1dayplot_Gal[[1]]$speed,
            col = terrain.colors(10), xlab = "Longitude", ylab = "Lattitude",
            zlim = c(0.01, 0.999))
 
-lines(getMap(resolution = "low"), lwd = 4)    # adds lines around islands
+lines(getMap(resolution = "high"), lwd = 2)    # adds lines around islands
 
 points(pntA, pch = 19, cex = 3.4, col = "red")   #adds pntA
 points(pntB, pch = 19, cex = 3.4, col = "blue")  #adds pntB
 
-lines(AtoB, col = "red", lwd = 4, lty = 2)   #draws line a to b
-lines(BtoA, col = "blue", lwd = 4, lty = 2)  #b to a
+lines(AtoB, col = "red", lwd = 2, lty = 2)   #draws line a to b
+lines(BtoA, col = "blue", lwd = 2, lty = 2)  #b to a
 
 
 velocity_gal
@@ -174,7 +184,7 @@ Same plot but for direction
 
 #pdf(file= "plots/single_day/direction_gal.pdf", width=13, height = 10 )
 
-direction_gal<-image.plot(daystacklist_1dayplot_Gal[[14]]$direction,    # background plot of speed raster for 
+direction_gal<-image.plot(daystacklist_1dayplot_Gal[[1]]$direction,    # background plot of speed raster for 
            #this day (the first, as an example)
            main = "least cost paths by current direction",
            col = terrain.colors(10), xlab = "Longitude", ylab = "Lattitude",
