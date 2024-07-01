@@ -130,8 +130,8 @@ calculate_costMatrix <- function(files, geo_points) {
     nc <- nc_open(files[i])
     if(length(which(abs(nc$var$water_u$dim[[1]]$vals) > 180)) >= 1){  #depending 
       #on their coords, some rasters need to be rotated
-      rr_u <- rotate(raster(files[i], level = 1, varname = "water_u", band = 1))
-      rr_v <- rotate(raster(files[i], level = 1, varname = "water_v", band = 1))
+      rr_u <- raster::rotate(raster(files[i], level = 1, varname = "water_u", band = 1))
+      rr_v <- raster::rotate(raster(files[i], level = 1, varname = "water_v", band = 1))
       
     } else {
       rr_u <- raster(files[i], level = 1, varname = "water_u", band = 1)
@@ -217,8 +217,8 @@ calculate_conductance <- function(files) {
     
     nc <- nc_open(files[i])
     if(length(which(abs(nc$var$water_u$dim[[1]]$vals) > 180)) >= 1){  #depending on their coords, some rasters need to be rotated
-      rr_u <- rotate(raster(files[i], level = 1, varname = "water_u", band = 1))
-      rr_v <- rotate(raster(files[i], level = 1, varname = "water_v", band = 1))
+      rr_u <- raster::rotate(raster(files[i], level = 1, varname = "water_u", band = 1))
+      rr_v <- raster::rotate(raster(files[i], level = 1, varname = "water_v", band = 1))
       
     } else {
       rr_u <- raster(files[i], level = 1, varname = "water_u", band = 1)
@@ -301,8 +301,8 @@ obtain_daystacklist <- function(files) {
     
     nc <- nc_open(files[i])
     if(length(which(abs(nc$var$water_u$dim[[1]]$vals) > 180)) >= 1){  #depending on their coords, some rasters need to be rotated
-      rr_u <- rotate(raster(files[i], level = 1, varname = "water_u", band = 1))
-      rr_v <- rotate(raster(files[i], level = 1, varname = "water_v", band = 1))
+      rr_u <- raster::rotate(raster(files[i], level = 1, varname = "water_u", band = 1))
+      rr_v <- raster::rotate(raster(files[i], level = 1, varname = "water_v", band = 1))
       
     } else {
       rr_u <- raster(files[i], level = 1, varname = "water_u", band = 1)

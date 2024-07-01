@@ -432,6 +432,13 @@ plot_cor_centrality_measures
 
 ## Test effect of centrality on % littoral
 
+```{r}
+#cCompute proportion
+df_percent_degree_all$Percent_Littoral_Prop <- df_percent_degree_all$Percent_Littoral / 100
+
+```
+
+
 ### Degree
 
 ```{r}
@@ -444,26 +451,22 @@ df_percent_degree_all <- df_percent_degree_all %>%
 df_percent_degree_all <- df_percent_degree_all %>%
   mutate(centered_log_in_degree = log_in_degree - mean(log_in_degree, na.rm = TRUE))
 
-
-#cCompute proportion
-df_percent_degree_all$Percent_Littoral_Prop <- df_percent_degree_all$Percent_Littoral / 100
-
 # Model
 
-model <- glmmTMB(Percent_Littoral_Prop ~ archipelago*centered_log_in_degree, data = df_percent_degree_all, family = beta_family(link = "logit"))
+model_degree <- glmmTMB(Percent_Littoral_Prop ~ archipelago*centered_log_in_degree, data = df_percent_degree_all, family = beta_family(link = "logit"))
 
 # Result
 
-summary(model)
+summary(model_degree)
 
-car::Anova(model)
+car::Anova(model_degree)
 
 ```
 
 Model diagnostics
 
 ```{r}
-simulationOutput_surv_d<-simulateResiduals(model) 
+simulationOutput_surv_d<-simulateResiduals(model_degree) 
 dharma_plot_surv<-plot(simulationOutput_surv_d)
 surv_dharma<-testResiduals(simulationOutput_surv_d)
 ```
@@ -473,16 +476,114 @@ Save data
 
 ```{r}
 # Extract summary information
-summary_info <- summary(model)
+summary_info <- summary(model_degree)
 
 # Extract coefficients and their statistics
 coefficients_df <- summary_info$coefficients
 
 # Save coefficients to CSV
-write.csv(coefficients_df$cond, file = here::here("c_output/tables/model_centrality_summary.csv"), row.names = TRUE)
+write.csv(coefficients_df$cond, file = here::here("c_output/tables/model_degree_summary.csv"), row.names = TRUE)
 
-write.csv(as.data.frame(car::Anova(model)), file = here::here("c_output/tables/model_centrality_anova.csv"), row.names = TRUE)
+write.csv(as.data.frame(car::Anova(model_degree)), file = here::here("c_output/tables/model_degree_anova.csv"), row.names = TRUE)
 ```
+
+### Closeness
+
+```{r}
+# Model
+
+model_closeness <- glmmTMB(Percent_Littoral_Prop ~ archipelago*closeness, data = df_percent_degree_all, family = beta_family(link = "logit"))
+
+# Result
+
+summary(model_closeness)
+
+car::Anova(model_closeness)
+
+
+```
+
+
+
+```{r}
+simulationOutput_surv_d<-simulateResiduals(model_closeness) 
+dharma_plot_surv<-plot(simulationOutput_surv_d)
+surv_dharma<-testResiduals(simulationOutput_surv_d)
+```
+
+Save data
+
+```{r}
+# Extract summary information
+summary_info <- summary(model_closeness)
+
+# Extract coefficients and their statistics
+coefficients_df <- summary_info$coefficients
+
+# Save coefficients to CSV
+write.csv(coefficients_df$cond, file = here::here("c_output/tables/model_closeness_summary.csv"), row.names = TRUE)
+
+write.csv(as.data.frame(car::Anova(model_closeness)), file = here::here("c_output/tables/model_closeness_anova.csv"), row.names = TRUE)
+```
+
+
+
+
+### Betwenness
+
+```{r}
+# Model
+
+df_percent_degree_all$betweenness[which(df_percent_degree_all$betweenness == 0)] <- 0.01
+
+model_betwenness <- glmmTMB(Percent_Littoral_Prop ~ archipelago*betweenness, data = df_percent_degree_all, family = beta_family(link = "logit"))
+
+# Result
+
+summary(model_betwenness)
+
+car::Anova(model_betwenness)
+
+
+```
+
+
+
+```{r}
+simulationOutput_surv_d<-simulateResiduals(model_betwenness) 
+dharma_plot_surv<-plot(simulationOutput_surv_d)
+surv_dharma<-testResiduals(simulationOutput_surv_d)
+```
+
+Save data
+
+```{r}
+# Extract summary information
+summary_info <- summary(model_betwenness)
+
+# Extract coefficients and their statistics
+coefficients_df <- summary_info$coefficients
+
+# Save coefficients to CSV
+write.csv(coefficients_df$cond, file = here::here("c_output/tables/model_betwenness_summary.csv"), row.names = TRUE)
+
+write.csv(as.data.frame(car::Anova(model_betwenness)), file = here::here("c_output/tables/model_betwenness_anova.csv"), row.names = TRUE)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
