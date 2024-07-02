@@ -621,7 +621,7 @@ plot_network_littoral <- function(weighted_matrix, centroids, node_size, percent
 
 
 
-plot_network_in_degree <- function(weighted_matrix, centroids, df_degree, node_size, percent_littoral, scale_edge, scale_degree) {
+plot_network_in_degree <- function(weighted_matrix, centroids, df_degree, node_size, percent_littoral, scale_edge, scale_degree, legend_label) {
   
   # Assuming your adjacency matrix is named 'single_point_min_Galap'
   # Convert the matrix to an igraph object
@@ -701,7 +701,7 @@ plot_network_in_degree <- function(weighted_matrix, centroids, df_degree, node_s
   netplot_degree <- ggraph(tg, layout = 'manual', x = V(tg)$long, y = V(tg)$lat) + 
     geom_edge_link(aes(width = E(tg)$inv_weight, alpha = E(tg)$inv_weight), show.legend = FALSE) +
     geom_node_point(aes(color = V(tg)$in_degree), size = node_size) +  # Color nodes based on Percent_Littoral
-    scale_color_viridis(name = "In-degree centrality", option = "turbo") + # Use viridis color scale
+    scale_color_viridis(name = legend_label, option = "turbo") + # Use viridis color scale
     geom_node_text(aes(label = name), repel = TRUE, 
                    nudge_y = 0.1, 
                    nudge_x = -0.04, size = 5, segment.size = 0.15) +
@@ -1053,3 +1053,5 @@ perform_sensitivity_analysis <- function(df_flora, matrix_curr, min, max) {
   return(plot)
   
 }
+
+
