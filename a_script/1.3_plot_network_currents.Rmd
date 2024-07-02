@@ -401,22 +401,6 @@ df_percent_degree_all
 #write.csv(df_percent_degree_all, here::here("c_output/tables/island_centrality_currents.csv"))
 
 
-df_percent_degree_gal[which(df_percent_degree_gal$Percent_Littoral == max(df_percent_degree_gal$Percent_Littoral)),"name"]
-df_percent_degree_gal[which(df_percent_degree_gal$Percent_Littoral == min(df_percent_degree_gal$Percent_Littoral)),"name"]
-
-df_percent_degree_gal[which(df_percent_degree_gal$in_degree == max(df_percent_degree_gal$in_degree)),"name"]
-df_percent_degree_gal[which(df_percent_degree_gal$in_degree == min(df_percent_degree_gal$in_degree)),"name"]
-
-df_percent_degree_gal[which(df_percent_degree_gal$out_degree == max(df_percent_degree_gal$out_degree)),"name"]
-df_percent_degree_gal[which(df_percent_degree_gal$out_degree == min(df_percent_degree_gal$out_degree)),"name"]
-
-df_percent_degree_gal[which(df_percent_degree_gal$closeness == max(df_percent_degree_gal$closeness)),"name"]
-df_percent_degree_gal[which(df_percent_degree_gal$closeness == min(df_percent_degree_gal$closeness)),"name"]
-
-df_percent_degree_gal[which(df_percent_degree_gal$betweenness == max(df_percent_degree_gal$betweenness)),"name"]
-df_percent_degree_gal[which(df_percent_degree_gal$betweenness == min(df_percent_degree_gal$betweenness)),"name"]
-
-
 ```
 
 
@@ -507,7 +491,7 @@ df_percent_degree_all$Percent_Littoral_Prop <- df_percent_degree_all$Percent_Lit
 
 # Log-transform the in_degree variable
 df_percent_degree_all <- df_percent_degree_all %>%
-  mutate(log_in_degree = log(in_degree))
+  mutate(log_in_degree = log(In_degree))
 
 # Center the log-transformed in_degree variable
 df_percent_degree_all <- df_percent_degree_all %>%
@@ -552,9 +536,19 @@ write.csv(as.data.frame(car::Anova(model_degree)), file = here::here("c_output/t
 ### Closeness
 
 ```{r}
+
+# come back to original values
+
+df_percent_degree_all$closeness <- df_percent_degree_all$closeness/1000
+
+# scale them
+
+df_percent_degree_all$Closeness_scaled <- scale(df_percent_degree_all$Closeness)
+
+
 # Model
 
-model_closeness <- glmmTMB(Percent_Littoral_Prop ~ archipelago*closeness, data = df_percent_degree_all, family = beta_family(link = "logit"))
+model_closeness <- glmmTMB(Percent_Littoral_Prop ~ archipelago*Closeness_scaled, data = df_percent_degree_all, family = beta_family(link = "logit"))
 
 # Result
 
@@ -596,9 +590,9 @@ write.csv(as.data.frame(car::Anova(model_closeness)), file = here::here("c_outpu
 ```{r}
 # Model
 
-df_percent_degree_all$betweenness[which(df_percent_degree_all$betweenness == 0)] <- 0.01
+df_percent_degree_all$Betweenness[which(df_percent_degree_all$Betweenness == 0)] <- 0.01
 
-model_betwenness <- glmmTMB(Percent_Littoral_Prop ~ archipelago*betweenness, data = df_percent_degree_all, family = beta_family(link = "logit"))
+model_betwenness <- glmmTMB(Percent_Littoral_Prop ~ archipelago*Betweenness, data = df_percent_degree_all, family = beta_family(link = "logit"))
 
 # Result
 
@@ -666,6 +660,19 @@ coord_centroids_az <- read.csv(here::here("b_data/Data_Azores/centroids_network_
 back_transform_log <- function(x) {
   return(exp(x))  # Back transform using exponential function (inverse of log)
 }
+
+# scale closeness for axis readability:
+
+df_percent_degree_all$closeness <- df_percent_degree_all$closeness/1000
+
+```
+
+
+```{r}
+# Define the mathematical symbols for labels
+in_degree_label <- expression(C[In]^W)
+closeness_label <- expression(C[C])
+betweenness_label <- expression(C[B])
 ```
 
 
@@ -679,22 +686,23 @@ back_transform_log <- function(x) {
 max_perc_litt <- max(df_percent_degree_all$Percent_Littoral)
 
 
+
 # Galapagos 
 
 plot_litt_degree_gal <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Galapagos",], aes(x = in_degree, y = Percent_Littoral)) +
   geom_point(size = 5, fill = "gray40", colour="white",pch=21, size=2) + # Add points
   geom_smooth(method = "lm", se = FALSE, color = "black") + # Add trend lines
-  labs(x = "In-degree centrality", y = "% littoral plants in lowland") +
+  labs(x = in_degree_label, y = "% littoral plants in lowland") +
   ylim(0,max_perc_litt+1)+
   theme_classic() + # Use a minimal theme
   my_theme
 
 
-plot_litt_authority_gal <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Galapagos",], aes(x = log(authorities), y = Percent_Littoral)) +
+plot_litt_cc_gal <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Galapagos",], aes(x = closeness, y = Percent_Littoral)) +
   geom_point(size = 5, fill = "gray40", colour="white",pch=21, size=2) + # Add points
   geom_smooth(method = "lm", se = FALSE, color = "black") + # Add trend lines
       scale_x_continuous(labels = function(x) sprintf("%.2f", back_transform_log(x))) +
-  labs(x = "Authority centrality", y = "% littoral plants in lowland") +
+  labs(x = closeness_label, y = "% littoral plants in lowland") +
   ylim(0,max_perc_litt+1)+
   theme_classic() + # Use a minimal theme
   my_theme
@@ -704,19 +712,19 @@ plot_litt_authority_gal <- ggplot(df_percent_degree_all[df_percent_degree_all$ar
 
 plot_litt_degree_can <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Canaries",], aes(x = log(in_degree), y = Percent_Littoral)) +
   geom_point(size = 5, fill = "gray40", colour="white",pch=21, size=2) + # Add points
-  geom_smooth(method = "lm", se = FALSE, color = "black") + # Add trend lines
+  geom_smooth(method = "lm", se = FALSE, color = "red") + # Add trend lines
    scale_x_continuous(labels = function(x) sprintf("%.2f", back_transform_log(x))) +
-  labs(x = "In-degree centrality", y = "% littoral plants in lowland") +
+  labs(x = in_degree_label, y = "% littoral plants in lowland") +
   ylim(0,max_perc_litt+1)+
   theme_classic() + # Use a minimal theme
   my_theme
 
 
-plot_litt_authority_can <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Canaries",], aes(x = log(authorities), y = Percent_Littoral)) +
+plot_litt_cc_can <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Canaries",], aes(x = closeness, y = Percent_Littoral)) +
   geom_point(size = 5, fill = "gray40", colour="white",pch=21, size=2) + # Add points
-  geom_smooth(method = "lm", se = FALSE, color = "black") + # Add trend lines
+  geom_smooth(method = "lm", se = FALSE, color = "red") + # Add trend lines
       scale_x_continuous(labels = function(x) sprintf("%.3f", back_transform_log(x))) +
-  labs(x = "Authority centrality", y = "% littoral plants in lowland") +
+  labs(x = closeness_label, y = "% littoral plants in lowland") +
   ylim(0,max_perc_litt+1)+
   theme_classic() + # Use a minimal theme
   my_theme
@@ -727,17 +735,17 @@ plot_litt_authority_can <- ggplot(df_percent_degree_all[df_percent_degree_all$ar
 plot_litt_degree_az <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Azores",], aes(x = in_degree, y = Percent_Littoral)) +
   geom_point(size = 5, fill = "gray40", colour="white",pch=21, size=2) + # Add points
   geom_smooth(method = "lm", se = FALSE, color = "black") + # Add trend lines
-  labs(x = "In-degree centrality", y = "% littoral plants in lowland") +
+  labs(x = in_degree_label, y = "% littoral plants in lowland") +
   ylim(0,max_perc_litt+1)+
   theme_classic() + # Use a minimal theme
   my_theme
 
 
-plot_litt_authority_az <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Azores",], aes(x = log(authorities), y = Percent_Littoral)) +
+plot_litt_cc_az <- ggplot(df_percent_degree_all[df_percent_degree_all$archipelago == "Azores",], aes(x = closeness, y = Percent_Littoral)) +
   geom_point(size = 5, fill = "gray40", colour="white",pch=21, size=2) + # Add points
   geom_smooth(method = "lm", se = FALSE, color = "black") + # Add trend lines
       scale_x_continuous(labels = function(x) sprintf("%.2f", back_transform_log(x))) +
-  labs(x = "Authority centrality", y = "% littoral plants in lowland") +
+  labs(x = closeness_label, y = "% littoral plants in lowland") +
   ylim(0,max_perc_litt+1)+
   theme_classic() + # Use a minimal theme
   my_theme
@@ -747,7 +755,7 @@ plot_litt_authority_az <- ggplot(df_percent_degree_all[df_percent_degree_all$arc
 
 plot_perc_litt_centrality <- ggarrange(
   plot_litt_degree_gal+ labs(title = ""), plot_litt_degree_can + ylab(NULL)+ labs(title = ""), plot_litt_degree_az + ylab(NULL)+ labs(title = ""),
-  plot_litt_authority_gal+ labs(title = ""), plot_litt_authority_can + ylab(NULL)+ labs(title = ""), plot_litt_authority_az + ylab(NULL)+ labs(title = ""),
+  plot_litt_cc_gal+ labs(title = ""), plot_litt_cc_can + ylab(NULL)+ labs(title = ""), plot_litt_cc_az + ylab(NULL)+ labs(title = ""),
   
   ncol = 3,
   nrow = 2,
@@ -758,7 +766,7 @@ plot_perc_litt_centrality <- ggarrange(
 
 plot_perc_litt_centrality
 
-#ggsave(here::here("c_output/figures/plot_perc_litt_centrality.png"), height = 9, width = 9)
+ggsave(here::here("c_output/figures/plot_perc_litt_centrality.png"), height = 9, width = 9)
 
 ```
 
@@ -942,13 +950,17 @@ Plots
 
 # Galapagos
 
+df_percent_flora_gal <- df_percent_flora_gal %>% 
+  rename(island = Island)
+
 plot_network_degree_gal <- plot_network_in_degree(weighted_matrix = mat_medianMin_sym_Galapagos, 
                        centroids = coord_centroids_gal, 
                        df_degree = df_degree_gal,
                        node_size = 8,
                       percent_littoral = df_percent_flora_gal[,c(1,3)],
                       scale_edge = "none",
-                      scale_degree = "none")
+                      scale_degree = "none",
+                      legend_label = in_degree_label)
 
 plot_network_degree_gal
 
@@ -958,6 +970,9 @@ plot_network_degree_gal
 
 # Canaries
 
+df_percent_flora_can <- df_percent_flora_can %>% 
+  rename(island = Island)
+
 
 plot_network_degree_can <- plot_network_in_degree(weighted_matrix = mat_medianMin_sym_Canaries, 
                        centroids = coord_centroids_can, 
@@ -965,7 +980,8 @@ plot_network_degree_can <- plot_network_in_degree(weighted_matrix = mat_medianMi
                        node_size = 8,
                       percent_littoral = df_percent_flora_can[,c(1,3)],
                       scale_edge = "log_scale",
-                      scale_degree = "log_scale")+
+                      scale_degree = "log_scale",
+                      legend_label = in_degree_label)+
     scale_color_viridis(
     name = "In-degree centrality", 
     option = "turbo", 
@@ -980,6 +996,9 @@ plot_network_degree_can
 
 # Azores
 
+df_percent_flora_az <- df_percent_flora_az %>% 
+  rename(island = Island)
+
 
 plot_network_degree_az <- plot_network_in_degree(weighted_matrix = mat_medianMin_sym_Azores, 
                        centroids = coord_centroids_az, 
@@ -987,7 +1006,8 @@ plot_network_degree_az <- plot_network_in_degree(weighted_matrix = mat_medianMin
                        node_size = 8,
                       percent_littoral = df_percent_flora_az[,c(1,3)],
                       scale_edge = "sqrt_scale",
-                      scale_degree = "none")
+                      scale_degree = "none",
+                      legend_label = in_degree_label)
 
 plot_network_degree_az
 
@@ -1008,7 +1028,7 @@ Plot combined network & regression degree
 plot_regr_centrality_gal <- ggarrange(
   
   plot_litt_degree_gal + ylab(NULL), NULL,
-plot_litt_authority_gal+ ylab(NULL), NULL,
+plot_litt_cc_gal+ ylab(NULL), NULL,
 nrow = 2,
 ncol = 2,
 
@@ -1024,7 +1044,7 @@ plot_regr_centrality_gal <- annotate_figure(
 plot_regr_centrality_can <- ggarrange(
   
   plot_litt_degree_can+ ylab(NULL), NULL,
-plot_litt_authority_can+ ylab(NULL), NULL,
+plot_litt_cc_can+ ylab(NULL), NULL,
 nrow = 2,
 ncol = 2,
 
@@ -1040,7 +1060,7 @@ plot_regr_centrality_can <- annotate_figure(
 plot_regr_centrality_az <- ggarrange(
   
   plot_litt_degree_az+ ylab(NULL), NULL,
-plot_litt_authority_az+ ylab(NULL),NULL,
+plot_litt_cc_az+ ylab(NULL),NULL,
 nrow = 2,
 ncol = 2,
 
@@ -1061,7 +1081,7 @@ plot_regr_centrality_az <- annotate_figure(
 plot_network_regr_degree <- ggarrange(
   
       plot_network_degree_gal + theme(legend.position = "left") +
-    scale_color_viridis(name = "In-degree\n centrality", option = "turbo")+
+    scale_color_viridis(name = in_degree_label, option = "turbo")+
     guides(color = guide_colorbar(barwidth = 1, barheight = 8,
                                   title.position = "top", label.position = "left",
                                   title.hjust = 0.5,
@@ -1071,7 +1091,7 @@ plot_network_regr_degree <- ggarrange(
   
     plot_network_degree_can + theme(legend.position = "left") +
     scale_color_viridis(
-    name = "In-degree\n centrality", 
+    name = in_degree_label, 
     option = "turbo", 
     labels = function(x) sprintf("%.2f", back_transform_log(x),3))+
     guides(color = guide_colorbar(barwidth = 1, barheight = 8,
@@ -1082,7 +1102,7 @@ plot_network_regr_degree <- ggarrange(
   , plot_regr_centrality_can,
   
   plot_network_degree_az + theme(legend.position = "left") +
-    scale_color_viridis(name = "In-degree\n centrality", option = "turbo")+
+    scale_color_viridis(name =in_degree_label, option = "turbo")+
     guides(color = guide_colorbar(barwidth = 1, barheight = 8,
                                   title.position = "top", label.position = "left",
                                   title.hjust = 0.5,
