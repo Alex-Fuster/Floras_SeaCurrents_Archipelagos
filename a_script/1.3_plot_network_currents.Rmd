@@ -670,7 +670,7 @@ df_percent_degree_all$closeness <- df_percent_degree_all$closeness/1000
 
 ```{r}
 # Define the mathematical symbols for labels
-in_degree_label <- expression(C[In]^W)
+in_degree_label <- expression(C[D-In]^W)
 closeness_label <- expression(C[C])
 betweenness_label <- expression(C[B])
 ```
