@@ -340,11 +340,13 @@ compute_df_percent_flora_degree <- function(mat_min_conn_currents, df_percent) {
   # out_degree (pulls)
   V(tg)$out_degree <- strength(tg, mode = "out", weights = E(tg)$inv_weight)
   
+    # Closeness
+  V(tg)$closeness <- closeness(tg, weights = E(tg)$weight)
+  
   # Betwenness
   V(tg)$betweenness <- betweenness(tg, weights = E(tg)$weight)
   
-  # Closeness
-  V(tg)$closeness <- closeness(tg, weights = E(tg)$inv_weight)
+
   
 
   df_percent_litt_degree_az <- data.frame(tg)
@@ -384,6 +386,10 @@ df_percent_degree_az$archipelago <- rep("Azores", times = nrow(df_percent_degree
 
 df_percent_degree_all <- rbind(df_percent_degree_gal, df_percent_degree_can, df_percent_degree_az)
 
+# For readability:
+
+df_percent_degree_all$closeness <- df_percent_degree_all$closeness*1000
+
 df_percent_degree_all <- df_percent_degree_all %>% 
   rename(island = name)
 
@@ -393,6 +399,22 @@ df_percent_degree_all
 
 
 #write.csv(df_percent_degree_all, here::here("c_output/tables/island_centrality_currents.csv"))
+
+
+df_percent_degree_gal[which(df_percent_degree_gal$Percent_Littoral == max(df_percent_degree_gal$Percent_Littoral)),"name"]
+df_percent_degree_gal[which(df_percent_degree_gal$Percent_Littoral == min(df_percent_degree_gal$Percent_Littoral)),"name"]
+
+df_percent_degree_gal[which(df_percent_degree_gal$in_degree == max(df_percent_degree_gal$in_degree)),"name"]
+df_percent_degree_gal[which(df_percent_degree_gal$in_degree == min(df_percent_degree_gal$in_degree)),"name"]
+
+df_percent_degree_gal[which(df_percent_degree_gal$out_degree == max(df_percent_degree_gal$out_degree)),"name"]
+df_percent_degree_gal[which(df_percent_degree_gal$out_degree == min(df_percent_degree_gal$out_degree)),"name"]
+
+df_percent_degree_gal[which(df_percent_degree_gal$closeness == max(df_percent_degree_gal$closeness)),"name"]
+df_percent_degree_gal[which(df_percent_degree_gal$closeness == min(df_percent_degree_gal$closeness)),"name"]
+
+df_percent_degree_gal[which(df_percent_degree_gal$betweenness == max(df_percent_degree_gal$betweenness)),"name"]
+df_percent_degree_gal[which(df_percent_degree_gal$betweenness == min(df_percent_degree_gal$betweenness)),"name"]
 
 
 ```
@@ -425,9 +447,12 @@ summary_long <- df_percent_degree_all %>%
 summary_wide <- summary_long %>%
   pivot_wider(names_from = archipelago, values_from = Value)
 
+options(scipen = 999)
+
 summary_wide
 
-write.csv(summary_wide, here::here("c_output/tables/stats_islands.csv"))
+#write.csv(summary_wide, here::here("c_output/tables/stats_islands.csv"))
+
 
 ```
 
