@@ -220,6 +220,8 @@ df_percent_flora_az <- results
 ```
 
 
+
+
 Raw plots % littoral
 
 
@@ -394,6 +396,46 @@ df_percent_degree_all
 
 
 ```
+
+
+
+Stats centrality
+
+
+```{r}
+
+# Group the data by archipelago and summarize
+summary_long <- df_percent_degree_all %>%
+  group_by(archipelago) %>%
+  summarise(
+    Mean_Percent_Littoral = mean(Percent_Littoral),
+    SD_Percent_Littoral = sd(Percent_Littoral),
+    Mean_in_degree = mean(in_degree),
+    SD_in_degree = sd(in_degree),
+    Mean_out_degree = mean(out_degree),
+    SD_out_degree = sd(out_degree),
+        Mean_closeness = mean(closeness),
+    SD_closeness = sd(closeness),
+    Mean_betweenness = mean(betweenness),
+    SD_betweenness = sd(betweenness),
+  ) %>%
+  pivot_longer(cols = -archipelago, names_to = "Metric", values_to = "Value")
+
+# Spread the data to get archipelagos as columns
+summary_wide <- summary_long %>%
+  pivot_wider(names_from = archipelago, values_from = Value)
+
+summary_wide
+
+write.csv(summary_wide, here::here("c_output/tables/stats_islands.csv"))
+
+```
+
+
+
+
+
+
 
 Plot correlations centrality measures
 
