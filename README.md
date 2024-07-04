@@ -21,7 +21,9 @@ The analyses require to be run in a certain sequence:
 
 2) **compute_current_connectivity.Rmd**: downloads HYCOM data and uses it to compute pairwise cost distances by currents between islands in each archipelago.
 
-> The script downloads a large amount of NetCDF files. An option is to download these directly from the Zenodo folder and read them locally.
+> The script downloads a large amount of NetCDF files. An option is to download these directly from the [Zenodo] folder and read them locally: 
+https://zenodo.org/records/12659307?token=eyJhbGciOiJIUzUxMiJ9.eyJpZCI6IjgxMzgwODk4LTQ5NDktNDgwMC1iZTYwLWIyNDE2NjY5NTQ4NSIsImRhdGEiOnt9LCJyYW5kb20iOiIyNGU5MDg3NTAyM2E4MmZhNTllZmRjMjdlNDAyZWYyMyJ9.dgtOQZgvOw5vSmq-hyK6uJteSIeAL80YHtCYs69z0HSKAbL5_45m_sZpyRuCaQPxuDRmBzCujqppeXfI6E57lw
+
 
 3) **correlations.Rmd**: reads floristic and current distance matrices produced by scripts in (1) and (2) and computes Procrustes correlations between them.
 
