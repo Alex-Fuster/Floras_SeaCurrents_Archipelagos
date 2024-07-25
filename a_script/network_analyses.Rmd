@@ -485,21 +485,27 @@ df_percent_degree_all$Percent_Littoral_Prop <- df_percent_degree_all$Percent_Lit
 ```
 
 
+
+
 ### Degree
 
 ```{r}
 
 # Log-transform the in_degree variable
 df_percent_degree_all <- df_percent_degree_all %>%
-  mutate(log_in_degree = log(In_degree))
+  mutate(log_in_degree = log(in_degree))
 
 # Center the log-transformed in_degree variable
 df_percent_degree_all <- df_percent_degree_all %>%
   mutate(centered_log_in_degree = log_in_degree - mean(log_in_degree, na.rm = TRUE))
 
+
 # Model
 
-model_degree <- glmmTMB(Percent_Littoral_Prop ~ archipelago*centered_log_in_degree, data = df_percent_degree_all, family = beta_family(link = "logit"))
+#model_degree <- glmmTMB(Percent_Littoral_Prop ~ archipelago*centered_log_in_degree, data = df_percent_degree_all, family = beta_family(link = "logit"))
+
+model_degree <- glmmTMB(Percent_Littoral_Prop ~ centered_log_in_degree + (centered_log_in_degree | archipelago), data = df_percent_degree_all, family = beta_family(link = "logit"))
+
 
 # Result
 
@@ -518,6 +524,15 @@ surv_dharma<-testResiduals(simulationOutput_surv_d)
 ```
 
 
+```{r}
+
+# Extract random effects
+random_effects <- ranef(model_degree)$cond$archipelago
+print(random_effects)
+
+```
+
+
 Save data
 
 ```{r}
@@ -529,6 +544,8 @@ coefficients_df <- summary_info$coefficients
 
 # Save coefficients to CSV
 write.csv(coefficients_df$cond, file = here::here("c_output/tables/model_degree_summary.csv"), row.names = TRUE)
+write.csv(random_effects, file = here::here("c_output/tables/model_degree_random_effects.csv"), row.names = TRUE)
+
 
 write.csv(as.data.frame(car::Anova(model_degree)), file = here::here("c_output/tables/model_degree_anova.csv"), row.names = TRUE)
 ```
@@ -543,12 +560,15 @@ df_percent_degree_all$closeness <- df_percent_degree_all$closeness/1000
 
 # scale them
 
-df_percent_degree_all$Closeness_scaled <- scale(df_percent_degree_all$Closeness)
+df_percent_degree_all$Closeness_scaled <- scale(df_percent_degree_all$closeness)
 
 
 # Model
 
-model_closeness <- glmmTMB(Percent_Littoral_Prop ~ archipelago*Closeness_scaled, data = df_percent_degree_all, family = beta_family(link = "logit"))
+#model_closeness <- glmmTMB(Percent_Littoral_Prop ~ archipelago*Closeness_scaled, data = df_percent_degree_all, family = beta_family(link = "logit"))
+
+model_closeness <- glmmTMB(Percent_Littoral_Prop ~ Closeness_scaled + (Closeness_scaled | archipelago), data = df_percent_degree_all, family = beta_family(link = "logit"))
+
 
 # Result
 
@@ -567,6 +587,15 @@ dharma_plot_surv<-plot(simulationOutput_surv_d)
 surv_dharma<-testResiduals(simulationOutput_surv_d)
 ```
 
+```{r}
+# Extract random effects
+random_effects <- ranef(model_closeness)$cond$archipelago
+print(random_effects)
+```
+
+
+
+
 Save data
 
 ```{r}
@@ -579,6 +608,8 @@ coefficients_df <- summary_info$coefficients
 # Save coefficients to CSV
 write.csv(coefficients_df$cond, file = here::here("c_output/tables/model_closeness_summary.csv"), row.names = TRUE)
 
+write.csv(random_effects, file = here::here("c_output/tables/model_closeness_random_effects.csv"), row.names = TRUE)
+
 write.csv(as.data.frame(car::Anova(model_closeness)), file = here::here("c_output/tables/model_closeness_anova.csv"), row.names = TRUE)
 ```
 
@@ -590,9 +621,12 @@ write.csv(as.data.frame(car::Anova(model_closeness)), file = here::here("c_outpu
 ```{r}
 # Model
 
-df_percent_degree_all$Betweenness[which(df_percent_degree_all$Betweenness == 0)] <- 0.01
+df_percent_degree_all$betweenness[which(df_percent_degree_all$betweenness == 0)] <- 0.01
+df_percent_degree_all$betweenness_scaled <- scale(df_percent_degree_all$betweenness)
 
-model_betwenness <- glmmTMB(Percent_Littoral_Prop ~ archipelago*Betweenness, data = df_percent_degree_all, family = beta_family(link = "logit"))
+#model_betwenness <- glmmTMB(Percent_Littoral_Prop ~ archipelago*Betweenness, data = df_percent_degree_all, family = beta_family(link = "logit"))
+
+model_betwenness <- glmmTMB(Percent_Littoral_Prop ~ betweenness + (betweenness | archipelago), data = df_percent_degree_all, family = beta_family(link = "logit"), control = glmmTMBControl(optCtrl = list(iter.max = 1e4, rel.tol = 1e-5)))
 
 # Result
 
@@ -611,6 +645,16 @@ dharma_plot_surv<-plot(simulationOutput_surv_d)
 surv_dharma<-testResiduals(simulationOutput_surv_d)
 ```
 
+
+```{r}
+# Extract random effects
+random_effects <- ranef(model_betwenness)$cond$archipelago
+print(random_effects)
+```
+
+
+
+
 Save data
 
 ```{r}
@@ -623,23 +667,10 @@ coefficients_df <- summary_info$coefficients
 # Save coefficients to CSV
 write.csv(coefficients_df$cond, file = here::here("c_output/tables/model_betwenness_summary.csv"), row.names = TRUE)
 
+write.csv(random_effects, file = here::here("c_output/tables/model_betwenness_random_effects.csv"), row.names = TRUE)
+
 write.csv(as.data.frame(car::Anova(model_betwenness)), file = here::here("c_output/tables/model_betwenness_anova.csv"), row.names = TRUE)
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
