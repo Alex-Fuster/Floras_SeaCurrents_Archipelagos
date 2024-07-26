@@ -404,6 +404,8 @@ df_percent_degree_all
 ```
 
 
+**IMPORTANT NOTE**: in df_percent_degree_all, the in and out degree values for currents are inverted
+
 
 Stats centrality
 
@@ -442,10 +444,6 @@ summary_wide
 
 
 
-
-
-
-
 Plot correlations centrality measures
 
 
@@ -475,6 +473,321 @@ plot_cor_centrality_measures
 
 
 
+Add centrality by geographic distances
+
+
+```{r}
+# read matrices
+
+mat_geo_gal <- read.csv(here::here("b_data/Data_Galapagos/geographic_distance_galap.csv"))
+rownames(mat_geo_gal) <- mat_geo_gal[,1]
+mat_geo_gal<-mat_geo_gal[,-1]
+
+mat_geo_can <- read.csv(here::here("b_data/Data_Canaries/geographic_distance_canaries.csv"))
+rownames(mat_geo_can) <- mat_geo_can[,1]
+mat_geo_can<-mat_geo_can[,-1]
+
+mat_geo_az <- read.csv(here::here("b_data/Data_Azores/geographic_distance_azores.csv"))
+rownames(mat_geo_az) <- mat_geo_az[,1]
+mat_geo_az<-mat_geo_az[,-1]
+
+
+# order names and convert to matrices
+
+mat_geo_gal <- as.matrix(mat_geo_gal[order(rownames(mat_geo_gal)), order(colnames(mat_geo_gal))])
+
+mat_geo_can <- as.matrix(mat_geo_can[order(rownames(mat_geo_can)), order(colnames(mat_geo_can))])
+
+mat_geo_az <- as.matrix(mat_geo_az[order(rownames(mat_geo_az)), order(colnames(mat_geo_az))])
+```
+
+
+```{r}
+# Create graph objects for geographic distances (undirected)
+create_geo_graphs <- function(geo_mat) {
+  g_geo <- graph_from_adjacency_matrix(geo_mat, mode = "undirected", weighted = TRUE)
+  V(g_geo)$name <- as.character(V(g_geo)$name)
+  return(g_geo)
+}
+
+galapagos_geo <- create_geo_graphs(mat_geo_gal)
+canaries_geo <- create_geo_graphs(mat_geo_can)
+azores_geo <- create_geo_graphs(mat_geo_az)
+
+# Function to compute centrality measures for geographic distances
+compute_geo_centralities <- function(g_geo) {
+  centralities <- data.frame(
+    island = V(g_geo)$name,
+    degree_geo = strength(g_geo, mode = "all", weights = E(g_geo)$weight),
+    closeness_geo = closeness(g_geo, weights = E(g_geo)$weight),
+    betweenness_geo = betweenness(g_geo, weights = E(g_geo)$weight)
+  )
+  return(centralities)
+}
+
+galapagos_centralities <- compute_geo_centralities(galapagos_geo)
+canaries_centralities <- compute_geo_centralities(canaries_geo)
+azores_centralities <- compute_geo_centralities(azores_geo)
+
+# Add archipelago information
+galapagos_centralities$archipelago <- "Galapagos"
+canaries_centralities$archipelago <- "Canaries"
+azores_centralities$archipelago <- "Azores"
+
+centralities_geo <- rbind(galapagos_centralities, canaries_centralities, azores_centralities)
+
+centralities_geo$island <- gsub("_", "", centralities_geo$island)
+
+# Combine dataframes
+df_percent_degree_all <- df_percent_degree_all %>%
+  inner_join(centralities_geo, by = c("island", "archipelago"))
+
+```
+
+For plotting:
+
+```{r}
+df_percent_degree_all_p <- df_percent_degree_all
+
+df_percent_degree_all_p$closeness_geo <- df_percent_degree_all_p$closeness_geo*1000
+
+df_percent_degree_all_p$closeness <- df_percent_degree_all_p$closeness*1000
+```
+
+
+Important: degree centrality needs to be inversed to show a value of connectivity. This is done for currents in and out degree but not for geographic distance degree.
+
+```{r}
+df_percent_degree_all_p$degree_geo <- 1/df_percent_degree_all_p$degree_geo
+```
+
+
+
+## Plot data geographic centrality
+
+```{r}
+
+
+
+df_long <- df_percent_degree_all_p %>%
+  pivot_longer(cols = c(degree_geo, closeness_geo, betweenness_geo), 
+               names_to = "centrality", 
+               values_to = "value")
+
+
+# Define colors for each archipelago
+colors <- c("Galapagos" = "Skyblue", "Canaries" = "Lightgreen", "Azores" = "Lightcoral")
+
+create_plot <- function(data, archipelago_name, centrality_name) {
+  # Define y-axis labels based on centrality_name
+  y_axis_label <- switch(
+    centrality_name,
+    "degree_geo" = "Degree (Geographic)",
+    "closeness_geo" = "Closeness (Geographic)",
+    "betweenness_geo" = "Betweenness (Geographic)"
+  )
+  
+  # Filter and order the data for the specific archipelago and centrality
+  plot_data <- data %>%
+    filter(archipelago == archipelago_name & centrality == centrality_name) %>%
+    arrange(desc(value)) %>%
+    mutate(island = factor(island, levels = unique(island)))  # Order islands by value
+  
+  ggplot(plot_data, aes(x = island, y = value, fill = archipelago)) +
+    geom_bar(stat = "identity") +
+    scale_fill_manual(values = colors) +
+    theme_classic() +
+    my_theme +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),  # Angle labels for readability
+          axis.title.x = element_blank(),
+          axis.title.y = element_text(size = 12),
+          plot.title = element_text(hjust = 0.5, size = 10),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          legend.position = "none") +
+    labs(title = " ", y = y_axis_label)
+}
+
+
+# Create plots for each combination of archipelago and centrality
+plots <- list()
+
+for (archipelago in unique(df_long$archipelago)) {
+  for (centrality in unique(df_long$centrality)) {
+    p <- create_plot(df_long, archipelago, centrality)
+    plots[[paste(archipelago, centrality, sep = "_")]] <- p
+  }
+}
+
+# Arrange plots into a 3x3 grid
+plot_geo_centrality_islands <- ggarrange(
+  plots[["Galapagos_degree_geo"]], plots[["Galapagos_closeness_geo"]], plots[["Galapagos_betweenness_geo"]],
+  plots[["Canaries_degree_geo"]], plots[["Canaries_closeness_geo"]], plots[["Canaries_betweenness_geo"]],
+  plots[["Azores_degree_geo"]], plots[["Azores_closeness_geo"]], plots[["Azores_betweenness_geo"]],
+  nrow = 3, ncol = 3,
+  labels = LETTERS[1:9]
+)
+
+plot_geo_centrality_islands
+
+ggsave(here::here("c_output/figures/plot_geo_centrality_islands.png"), height = 10, width = 11)
+
+```
+
+## plot data ocean current centrality
+
+```{r}
+
+
+# Pivot data for centrality measures based on currents
+df_long_currents <- df_percent_degree_all_p %>%
+  pivot_longer(cols = c(in_degree, out_degree, closeness, betweenness), 
+               names_to = "centrality", 
+               values_to = "value")
+
+# Transform in_degree and out_degree to log for Canaries
+df_long_currents <- df_long_currents %>%
+  mutate(value = case_when(
+    archipelago == "Canaries" & centrality == "in_degree" ~ log(value),  # Add 1 to avoid log(0)
+    archipelago == "Canaries" & centrality == "out_degree" ~ log(value), # Add 1 to avoid log(0)
+    TRUE ~ value
+  ))
+
+create_plot_currents <- function(data, archipelago_name, centrality_name) {
+  # Define y-axis labels based on centrality_name
+  y_axis_label <- switch(
+    centrality_name,
+    "in_degree" = if (archipelago_name == "Canaries") "log (In-Degree) (currents)" else "In-degree (currents)",
+    "out_degree" = if (archipelago_name == "Canaries") "log(Out-Degree) (currents)" else "Out-degree (currents)",
+    "closeness" = "Closeness (currents)",
+    "betweenness" = "Betweenness (currents)"
+  )
+  
+  # Filter and order the data for the specific archipelago and centrality
+  plot_data <- data %>%
+    filter(archipelago == archipelago_name & centrality == centrality_name) %>%
+    arrange(desc(value)) %>%
+    mutate(island = factor(island, levels = unique(island)))  # Order islands by value
+  
+  ggplot(plot_data, aes(x = island, y = value, fill = archipelago)) +
+    geom_bar(stat = "identity") +
+    scale_fill_manual(values = colors) +
+    theme_classic() +
+    my_theme +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),  # Angle labels for readability
+          axis.title.x = element_blank(),
+          axis.title.y = element_text(size = 12),
+          plot.title = element_text(hjust = 0.5, size = 10),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          legend.position = "none") +
+    labs(title = " ", y = y_axis_label)
+}
+
+# Create plots for each combination of archipelago and centrality
+plots_currents <- list()
+
+for (archipelago in unique(df_long_currents$archipelago)) {
+  for (centrality in unique(df_long_currents$centrality)) {
+    p <- create_plot_currents(df_long_currents, archipelago, centrality)
+    plots_currents[[paste(archipelago, centrality, sep = "_")]] <- p
+  }
+}
+
+# Arrange plots into a 3x4 grid
+plot_currents_centrality_islands <- ggarrange(
+  plots_currents[["Galapagos_in_degree"]], plots_currents[["Galapagos_out_degree"]], 
+  plots_currents[["Galapagos_closeness"]],
+  plots_currents[["Galapagos_betweenness"]],
+  plots_currents[["Canaries_in_degree"]],
+  plots_currents[["Canaries_out_degree"]], 
+  plots_currents[["Canaries_closeness"]],
+  plots_currents[["Canaries_betweenness"]],
+  plots_currents[["Azores_in_degree"]], 
+  plots_currents[["Azores_out_degree"]], 
+  plots_currents[["Azores_closeness"]],
+  plots_currents[["Azores_betweenness"]],
+  nrow = 3, ncol = 4,
+  labels = LETTERS[1:12]
+)
+
+plot_currents_centrality_islands
+
+ggsave(here::here("c_output/figures/plot_currents_centrality_islands.png"), height = 10, width = 14)
+
+```
+
+
+## plot geo vs currents centrality
+
+```{r}
+df_percent_degree_all_p <- df_percent_degree_all_p |> 
+  mutate(log_in_degree = log(in_degree),
+         log_out_degree = log(out_degree))
+```
+
+
+```{r}
+
+
+create_plot <- function(data, x_col, y_col, xlabel, ylabel, title) {
+  # Fit linear models and calculate slopes for each archipelago
+  slopes <- data %>%
+    group_by(archipelago) %>%
+    summarise(slope = coef(lm(get(y_col) ~ get(x_col)))[2],
+              .groups = "drop")
+  
+  ggplot(data, aes_string(x = x_col, y = y_col, color = "archipelago", fill = "archipelago")) +
+    geom_point(size = 6, colour = "white", pch = 21) +
+    geom_smooth(method = "lm", se = FALSE) +  # Add regression lines
+    scale_fill_manual(values = colors) +
+    scale_color_manual(values = colors) +
+    labs(title = title, x = xlabel, y = ylabel) +
+    theme_classic() +
+    my_theme +
+    theme(legend.title = element_blank(),
+          legend.position = "top")
+}
+
+
+
+
+# Plotting each centrality measure
+plot_in_degree <- create_plot(df_percent_degree_all_p, 
+                              x_col = "degree_geo", y_col = "log_in_degree", title = "",
+                              xlabel = "Degree (geographic)", ylabel = "log(In-degree) (currents)")
+
+plot_out_degree <- create_plot(df_percent_degree_all_p, 
+                               x_col = "degree_geo", y_col = "log_out_degree", title = "",
+                               xlabel = "Degree (geographic)", ylabel = "log(Out-degree) (currents)")
+
+plot_closeness <- create_plot(df_percent_degree_all_p, 
+                              x_col = "closeness_geo", y_col = "closeness", title = "",
+                              xlabel = "Closeness (geographic)", ylabel = "Closeness (currents)")
+
+plot_betweenness <- create_plot(df_percent_degree_all_p, 
+                                x_col = "betweenness_geo", y_col = "betweenness", title = "",
+                              xlabel = "Betweenness (geographic)", ylabel = "Betweenness (currents)")
+
+
+
+
+# Display plots
+
+ggarrange(plot_in_degree, 
+          plot_out_degree, 
+          plot_closeness, 
+          plot_betweenness, 
+          ncol = 2, 
+          nrow = 2,
+          common.legend = TRUE,
+          legend = "top",
+          labels = LETTERS[1:4])
+
+ggsave(here::here("c_output/figures/plot_centrality_geo_currents.png"), height = 9, width = 9.3)
+```
+
+
 
 ## Test effect of centrality on % littoral
 
@@ -491,20 +804,23 @@ df_percent_degree_all$Percent_Littoral_Prop <- df_percent_degree_all$Percent_Lit
 
 ```{r}
 
-# Log-transform the in_degree variable
-df_percent_degree_all <- df_percent_degree_all %>%
-  mutate(log_in_degree = log(in_degree))
 
 # Center the log-transformed in_degree variable
 df_percent_degree_all <- df_percent_degree_all %>%
-  mutate(centered_log_in_degree = log_in_degree - mean(log_in_degree, na.rm = TRUE))
+  mutate(centered_log_in_degree = log_in_degree - mean(log_in_degree, na.rm = TRUE),
+         centered_log_degree_geo = degree_geo - mean(degree_geo, na.rm = TRUE))
 
 
 # Model
 
-#model_degree <- glmmTMB(Percent_Littoral_Prop ~ archipelago*centered_log_in_degree, data = df_percent_degree_all, family = beta_family(link = "logit"))
+
 
 model_degree <- glmmTMB(Percent_Littoral_Prop ~ centered_log_in_degree + (centered_log_in_degree | archipelago), data = df_percent_degree_all, family = beta_family(link = "logit"))
+
+
+#model_degree <- glmmTMB(Percent_Littoral_Prop ~ centered_log_in_degree + centered_log_degree_geo + (1 | archipelago),  data = df_percent_degree_all, family = beta_family(link = "logit"))
+
+#model_degree <- glmmTMB(Percent_Littoral_Prop ~ centered_log_in_degree + centered_log_degree_geo + (centered_log_in_degree | archipelago) + (centered_log_degree_geo | archipelago), data = df_percent_degree_all,  family = beta_family(link = "logit"))
 
 
 # Result
@@ -512,7 +828,6 @@ model_degree <- glmmTMB(Percent_Littoral_Prop ~ centered_log_in_degree + (center
 summary(model_degree)
 
 car::Anova(model_degree)
-
 ```
 
 Model diagnostics
@@ -797,7 +1112,7 @@ plot_perc_litt_centrality <- ggarrange(
 
 plot_perc_litt_centrality
 
-ggsave(here::here("c_output/figures/plot_perc_litt_centrality.png"), height = 9, width = 9)
+#ggsave(here::here("c_output/figures/plot_perc_litt_centrality.png"), height = 9, width = 9)
 
 ```
 
@@ -1151,7 +1466,7 @@ plot_network_regr_degree <- ggarrange(
 
 plot_network_regr_degree
 
-ggsave(here::here("c_output/figures/plot_network_regr_degree.png"), height = 12, width = 12)
+#ggsave(here::here("c_output/figures/plot_network_regr_degree.png"), height = 12, width = 12)
 
 
 ```
