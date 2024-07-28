@@ -1,0 +1,325 @@
+---
+title: "GLM models"
+---
+
+
+```{r}
+library(ggplot2)
+library(MASS)
+library(tidyverse) 
+library(gdistance)
+library(fields)
+library(scales)
+library(igraph)
+library(ggraph)
+library(tidygraph)
+library(ggrepel)
+library(reshape2)
+library(GGally)
+library(ggpubr)
+library(DHARMa)
+library(car)
+library(glmmTMB)
+
+source("Functions.R")
+```
+
+
+
+parameters for plotting
+
+```{r}
+my_theme<-theme(axis.text=element_text(size=12),
+        axis.title = element_text(size = 14),
+        legend.text=element_text(size=10),
+        legend.title = element_text(size=12),
+        plot.title = element_text(face="bold",size=14,margin=margin(0,0,20,0),hjust = 0.5),
+        axis.title.y = element_text(hjust = 0.5),
+        axis.title.x = element_text(hjust = 0.5))
+```
+
+
+Read data
+
+```{r}
+df_centrality_cur_geo_litt <- readRDS(here::here("c_output/df_centrality_cur_geo_litt.rds"))
+```
+
+## correlations centrality currents
+
+Plot correlations centrality measures
+
+```{r}
+
+df_corr_centrality_currents <- df_centrality_cur_geo_litt %>% 
+  rename(In_degree = in_degree,
+         Out_degree = out_degree,
+         Betweenness = betweenness,
+         Closeness = closeness) |> 
+  select(archipelago, In_degree, Out_degree, Closeness, Betweenness)
+
+plot_cor_centrality_measures <- ggpairs(df_corr_centrality_currents, aes(color = archipelago),
+        columns = 2:ncol(df_corr_centrality_currents),  # Specify the columns to plot
+        lower = 'blank', diag = 'blank',
+        upper = list(continuous = wrap("cor", size = 3))) + 
+  scale_color_manual(
+    values = c( "lightcoral", "#660099", "skyblue"))+
+  theme_classic() +
+  my_theme
+
+plot_cor_centrality_measures
+
+#ggsave(here::here("c_output/figures/plot_cor_centrality_measures.png"), height = 5, width = 6)
+```
+
+
+Model:
+
+% = currents + geo + age + area + (currents| archipelago)
+
+Or, per archipelago;
+
+% = currents + geo + age + area
+
+
+## Degree
+
+```{r}
+
+# Center the log-transformed in_degree variable
+df_model_degree <- df_centrality_cur_geo_litt %>%
+  mutate(Percent_regional_litt = Percent_regional_litt/100,
+         Percent_local_floras = Percent_local_floras/100,
+    log_in_degree = log(in_degree),
+         log_out_degree = log(out_degree),
+    centered_log_in_degree = log_in_degree - mean(log_in_degree, na.rm = TRUE),
+    centered_degree_geo = degree_geo - mean(degree_geo, na.rm = TRUE))
+
+
+model_degree_littreg <- glmmTMB(Percent_regional_litt ~ centered_log_in_degree + (centered_log_in_degree| archipelago), data = df_model_degree, family = beta_family(link = "logit"),
+                        control = glmmTMBControl(optimizer=optim,
+               optArgs=list(method="BFGS")))
+
+model_degree_littloc <- glmmTMB(Percent_local_floras ~ centered_log_in_degree + (centered_log_in_degree| archipelago), data = df_model_degree, family = beta_family(link = "logit"),
+                        control = glmmTMBControl(optimizer=optim,
+               optArgs=list(method="BFGS")))
+
+summary(model_degree_littreg)
+summary(model_degree_littloc)
+
+
+
+
+```
+
+Model diagnostics
+
+```{r}
+simulationOutput_surv_d<-simulateResiduals(model_degree_littreg) 
+dharma_plot_surv<-plot(simulationOutput_surv_d)
+surv_dharma<-testResiduals(simulationOutput_surv_d)
+```
+
+```{r}
+simulationOutput_surv_d<-simulateResiduals(model_degree_littloc) 
+dharma_plot_surv<-plot(simulationOutput_surv_d)
+surv_dharma<-testResiduals(simulationOutput_surv_d)
+```
+
+
+```{r}
+# Extract random effects
+random_effects_littreg <- ranef(model_degree_littreg)$cond$archipelago
+print(random_effects_littreg)
+```
+
+
+```{r}
+# Extract random effects
+random_effects_littloc <- ranef(model_degree_littloc)$cond$archipelago
+print(random_effects_littloc)
+```
+
+Save data
+
+```{r}
+# Extract summary information
+summary_littreg <- summary(model_degree_littreg)
+summary_littloc <- summary(model_degree_littloc)
+
+# Extract coefficients and their statistics
+coefficients_df_littreg <- summary_littreg$coefficients
+coefficients_df_littloc <- summary_littloc$coefficients
+
+# Save coefficients to CSV
+write.csv(coefficients_df_littreg$cond, file = here::here("c_output/tables/glms/model_degree_summary_littreg.csv"), row.names = TRUE)
+
+write.csv(coefficients_df_littloc$cond, file = here::here("c_output/tables/glms/model_degree_summary_littloc.csv"), row.names = TRUE)
+
+
+
+write.csv(random_effects_littreg, file = here::here("c_output/tables/glms/model_degree_random_effects_littreg.csv"), row.names = TRUE)
+
+write.csv(random_effects_littloc, file = here::here("c_output/tables/glms/model_degree_random_effects_littloc.csv"), row.names = TRUE)
+
+```
+
+
+
+## Closeness
+
+```{r}
+
+# Center the log-transformed in_degree variable
+df_model_closeness <- df_centrality_cur_geo_litt %>%
+  mutate(Percent_regional_litt = Percent_regional_litt/100,
+         Percent_local_floras = Percent_local_floras/100,
+         closeness = scale(closeness))
+
+
+model_closeness_littreg <- glmmTMB(Percent_regional_litt ~ closeness + (closeness| archipelago), data = df_model_closeness, family = beta_family(link = "logit"),
+                        control = glmmTMBControl(optimizer=optim,
+               optArgs=list(method="BFGS")))
+
+model_closeness_littloc <- glmmTMB(Percent_local_floras ~ closeness + (closeness| archipelago), data = df_model_closeness, family = beta_family(link = "logit"),
+                        control = glmmTMBControl(optimizer=optim,
+               optArgs=list(method="BFGS")))
+
+
+
+summary(model_closeness_littreg)
+summary(model_closeness_littloc)
+
+```
+
+Model diagnostics
+
+```{r}
+simulationOutput_surv_d<-simulateResiduals(model_closeness_littreg) 
+dharma_plot_surv<-plot(simulationOutput_surv_d)
+surv_dharma<-testResiduals(simulationOutput_surv_d)
+```
+
+```{r}
+simulationOutput_surv_d<-simulateResiduals(model_closeness_littloc) 
+dharma_plot_surv<-plot(simulationOutput_surv_d)
+surv_dharma<-testResiduals(simulationOutput_surv_d)
+```
+
+
+```{r}
+# Extract random effects
+random_effects_littreg <- ranef(model_closeness_littreg)$cond$archipelago
+print(random_effects_littreg)
+```
+
+
+```{r}
+# Extract random effects
+random_effects_littloc <- ranef(model_closeness_littloc)$cond$archipelago
+print(random_effects_littloc)
+```
+
+Save data
+
+```{r}
+# Extract summary information
+summary_littreg <- summary(model_closeness_littreg)
+summary_littloc <- summary(model_closeness_littloc)
+
+# Extract coefficients and their statistics
+coefficients_df_littreg <- summary_littreg$coefficients
+coefficients_df_littloc <- summary_littloc$coefficients
+
+# Save coefficients to CSV
+write.csv(coefficients_df_littreg$cond, file = here::here("c_output/tables/glms/model_closeness_summary_littreg.csv"), row.names = TRUE)
+
+write.csv(coefficients_df_littloc$cond, file = here::here("c_output/tables/glms/model_closeness_summary_littloc.csv"), row.names = TRUE)
+
+
+
+write.csv(random_effects_littreg, file = here::here("c_output/tables/glms/model_closeness_random_effects_littreg.csv"), row.names = TRUE)
+
+write.csv(random_effects_littloc, file = here::here("c_output/tables/glms/model_closeness_random_effects_littloc.csv"), row.names = TRUE)
+
+```
+
+
+
+## Betweenness
+
+```{r}
+
+# Center the log-transformed in_degree variable
+df_model_betweenness <- df_centrality_cur_geo_litt %>%
+  mutate(Percent_regional_litt = Percent_regional_litt/100,
+         Percent_local_floras = Percent_local_floras/100,
+         betweenness = scale(betweenness + 0.01)) # add a small constant to avoid 0
+
+
+model_betweenness_littreg <- glmmTMB(Percent_regional_litt ~ betweenness + (betweenness| archipelago), data = df_model_betweenness, family = beta_family(link = "logit"),
+                        control = glmmTMBControl(optimizer=optim,
+               optArgs=list(method="BFGS")))
+
+model_betweenness_littloc <- glmmTMB(Percent_local_floras ~ betweenness + (betweenness| archipelago), data = df_model_betweenness, family = beta_family(link = "logit"),
+                        control = glmmTMBControl(optimizer=optim,
+               optArgs=list(method="BFGS")))
+
+
+
+summary(model_betweenness_littreg)
+summary(model_betweenness_littloc)
+
+```
+
+Model diagnostics
+
+```{r}
+simulationOutput_surv_d<-simulateResiduals(model_betweenness_littreg) 
+dharma_plot_surv<-plot(simulationOutput_surv_d)
+surv_dharma<-testResiduals(simulationOutput_surv_d)
+```
+
+```{r}
+simulationOutput_surv_d<-simulateResiduals(model_betweenness_littloc) 
+dharma_plot_surv<-plot(simulationOutput_surv_d)
+surv_dharma<-testResiduals(simulationOutput_surv_d)
+```
+
+
+```{r}
+# Extract random effects
+random_effects_littreg <- ranef(model_betweenness_littreg)$cond$archipelago
+print(random_effects_littreg)
+```
+
+
+```{r}
+# Extract random effects
+random_effects_littloc <- ranef(model_betweenness_littloc)$cond$archipelago
+print(random_effects_littloc)
+```
+
+Save data
+
+```{r}
+# Extract summary information
+summary_littreg <- summary(model_betweenness_littreg)
+summary_littloc <- summary(model_betweenness_littloc)
+
+# Extract coefficients and their statistics
+coefficients_df_littreg <- summary_littreg$coefficients
+coefficients_df_littloc <- summary_littloc$coefficients
+
+# Save coefficients to CSV
+write.csv(coefficients_df_littreg$cond, file = here::here("c_output/tables/glms/model_betweenness_summary_littreg.csv"), row.names = TRUE)
+
+write.csv(coefficients_df_littloc$cond, file = here::here("c_output/tables/glms/model_betweenness_summary_littloc.csv"), row.names = TRUE)
+
+
+
+write.csv(random_effects_littreg, file = here::here("c_output/tables/glms/model_betweenness_random_effects_littreg.csv"), row.names = TRUE)
+
+write.csv(random_effects_littloc, file = here::here("c_output/tables/glms/model_betweenness_random_effects_littloc.csv"), row.names = TRUE)
+
+```

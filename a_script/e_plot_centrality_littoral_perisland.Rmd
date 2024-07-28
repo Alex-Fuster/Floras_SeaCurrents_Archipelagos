@@ -1,0 +1,351 @@
+---
+title: "Plot % littoral species and centrality by geography and currents for each island"
+---
+
+
+```{r}
+library(ggplot2)
+library(MASS)
+library(tidyverse) 
+library(gdistance)
+library(fields)
+library(tidygraph)
+library(ggrepel)
+library(reshape2)
+library(ggpubr)
+
+source("Functions.R")
+```
+
+
+
+read data
+
+```{r}
+df_centrality_cur_geo_litt <- readRDS(here::here("c_output/df_centrality_cur_geo_litt.rds"))
+
+df_centrality_cur_geo_litt
+```
+
+
+
+```{r}
+# Define colors for each archipelago
+colors <- c("Galapagos" = "skyblue", "Canaries" = "#660099", "Azores" = "lightcoral")
+
+my_theme<-theme(axis.text=element_text(size=12),
+        axis.title = element_text(size = 14),
+        legend.text=element_text(size=10),
+        legend.title = element_text(size=12),
+        plot.title = element_text(face="bold",size=14,margin=margin(0,0,20,0),hjust = 0.5),
+        axis.title.y = element_text(hjust = 0.5),
+        axis.title.x = element_text(hjust = 0.5))
+
+```
+
+
+
+
+## Plot % littoral species per island
+
+
+```{r}
+
+# Create separate dataframes for each archipelago
+df_galapagos <- df_centrality_cur_geo_litt %>% filter(archipelago == "Galapagos")
+df_canaries <- df_centrality_cur_geo_litt %>% filter(archipelago == "Canaries")
+df_azores <- df_centrality_cur_geo_litt %>% filter(archipelago == "Azores")
+
+# Create a vector with the maximum values for each archipelago
+max_values <- df_centrality_cur_geo_litt %>%
+  group_by(archipelago) %>%
+  summarise(max_percent_local_floras = max(Percent_local_floras, na.rm = TRUE))
+
+# Extract maximum values for y-axis limits
+ymax_galapagos <- max_values$max_percent_local_floras[max_values$archipelago == "Galapagos"]
+ymax_canaries <- max_values$max_percent_local_floras[max_values$archipelago == "Canaries"]
+ymax_azores <- max_values$max_percent_local_floras[max_values$archipelago == "Azores"]
+
+# Create plots with reordered dataframes and appropriate y-axis limits
+plot_gal <- ggplot(df_galapagos, aes(x = reorder(island, -Percent_local_floras), y = Percent_local_floras)) +
+  geom_bar(stat = "identity", fill = "skyblue") +  # Create the bar plot
+  geom_text(aes(label = Total_Species_island), 
+            vjust = -0.5, 
+            size = 4) +  # Add text labels for Total_Species at the top of each bar
+  labs(x = NULL, y = "% littoral species") +
+  ylim(0, ymax_galapagos + 0.8) +
+  theme_classic() +  # Use a classic theme
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate x-axis labels for better readability
+  my_theme
+
+plot_can <- ggplot(df_canaries, aes(x = reorder(island, -Percent_local_floras), y = Percent_local_floras)) +
+  geom_bar(stat = "identity", fill = "#660099") +  # Create the bar plot
+  geom_text(aes(label = Total_Species_island), 
+            vjust = -0.5, 
+            size = 4) +  # Add text labels for Total_Species at the top of each bar
+  labs(x = NULL, y = "% littoral species") +
+  ylim(0, ymax_canaries + 0.8) +
+  theme_classic() +  # Use a classic theme
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate x-axis labels for better readability
+  my_theme
+
+plot_az <- ggplot(df_azores, aes(x = reorder(island, -Percent_local_floras), y = Percent_local_floras)) +
+  geom_bar(stat = "identity", fill = "lightcoral") +  # Create the bar plot
+  geom_text(aes(label = Total_Species_island), 
+            vjust = -0.5, 
+            size = 4) +  # Add text labels for Total_Species at the top of each bar
+  labs(x = NULL, y = "% littoral species") +
+  ylim(0, ymax_azores + 0.8) +
+  theme_classic() +  # Use a classic theme
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  my_theme
+
+# Arrange the plots in a 3x1 grid
+plot_percent_litt_islands <- ggarrange(
+  plot_gal,
+  plot_can,
+  plot_az,
+  labels = LETTERS[1:3],
+  nrow = 3,
+  ncol = 1
+)
+
+plot_percent_litt_islands
+
+ggsave(here::here("c_output/figures/plot_percent_litt_islands.png"), height = 10, width = 4.5)
+
+```
+
+
+
+
+```{r}
+
+
+create_plot_floras <- function(data, archipelago_name) {
+  plot_data <- data %>%
+    filter(archipelago == archipelago_name) %>%
+    arrange(desc(Percent_local_floras)) %>%
+    mutate(island = factor(island, levels = unique(island)))  # Order islands by value
+  
+  y_limits <- c(0, max(plot_data$Percent_local_floras) * 1.3)
+  
+  ggplot(plot_data, aes(x = island, y = Percent_local_floras, fill = archipelago)) +
+    geom_bar(stat = "identity") +
+    scale_fill_manual(values = colors) +
+    geom_text(aes(label = sprintf("%.1f", age)), vjust = -2, size = 3.2) +
+    geom_text(aes(label = sprintf("%.0f", area)), vjust = -0.5, size = 3.2) +
+    ylim(y_limits) +
+    theme_classic() +
+    my_theme+
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),  # Angle labels for readability
+      axis.title.x = element_blank(),
+      axis.title.y = element_text(size = 12),
+      plot.title = element_text(hjust = 0.5, size = 10),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(),
+      legend.position = "none"
+    ) +
+    labs(title = " ", y = "% littoral species")
+}
+
+archipelago_order <- c("Galapagos", "Canaries", "Azores")
+
+# Create plots for each archipelago
+plots_floras <- lapply(archipelago_order, function(archipelago) {
+  create_plot_floras(df_centrality_cur_geo_litt, archipelago)
+})
+
+# Combine plots into one
+plot_percent_local_floras <- ggarrange(
+  plotlist = plots_floras,
+  nrow = 3, ncol = 1,
+  labels = LETTERS[1:3]
+)
+
+plot_percent_local_floras
+
+ggsave(here::here("c_output/figures/plot_perclitt_islands.png"), height = 9, width = 4)
+
+```
+
+
+
+## Plot data geographic centrality
+
+```{r}
+
+df_long <- df_centrality_cur_geo_litt %>%
+  pivot_longer(cols = c(degree_geo, closeness_geo, betweenness_geo), 
+               names_to = "centrality", 
+               values_to = "value")
+
+
+create_plot <- function(data, archipelago_name, centrality_name) {
+  # Define y-axis labels based on centrality_name
+  y_axis_label <- switch(
+    centrality_name,
+    "degree_geo" = "Degree (Geographic)",
+    "closeness_geo" = "Closeness (Geographic)",
+    "betweenness_geo" = "Betweenness (Geographic)"
+  )
+  
+  # Filter and order the data for the specific archipelago and centrality
+  plot_data <- data %>%
+    filter(archipelago == archipelago_name & centrality == centrality_name) %>%
+    arrange(desc(value)) %>%
+    mutate(island = factor(island, levels = unique(island)))  # Order islands by value
+  
+  # Define y-axis limit
+  y_limit <- max(plot_data$value) * 1.3  # Increase the limit by 30% for text space
+  
+  ggplot(plot_data, aes(x = island, y = value, fill = archipelago)) +
+    geom_bar(stat = "identity") +
+    geom_text(aes(label = sprintf("%.1f", age)), 
+              vjust = -2, 
+              size = 3) +  # Age annotation on top
+    geom_text(aes(label = sprintf("%.0f", area)), 
+              vjust = -0.5, 
+              size = 3) +  # Area annotation below the age
+    scale_fill_manual(values = colors) +
+    theme_classic() +
+    my_theme +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),  # Angle labels for readability
+          axis.title.x = element_blank(),
+          axis.title.y = element_text(size = 12),
+          plot.title = element_text(hjust = 0.5, size = 10),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          legend.position = "none") +
+    labs(title = " ", y = y_axis_label) +
+    ylim(0, y_limit)
+}
+
+
+
+# Create plots for each combination of archipelago and centrality
+plots <- list()
+
+for (archipelago in unique(df_long$archipelago)) {
+  for (centrality in unique(df_long$centrality)) {
+    p <- create_plot(df_long, archipelago, centrality)
+    plots[[paste(archipelago, centrality, sep = "_")]] <- p
+  }
+}
+
+# Arrange plots into a 3x3 grid
+plot_geo_centrality_islands <- ggarrange(
+  plots[["Galapagos_degree_geo"]], plots[["Galapagos_closeness_geo"]], plots[["Galapagos_betweenness_geo"]],
+  plots[["Canaries_degree_geo"]], plots[["Canaries_closeness_geo"]], plots[["Canaries_betweenness_geo"]],
+  plots[["Azores_degree_geo"]], plots[["Azores_closeness_geo"]], plots[["Azores_betweenness_geo"]],
+  nrow = 3, ncol = 3,
+  labels = LETTERS[1:9]
+)
+
+plot_geo_centrality_islands
+
+ggsave(here::here("c_output/figures/plot_geo_centrality_islands.png"), height = 10, width = 11)
+
+```
+
+
+
+
+## plot data ocean current centrality
+
+```{r}
+
+
+# Pivot data for centrality measures based on currents
+df_long_currents <- df_centrality_cur_geo_litt %>%
+  pivot_longer(cols = c(in_degree, out_degree, closeness, betweenness), 
+               names_to = "centrality", 
+               values_to = "value")
+
+# Transform in_degree and out_degree to log for Canaries
+df_long_currents <- df_long_currents %>%
+  mutate(value = case_when(
+    archipelago == "Canaries" & centrality == "in_degree" ~ log(value),
+    archipelago == "Canaries" & centrality == "out_degree" ~ log(value),
+    TRUE ~ value
+  ))
+
+create_plot_currents <- function(data, archipelago_name, centrality_name) {
+  # Define y-axis labels based on centrality_name
+  y_axis_label <- switch(
+    centrality_name,
+    "in_degree" = if (archipelago_name == "Canaries") "log(In-Degree) (currents)" else "In-degree (currents)",
+    "out_degree" = if (archipelago_name == "Canaries") "log(Out-Degree) (currents)" else "Out-degree (currents)",
+    "closeness" = "Closeness (currents)",
+    "betweenness" = "Betweenness (currents)"
+  )
+  
+  # Filter and order the data for the specific archipelago and centrality
+  plot_data <- data %>%
+    filter(archipelago == archipelago_name & centrality == centrality_name) %>%
+    arrange(desc(value)) %>%
+    mutate(island = factor(island, levels = unique(island)))  # Order islands by value
+  
+  # Define y-axis limits dynamically for Canaries in-degree and out-degree
+  y_limits <- if (archipelago_name == "Canaries" & centrality_name %in% c("in_degree", "out_degree")) {
+    c(min(plot_data$value) * 1.5, max(plot_data$value) * 4)
+  } else {
+    c(0, max(plot_data$value) * 1.3)
+  }
+  
+  ggplot(plot_data, aes(x = island, y = value, fill = archipelago)) +
+    geom_bar(stat = "identity") +
+    geom_text(aes(label = sprintf("%.1f", age)), 
+              vjust = ifelse(plot_data$value >= 0, -2, 2.7), 
+              size = 3) +  # Age annotation on top
+    geom_text(aes(label = sprintf("%.0f", area)), 
+              vjust = ifelse(plot_data$value >= 0, -0.5, 1.2), 
+              size = 3) +  # Area annotation below the age
+    scale_fill_manual(values = colors) +
+    theme_classic() +
+    my_theme +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),  # Angle labels for readability
+          axis.title.x = element_blank(),
+          axis.title.y = element_text(size = 12),
+          plot.title = element_text(hjust = 0.5, size = 10),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          legend.position = "none") +
+    labs(title = " ", y = y_axis_label) +
+    ylim(y_limits)
+}
+
+
+# Create plots for each combination of archipelago and centrality
+plots_currents <- list()
+
+for (archipelago in unique(df_long_currents$archipelago)) {
+  for (centrality in unique(df_long_currents$centrality)) {
+    p <- create_plot_currents(df_long_currents, archipelago, centrality)
+    plots_currents[[paste(archipelago, centrality, sep = "_")]] <- p
+  }
+}
+
+# Arrange plots into a 3x4 grid
+plot_currents_centrality_islands <- ggarrange(
+  plots_currents[["Galapagos_in_degree"]], plots_currents[["Galapagos_out_degree"]], 
+  plots_currents[["Galapagos_closeness"]],
+  plots_currents[["Galapagos_betweenness"]],
+  plots_currents[["Canaries_in_degree"]],
+  plots_currents[["Canaries_out_degree"]], 
+  plots_currents[["Canaries_closeness"]],
+  plots_currents[["Canaries_betweenness"]],
+  plots_currents[["Azores_in_degree"]], 
+  plots_currents[["Azores_out_degree"]], 
+  plots_currents[["Azores_closeness"]],
+  plots_currents[["Azores_betweenness"]],
+  nrow = 3, ncol = 4,
+  labels = LETTERS[1:12]
+)
+
+plot_currents_centrality_islands
+
+ggsave(here::here("c_output/figures/plot_currents_centrality_islands.png"), height = 10, width = 14)
+
+```

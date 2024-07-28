@@ -1,0 +1,155 @@
+---
+title: "Compute correlations between centrality measures by geography and ocean currents"
+
+---
+
+```{r}
+library(ggplot2)
+library(MASS)
+library(tidyverse) 
+library(gdistance)
+library(fields)
+library(tidygraph)
+library(ggrepel)
+library(reshape2)
+library(ggpubr)
+
+source("Functions.R")
+```
+
+
+```{r}
+colors <- c("Galapagos" = "skyblue", "Canaries" = "#660099", "Azores" = "lightcoral")
+
+my_theme<-theme(axis.text=element_text(size=12),
+        axis.title = element_text(size = 14),
+        legend.text=element_text(size=10),
+        legend.title = element_text(size=12),
+        plot.title = element_text(face="bold",size=14,margin=margin(0,0,20,0),hjust = 0.5),
+        axis.title.y = element_text(hjust = 0.5),
+        axis.title.x = element_text(hjust = 0.5))
+```
+
+
+read data
+
+```{r}
+df_centrality_cur_geo_litt <- readRDS(here::here("c_output/df_centrality_cur_geo_litt.rds"))
+
+df_centrality_cur_geo_litt
+```
+
+## correlations centrality geography-currents
+
+
+```{r}
+
+
+# Function to calculate correlations for each group
+calculate_correlations <- function(data) {
+  cor_data <- data %>%
+    select(3:9) %>%  # Select the relevant columns
+    cor() %>%  # Calculate correlation matrix
+    as.data.frame() %>%  # Convert to dataframe
+    rownames_to_column(var = "variable1") %>%  # Convert row names to a column
+    pivot_longer(cols = -variable1, names_to = "variable2", values_to = "correlation")  # Reshape to long format
+  
+  return(cor_data)
+}
+
+# Calculate correlations for each archipelago
+correlation_results <- df_centrality_cur_geo_litt %>%
+  group_by(archipelago) %>%
+  nest() %>%
+  mutate(correlations = map(data, calculate_correlations)) %>%
+  unnest(correlations) %>%
+  select(-data)  # Remove the nested data column
+
+# View the results
+correlation_results
+
+#ggsave(here::here("c_output/figures/plot_cor_centrality_measures.png"), height = 5, width = 6)
+```
+
+
+## plot geo vs currents centrality
+
+```{r}
+df_percent_degree_all_p <- df_centrality_cur_geo_litt |> 
+  mutate(log_in_degree = log(in_degree),
+         log_out_degree = log(out_degree))
+```
+
+
+```{r}
+
+# Create plot function with correlation annotation and trend lines
+create_plot <- function(data, x_col, y_col, xlabel, ylabel, title) {
+  # Calculate correlations for each archipelago
+  correlations <- data %>%
+    group_by(archipelago) %>%
+    summarise(correlation = cor(get(x_col), get(y_col), method = "pearson"),
+              .groups = "drop")
+  
+  # Calculate the y-axis range
+  y_range <- range(data[[y_col]], na.rm = TRUE)
+  
+  # Define vertical positions based on the y-axis range
+  vertical_positions <- y_range[1] + c(0.9, 0.8, 0.7) * diff(y_range)
+  
+  correlations <- correlations %>%
+    mutate(vertical_position = vertical_positions[as.numeric(factor(archipelago, levels = c("Galapagos", "Canaries", "Azores")))])
+  
+  ggplot(data, aes_string(x = x_col, y = y_col, color = "archipelago", fill = "archipelago")) +
+    geom_point(size = 6, colour = "white", pch = 21) +
+    geom_smooth(method = "lm", se = FALSE, linetype = "solid") +  # Add regression lines
+    scale_fill_manual(values = colors) +
+    scale_color_manual(values = colors) +
+    labs(title = title, x = xlabel, y = ylabel) +
+    theme_classic() +
+    my_theme +
+    theme(legend.title = element_blank(),
+          legend.position = "top") +
+    # Add correlation annotations on the left side
+    geom_text(data = correlations, 
+              aes(x = -Inf, y = vertical_position, label = sprintf("r = %.2f", correlation), color = archipelago),
+              hjust = -0.1, vjust = 0.5, size = 5)
+}
+
+
+
+# Data preparation
+df_percent_degree_all_p <- df_centrality_cur_geo_litt |> 
+  mutate(log_in_degree = log(in_degree),
+         log_out_degree = log(out_degree))
+
+# Plotting each centrality measure
+plot_in_degree <- create_plot(df_percent_degree_all_p, 
+                              x_col = "degree_geo", y_col = "log_in_degree", title = "",
+                              xlabel = "Degree (geographic)", ylabel = "log(In-degree) (currents)")
+
+plot_out_degree <- create_plot(df_percent_degree_all_p, 
+                               x_col = "degree_geo", y_col = "log_out_degree", title = "",
+                               xlabel = "Degree (geographic)", ylabel = "log(Out-degree) (currents)")
+
+plot_closeness <- create_plot(df_percent_degree_all_p, 
+                              x_col = "closeness_geo", y_col = "closeness", title = "",
+                              xlabel = "Closeness (geographic)", ylabel = "Closeness (currents)")
+
+plot_betweenness <- create_plot(df_percent_degree_all_p, 
+                                x_col = "betweenness_geo", y_col = "betweenness", title = "",
+                                xlabel = "Betweenness (geographic)", ylabel = "Betweenness (currents)")
+
+# Display plots
+ggarrange(plot_in_degree, 
+          plot_out_degree, 
+          plot_closeness, 
+          plot_betweenness, 
+          ncol = 2, 
+          nrow = 2,
+          common.legend = TRUE,
+          legend = "top",
+          labels = LETTERS[1:4])
+
+ggsave(here::here("c_output/figures/plot_centrality_geo_currents.png"), height = 9, width = 9.3)
+```
