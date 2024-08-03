@@ -228,7 +228,7 @@ Currents
 # Galapagos
 
 
-plot_network_litt_gal <- plot_network_littoral1(weighted_matrix = mat_median_min_singlepoints_gal,
+plot_network_litt_gal <- plot_network_littoral(weighted_matrix = mat_median_min_singlepoints_gal,
                       centroids = coord_centroids_gal,
                       node_size = 8,
                       percent_littoral = df_galapagos[,c("Percent_regional_litt", "island")],
@@ -240,7 +240,7 @@ plot_network_litt_gal <- plot_network_littoral1(weighted_matrix = mat_median_min
 
 # Canaries
 
-plot_network_litt_can <- plot_network_littoral1(weighted_matrix = mat_median_min_singlepoints_can,
+plot_network_litt_can <- plot_network_littoral(weighted_matrix = mat_median_min_singlepoints_can,
                       centroids = coord_centroids_can,
                       node_size = 8,
                       percent_littoral = df_canaries[,c("Percent_regional_litt", "island")],
@@ -254,7 +254,7 @@ plot_network_litt_can <- plot_network_littoral1(weighted_matrix = mat_median_min
 # Azores
 
 
-plot_network_litt_az <- plot_network_littoral1(weighted_matrix = mat_median_min_singlepoints_az,
+plot_network_litt_az <- plot_network_littoral(weighted_matrix = mat_median_min_singlepoints_az,
                       centroids = coord_centroids_az,
                       node_size = 8,
                       percent_littoral = df_azores[,c("Percent_regional_litt", "island")],
@@ -277,12 +277,14 @@ plot_network_litt_all <- ggarrange(
   labels = LETTERS[1:3],
   
   ncol = 1,
-  nrow = 3
+  nrow = 3,
+  common.legend = TRUE,
+  legend = "right"
 )
 
 plot_network_litt_all
 
-ggsave(here::here("c_output/figures/plot_network_litt_all.png"), height = 12, width = 8)
+#ggsave(here::here("c_output/figures/plot_network_litt_all.png"), height = 12, width = 8)
 
 
 
@@ -295,86 +297,34 @@ ggsave(here::here("c_output/figures/plot_network_litt_all.png"), height = 12, wi
 
 
 
-
-
-Plots degree
-
-```{r}
-
-# Galapagos
-
-plot_network_degree_gal <- plot_network_in_degree(weighted_matrix = mat_medianMin_sym_Galapagos, 
-                       centroids = coord_centroids_gal, 
-                       df_degree = df_galapagos[,c("in_degree", "island")],
-                       node_size = 8,
-                      scale_edge = "none",
-                      scale_degree = "none",
-                      legend_label = in_degree_label)
-
-# Canaries
-
-plot_network_degree_can <- plot_network_in_degree(weighted_matrix = mat_medianMin_sym_Canaries, 
-                       centroids = coord_centroids_can, 
-                       df_degree = df_canaries[,c("in_degree", "island")],
-                       node_size = 8,
-                      scale_edge = "log_scale",
-                      scale_degree = "log_scale",
-                      legend_label = in_degree_label)+
-    scale_color_viridis(
-    name = "In-degree centrality", 
-    option = "turbo", 
-    labels = function(x) sprintf("%.2f", back_transform_log(x),3))
-
-# Azores
-
-
-plot_network_degree_az <- plot_network_in_degree(weighted_matrix = mat_medianMin_sym_Azores, 
-                       centroids = coord_centroids_az, 
-                       df_degree = df_azores[,c("in_degree", "island")],
-                       node_size = 8,
-                      scale_edge = "sqrt_scale",
-                      scale_degree = "sqrt_scale",
-                      legend_label = in_degree_label)
-
-```
-
-
-
-
 Plots closeness
 
 ```{r}
 
 # Galapagos
 
-plot_network_closeness_gal <- plot_network_closeness(weighted_matrix = mat_medianMin_sym_Galapagos, 
-                       centroids = coord_centroids_gal, 
-                       df_closeness = df_galapagos[,c("closeness", "island")],
-                       node_size = 8,
-                      scale_edge = "none",
-                      scale_degree = "none",
-                      legend_label = closeness_label)
+plot_network_closeness_gal <- plot_network_closeness(weighted_matrix = mat_median_min_singlepoints_gal,
+                      centroids = coord_centroids_gal,
+                      node_size = 8,
+                      data_closeness = df_galapagos[,c("closeness", "island")],
+                      scale = "none")
 
 # Canaries
 
-plot_network_closeness_can <- plot_network_closeness(weighted_matrix = mat_medianMin_sym_Canaries, 
-                       centroids = coord_centroids_can, 
-                       df_closeness = df_canaries[,c("closeness", "island")],
-                       node_size = 8,
-                      scale_edge = "none",
-                      scale_degree = "none",
-                      legend_label = closeness_label)
+plot_network_closeness_can <- plot_network_closeness(weighted_matrix = mat_median_min_singlepoints_can,
+                      centroids = coord_centroids_can,
+                      node_size = 8,
+                      data_closeness = df_canaries[,c("closeness", "island")],
+                      scale = "log_scale")
 
 # Azores
 
 
-plot_network_closeness_az <- plot_network_closeness(weighted_matrix = mat_medianMin_sym_Azores, 
-                       centroids = coord_centroids_az, 
-                       df_closeness = df_azores[,c("closeness", "island")],
-                       node_size = 8,
-                      scale_edge = "none",
-                      scale_degree = "none",
-                      legend_label = closeness_label)
+plot_network_closeness_az <- plot_network_closeness(weighted_matrix = mat_median_min_singlepoints_az,
+                      centroids = coord_centroids_az,
+                      node_size = 8,
+                      data_closeness = df_azores[,c("closeness", "island")],
+                      scale = "sqrt_scale")
 
 ```
 
@@ -387,9 +337,21 @@ Plot combined network & regression degree
 ```{r}
 
 
+plot_perc_litt_centrality <- ggarrange(
+  plot_litt_geo_gal+ labs(title = "")+ xlab(NULL), plot_litt_geo_can + ylab(NULL) + xlab(NULL)+ labs(title = ""), plot_litt_geo_az + ylab(NULL)+ labs(title = "") + xlab(NULL),
+  plot_litt_cc_gal+ labs(title = ""), plot_litt_cc_can + ylab(NULL)+ labs(title = ""), plot_litt_cc_az + ylab(NULL)+ labs(title = ""),
+  
+  ncol = 3,
+  nrow = 2,
+  
+  labels = LETTERS[1:6]
+)
+
+
+
 plot_regr_centrality_gal <- ggarrange(
   
-  plot_litt_degree_gal + ylab(NULL), NULL,
+  plot_litt_geo_gal + ylab(NULL), NULL,
 plot_litt_cc_gal+ ylab(NULL), NULL,
 nrow = 2,
 ncol = 2,
@@ -405,7 +367,7 @@ plot_regr_centrality_gal <- annotate_figure(
 
 plot_regr_centrality_can <- ggarrange(
   
-  plot_litt_degree_can+ ylab(NULL), NULL,
+  plot_litt_geo_can+ ylab(NULL), NULL,
 plot_litt_cc_can+ ylab(NULL), NULL,
 nrow = 2,
 ncol = 2,
@@ -421,7 +383,7 @@ plot_regr_centrality_can <- annotate_figure(
 
 plot_regr_centrality_az <- ggarrange(
   
-  plot_litt_degree_az+ ylab(NULL), NULL,
+  plot_litt_geo_az+ ylab(NULL), NULL,
 plot_litt_cc_az+ ylab(NULL),NULL,
 nrow = 2,
 ncol = 2,
@@ -437,143 +399,36 @@ plot_regr_centrality_az <- annotate_figure(
 
 #############################
 
-
-
-
-plot_network_regr_degree <- ggarrange(
-  
-      plot_network_degree_gal + theme(legend.position = "left") +
-    scale_color_viridis(name = in_degree_label, option = "turbo")+
-    guides(color = guide_colorbar(barwidth = 1, barheight = 8,
-                                  title.position = "top", label.position = "left",
-                                  title.hjust = 0.5,
-                                  ticks = FALSE,
-                                  breaks = seq(0, 100, by = 20))) 
-  , plot_regr_centrality_gal,
-  
-    plot_network_degree_can + theme(legend.position = "left") +
-    scale_color_viridis(
-    name = in_degree_label, 
-    option = "turbo", 
-    labels = function(x) sprintf("%.2f", back_transform_log(x),3))+
-    guides(color = guide_colorbar(barwidth = 1, barheight = 8,
-                                  title.position = "top", label.position = "left",
-                                  title.hjust = 0.5,
-                                  ticks = FALSE,
-                                  breaks = seq(0, 100, by = 20))) 
-  , plot_regr_centrality_can,
-  
-  plot_network_degree_az + theme(legend.position = "left") +
-    scale_color_viridis(name =in_degree_label, option = "turbo")+
-    guides(color = guide_colorbar(barwidth = 1, barheight = 8,
-                                  title.position = "top", label.position = "left",
-                                  title.hjust = 0.5,
-                                  ticks = FALSE,
-                                  breaks = seq(0, 100, by = 20))) 
-  , plot_regr_centrality_az,
-  
-  ncol = 2,
-  nrow = 3,
-  
-  labels = LETTERS[1:6],
-  
-  widths = c(2, 1)
-)
-
-plot_network_regr_degree
-
-#ggsave(here::here("c_output/figures/plot_network_regr_degree.png"), height = 12, width = 12)
-
-
-```
-
-
-
-
-Plot combined network & regression closeness
-
-```{r}
-
-
-plot_regr_centrality_gal <- ggarrange(
-  
-  plot_litt_degree_gal + ylab(NULL), NULL,
-plot_litt_cc_gal+ ylab(NULL), NULL,
-nrow = 2,
-ncol = 2,
-
-widths = c(1.6, 1)
-)
-
-plot_regr_centrality_gal <- annotate_figure(
-  plot_regr_centrality_gal,
-  left = text_grob("% littoral species", rot = 90, vjust = 0.5, hjust = 0.5, size = 16)
-)
-
-
-plot_regr_centrality_can <- ggarrange(
-  
-  plot_litt_degree_can+ ylab(NULL), NULL,
-plot_litt_cc_can+ ylab(NULL), NULL,
-nrow = 2,
-ncol = 2,
-
-widths = c(1.6, 1)
-)
-
-plot_regr_centrality_can <- annotate_figure(
-  plot_regr_centrality_can,
-  left = text_grob("% littoral species", rot = 90, vjust = 0.5, hjust = 0.5, size = 16)
-)
-
-
-plot_regr_centrality_az <- ggarrange(
-  
-  plot_litt_degree_az+ ylab(NULL), NULL,
-plot_litt_cc_az+ ylab(NULL),NULL,
-nrow = 2,
-ncol = 2,
-
-widths = c(1.6, 1)
-)
-
-plot_regr_centrality_az <- annotate_figure(
-  plot_regr_centrality_az,
-  left = text_grob("% littoral species", rot = 90, vjust = 0.5, hjust = 0.5, size = 16)
-)
-
-
-#############################
 
 
 
 plot_network_regr_closeness <- ggarrange(
   
-         plot_network_closeness_gal + theme(legend.position = "left") +
-    scale_color_viridis(name = closeness_label, option = "turbo")+
+  plot_network_closeness_gal + theme(legend.position = "left") +
+    scale_color_viridis(name = "Closeness", option = "turbo")+
     guides(color = guide_colorbar(barwidth = 1, barheight = 8,
                                   title.position = "top", label.position = "left",
                                   title.hjust = 0.5,
                                   ticks = FALSE
                                   #breaks = seq(0, 100 , by = 0.02
-                                  ))+ xlab(""),
-    
-    plot_regr_centrality_gal,
+    ))+ xlab(""),
   
-    plot_network_closeness_can + theme(legend.position = "left") +
+  plot_regr_centrality_gal,
+  
+  plot_network_closeness_can + theme(legend.position = "left") +
     scale_color_viridis(
-    name = closeness_label, 
-    option = "turbo", 
-    labels = function(x) sprintf("%.2f", back_transform_log(x),3))+
+      name = "Closeness", 
+      option = "turbo", 
+      labels = function(x) sprintf("%.2f", back_transform_log(x),3))+
     guides(color = guide_colorbar(barwidth = 1, barheight = 8,
                                   title.position = "top", label.position = "left",
                                   title.hjust = 0.5,
                                   ticks = FALSE,
                                   breaks = seq(0, 100, by = 20)))+ xlab(""),
-    plot_regr_centrality_can,
+  plot_regr_centrality_can,
   
   plot_network_closeness_az + theme(legend.position = "left") +
-    scale_color_viridis(name =closeness_label, option = "turbo")+
+    scale_color_viridis(name ="Closeness", option = "turbo")+
     guides(color = guide_colorbar(barwidth = 1, barheight = 8,
                                   title.position = "top", label.position = "left",
                                   title.hjust = 0.5,
@@ -598,96 +453,6 @@ plot_network_regr_closeness
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r}
-plot_network_regr_centrality <- ggarrange(
-  
-      plot_network_degree_gal + theme(legend.position = "top") +
-    scale_color_viridis(name = in_degree_label, option = "turbo")+
-    guides(color = guide_colorbar(barwidth = 8, barheight = 1,
-                                  title.position = "left", label.position = "bottom",
-                                  title.hjust = 0.5,
-                                  ticks = FALSE,
-                                  breaks = seq(0, 100, by = 20))),
-    
-    plot_network_closeness_gal + theme(legend.position = "top") +
-    scale_color_viridis(name = closeness_label, option = "turbo")+
-    guides(color = guide_colorbar(barwidth = 8, barheight = 1,
-                                  title.position = "left", label.position = "bottom",
-                                  title.hjust = 0.5,
-                                  ticks = FALSE,
-                                  breaks = seq(0, 100, by = 20))),
-  plot_regr_centrality_gal,
-  
-    plot_network_degree_can + theme(legend.position = "top") +
-    scale_color_viridis(
-    name = in_degree_label, 
-    option = "turbo", 
-    labels = function(x) sprintf("%.2f", back_transform_log(x),3))+
-    guides(color = guide_colorbar(barwidth = 8, barheight = 1,
-                                  title.position = "left", label.position = "bottom",
-                                  title.hjust = 0.5,
-                                  ticks = FALSE,
-                                  breaks = seq(0, 100, by = 20))),
-  
-  plot_network_closeness_can + theme(legend.position = "top") +
-    scale_color_viridis(
-    name = closeness_label, 
-    option = "turbo", 
-    labels = function(x) sprintf("%.2f", back_transform_log(x),3))+
-    guides(color = guide_colorbar(barwidth = 8, barheight = 1,
-                                  title.position = "left", label.position = "bottom",
-                                  title.hjust = 0.5,
-                                  ticks = FALSE,
-                                  breaks = seq(0, 100, by = 20))) ,
-   plot_regr_centrality_can,
-  
-  plot_network_degree_az + theme(legend.position = "top") +
-    scale_color_viridis(name =in_degree_label, option = "turbo")+
-    guides(color = guide_colorbar(barwidth = 8, barheight = 1,
-                                  title.position = "left", label.position = "bottom",
-                                  title.hjust = 0.5,
-                                  ticks = FALSE,
-                                  breaks = seq(0, 100, by = 20))),
-  
-  plot_network_closeness_az + theme(legend.position = "top") +
-    scale_color_viridis(name =closeness_label, option = "turbo")+
-    guides(color = guide_colorbar(barwidth = 8, barheight = 1,
-                                  title.position = "left", label.position = "bottom",
-                                  title.hjust = 0.5,
-                                  ticks = FALSE,
-                                  breaks = seq(0, 100, by = 20))),
-  plot_regr_centrality_az,
-  
-  ncol = 3,
-  nrow = 3,
-  
-  labels = LETTERS[1:9],
-  
-  widths = c(1.6, 1.6, 1)
-)
-
-plot_network_regr_centrality
-
-ggsave(here::here("c_output/figures/plot_network_regr_centrality.png"), height = 12, width = 14)
-```
 
 
 

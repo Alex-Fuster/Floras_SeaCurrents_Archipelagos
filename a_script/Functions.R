@@ -537,302 +537,115 @@ compute_mat_min_weighted <- function(matrix_conn) {
 
 # Plot network with % littoral
 
+
 plot_network_littoral <- function(weighted_matrix, centroids, node_size, percent_littoral, scale) {
+  # Create a directed graph from the full matrix
+  g <- graph_from_adjacency_matrix(weighted_matrix, mode = "directed", weighted = TRUE)
   
-  # Assuming your adjacency matrix is named 'single_point_min_Galap'
-  # Convert the matrix to an igraph object
-  g <- graph_from_adjacency_matrix(weighted_matrix, mode = "undirected", weighted = TRUE)
+  # Obtain the edge list from the graph
+  el <- get.data.frame(g, what = "edges")
   
+  # Filter the edge list to keep only the minimum edge for each pair of vertices
+  el <- el %>%
+    group_by(pair = pmin(from, to), pair_max = pmax(from, to)) %>%
+    slice_min(order_by = weight, n = 1) %>%
+    ungroup() %>%
+    select(-pair, -pair_max)
   
-  # Create a data frame from the igraph object
-  node_list <- data.frame(name = V(g)$name)%>% 
-    rename(island = name)
+  # Create a new graph from the cleaned edge list
+  g <- graph_from_data_frame(el, directed = TRUE, vertices = data.frame(name=V(g)$name))
   
-  # Merge the coordinates with the node list
-  node_list <- merge(node_list, centroids, by = "island")
+  # Invert the weights for visualization (lower cost means stronger connection)
+  E(g)$weight <- 1 / E(g)$weight
   
-  # Merge with percent_littoral dataframe
-  node_list <- merge(node_list, percent_littoral, by = "island")
+  # Prepare node information for plotting
+  node_info <- data.frame(name = V(g)$name) %>%
+    left_join(centroids, by = c("name" = "island")) %>%
+    left_join(percent_littoral, by = c("name" = "island"))
   
-  # Ensure no missing coordinates
-  node_list <- na.omit(node_list)
-  
-  # Ensure the graph vertices match the coordinates names
-  V(g)$name <- as.character(V(g)$name)
-  node_list$name <- as.character(node_list$island)
-  
-  # Convert the igraph object to a tidygraph object
+  # Convert to tidygraph to leverage tidyverse capabilities
   tg <- as_tbl_graph(g)
-  
-  # Add coordinates to the tidygraph object
   tg <- tg %>%
     activate(nodes) %>%
-    left_join(node_list, by = c("name" = "name"))
+    left_join(node_info, by = c("name" = "name"))
   
-  # Invert the weights: higher values become lower and vice versa
-  E(tg)$inv_weight <- 1 / E(tg)$weight
-  
-  
-  # Calculate total degree
-  V(tg)$degree <- strength(tg, mode = "all",
-                           weights = E(tg)$inv_weight)
-  
-  if(scale == "none"){
-    
-    E(tg)$inv_weight <- E(tg)$inv_weight
-    
-  }else if(scale == "sqrt_scale"){
-    
-    E(tg)$inv_weight <- sqrt(E(tg)$inv_weight)
-    
-  }else if(scale =="log_scale"){
-    
-    E(tg)$inv_weight <- log(E(tg)$inv_weight)
-    
+  # Adjust weight scale for visualization
+  if (scale == "sqrt_scale") {
+    E(tg)$weight <- sqrt(E(tg)$weight)
+  } else if (scale == "log_scale") {
+    E(tg)$weight <- log(E(tg)$weight)
   }
   
-  # Plot the graph using ggraph with spatial coordinates and color nodes based on total degree
-  netplot_degree <- ggraph(tg, layout = 'manual', x = V(tg)$long, y = V(tg)$lat) + 
-    geom_edge_link(aes(width = E(tg)$inv_weight, alpha = E(tg)$inv_weight), show.legend = FALSE) +
-    geom_node_point(aes(color = V(tg)$Percent_local_floras), size = node_size) +  # Color nodes based on Percent_Littoral
-    # scale_edge_width(range = range(E(tg)$inv_weight), name = "Normalized Connectivity") + # Adjust the range for better visualization
-    scale_color_viridis(name = "% littoral species", option = "turbo") + # Use viridis color scale
-    geom_node_text(aes(label = name), repel = TRUE, 
-                   nudge_y = 0.1, 
-                   nudge_x = -0.04, size = 5, segment.size = 0.15) +
-    theme_classic() + 
-    labs(x = "Longitude",
-         y = "Latitude",
-         edge_width = "Normalized connectivity") +
-    guides(color = guide_colorbar(barwidth = 1, barheight = 8,
-                                  title.position = "top", label.position = "left",
-                                  title.hjust = 0.5,
-                                  ticks = FALSE,
-                                  breaks = seq(0, 100, by = 20))) + # Customize legend breaks and labels
-    theme(legend.position = "right") +
+  # Plot the graph
+  netplot_degree <- ggraph(tg, layout = 'manual', x = node_info$long, y = node_info$lat) +
+    geom_edge_link(aes(width = weight, alpha = weight), arrow = arrow(length = unit(4, 'mm')), end_cap = circle(3, 'mm'), show.legend = FALSE) +
+    geom_node_point(aes(color = Percent_regional_litt), size = node_size) +
+    geom_node_text(aes(label = name), repel = TRUE, nudge_y = 0.1, size = 5, segment.size = 0.15) +
+    scale_color_viridis_c(name = "% littoral\nspecies\n ", option = "turbo",
+                          limits = c(0, 100),
+                          breaks = c(25, 50, 75, 100),
+                          labels = c("25", "50", "75", "100")) +
+    theme_classic() +
+    labs(x = "Longitude", y = "Latitude") +
+    theme(legend.position = "right")+
     my_theme
   
   return(netplot_degree)
-  
 }
 
 
 
-
-
-
-plot_network_in_degree <- function(weighted_matrix, centroids, df_degree, node_size, scale_edge, scale_degree, legend_label) {
+plot_network_closeness <- function(weighted_matrix, centroids, node_size, data_closeness, scale) {
+  # Create a directed graph from the full matrix
+  g <- graph_from_adjacency_matrix(weighted_matrix, mode = "directed", weighted = TRUE)
   
-  # Assuming your adjacency matrix is named 'single_point_min_Galap'
-  # Convert the matrix to an igraph object
-  g <- graph_from_adjacency_matrix(weighted_matrix, mode = "undirected", weighted = TRUE)
+  # Obtain the edge list from the graph
+  el <- get.data.frame(g, what = "edges")
   
-  # Handle zero weights to avoid division by zero
-  #E(g)$weight[E(g)$weight == 0] <- NA
+  # Filter the edge list to keep only the minimum edge for each pair of vertices
+  el <- el %>%
+    group_by(pair = pmin(from, to), pair_max = pmax(from, to)) %>%
+    slice_min(order_by = weight, n = 1) %>%
+    ungroup() %>%
+    select(-pair, -pair_max)
   
-  # Create a data frame from the igraph object
-  node_list <- data.frame(name = V(g)$name) %>% 
-    rename(island = name)
+  # Create a new graph from the cleaned edge list
+  g <- graph_from_data_frame(el, directed = TRUE, vertices = data.frame(name=V(g)$name))
   
-  # Merge the coordinates with the node list
-  node_list <- merge(node_list, centroids, by="island")
-  node_list <- merge(node_list, df_degree,  by="island")
+  # Invert the weights for visualization (lower cost means stronger connection)
+  E(g)$weight <- 1 / E(g)$weight
   
+  # Prepare node information for plotting
+  node_info <- data.frame(name = V(g)$name) %>%
+    left_join(centroids, by = c("name" = "island")) %>%
+    left_join(data_closeness, by = c("name" = "island"))
   
-  
-  # Ensure the graph vertices match the coordinates names
-  V(g)$name <- as.character(V(g)$name)
-  node_list$name <- as.character(node_list$island)
-  
-  # Convert the igraph object to a tidygraph object
+  # Convert to tidygraph to leverage tidyverse capabilities
   tg <- as_tbl_graph(g)
-  
-  # Add coordinates to the tidygraph object
   tg <- tg %>%
     activate(nodes) %>%
-    left_join(node_list, by = c("name" = "name"))
+    left_join(node_info, by = c("name" = "name"))
   
-  # Invert the weights: higher values become lower and vice versa
-  E(tg)$inv_weight <- 1 / E(tg)$weight
-  
-
-  
-  # scale for edges
-  
-  if(scale_edge == "none"){
-    
-    E(tg)$inv_weight <- E(tg)$inv_weight
-    
-  }else if(scale_edge == "sqrt_scale"){
-    
-    E(tg)$inv_weight <- sqrt(E(tg)$inv_weight)
-    
-  }else if(scale_edge =="log_scale"){
-    
-    E(tg)$inv_weight <- log(E(tg)$inv_weight)
-    
+  # Adjust weight scale for visualization
+  if (scale == "sqrt_scale") {
+    E(tg)$weight <- sqrt(E(tg)$weight)
+  } else if (scale == "log_scale") {
+    E(tg)$weight <- log(E(tg)$weight)
   }
   
-  
-  # scale for in-degree
-  
-  V(tg)$in_degree
-  
-  if(scale_degree == "none"){
-    
-    V(tg)$in_degree <- V(tg)$in_degree
-    
-  }else if(scale_degree == "sqrt_scale"){
-    
-    V(tg)$in_degree <- sqrt(V(tg)$in_degree)
-    
-  }else if(scale_degree =="log_scale"){
-    
-    V(tg)$in_degree <- log(V(tg)$in_degree)
-    
-  }
-  
-  
-  
-  
-  # Plot the graph using ggraph with spatial coordinates and color nodes based on total degree
-  netplot_degree <- ggraph(tg, layout = 'manual', x = V(tg)$long, y = V(tg)$lat) + 
-    geom_edge_link(aes(width = E(tg)$inv_weight, alpha = E(tg)$inv_weight), show.legend = FALSE) +
-    geom_node_point(aes(color = V(tg)$in_degree), size = node_size) +  # Color nodes based on Percent_Littoral
-    scale_color_viridis(name = legend_label, option = "turbo") + # Use viridis color scale
-    geom_node_text(aes(label = name), repel = TRUE, 
-                   nudge_y = 0.1, 
-                   nudge_x = -0.04, size = 5, segment.size = 0.15) +
-    theme_classic() + 
-    labs(x = "Longitude",
-         y = "Latitude",
-         edge_width = "Normalized connectivity") +
-    guides(color = guide_colorbar(barwidth = 8, barheight = 1,
-                                  title.position = "top", label.position = "bottom",
-                                  title.hjust = 0.5,
-                                  ticks = FALSE,
-                                  breaks = seq(0, 100, by = 20))) + # Customize legend breaks and labels
-    theme(legend.position = "bottom") +
+  # Plot the graph
+  netplot <- ggraph(tg, layout = 'manual', x = node_info$long, y = node_info$lat) +
+    geom_edge_link(aes(width = weight, alpha = weight), arrow = arrow(length = unit(4, 'mm')), end_cap = circle(3, 'mm'), show.legend = FALSE) +
+    geom_node_point(aes(color = closeness), size = node_size) +
+    geom_node_text(aes(label = name), repel = TRUE, nudge_y = 0.1, size = 5, segment.size = 0.15) +
+    scale_color_viridis_c(name = "Closeness", option = "turbo") +
+    theme_classic() +
+    labs(x = "Longitude", y = "Latitude") +
+    theme(legend.position = "right")+
     my_theme
   
-  return(netplot_degree)
-  
+  return(netplot)
 }
-
-
-
-plot_network_closeness <- function(weighted_matrix, centroids, df_closeness, node_size, scale_edge, scale_degree, legend_label) {
-  
-  # Assuming your adjacency matrix is named 'single_point_min_Galap'
-  # Convert the matrix to an igraph object
-  g <- graph_from_adjacency_matrix(weighted_matrix, mode = "undirected", weighted = TRUE)
-  
-  # Handle zero weights to avoid division by zero
-  #E(g)$weight[E(g)$weight == 0] <- NA
-  
-  # Create a data frame from the igraph object
-  node_list <- data.frame(name = V(g)$name) %>% 
-    rename(island = name)
-  
-  # Merge the coordinates with the node list
-  node_list <- merge(node_list, centroids, by="island")
-  node_list <- merge(node_list, df_closeness,  by="island")
-  
-  
-  
-  # Ensure the graph vertices match the coordinates names
-  V(g)$name <- as.character(V(g)$name)
-  node_list$name <- as.character(node_list$island)
-  
-  # Convert the igraph object to a tidygraph object
-  tg <- as_tbl_graph(g)
-  
-  # Add coordinates to the tidygraph object
-  tg <- tg %>%
-    activate(nodes) %>%
-    left_join(node_list, by = c("name" = "name"))
-  
-  # Invert the weights: higher values become lower and vice versa
-  E(tg)$inv_weight <- 1 / E(tg)$weight
-  
-  
-  
-  # scale for edges
-  
-  if(scale_edge == "none"){
-    
-    E(tg)$inv_weight <- E(tg)$inv_weight
-    
-  }else if(scale_edge == "sqrt_scale"){
-    
-    E(tg)$inv_weight <- sqrt(E(tg)$inv_weight)
-    
-  }else if(scale_edge =="log_scale"){
-    
-    E(tg)$inv_weight <- log(E(tg)$inv_weight)
-    
-  }
-  
-  
-  # scale for in-degree
-  
-  V(tg)$closeness
-  
-  if(scale_degree == "none"){
-    
-    V(tg)$closeness <- V(tg)$closeness
-    
-  }else if(scale_degree == "sqrt_scale"){
-    
-    V(tg)$closeness <- sqrt(V(tg)$closeness)
-    
-  }else if(scale_degree =="log_scale"){
-    
-    V(tg)$closeness <- log(V(tg)$closeness)
-    
-  }
-  
-  
-  
-  
-  # Plot the graph using ggraph with spatial coordinates and color nodes based on total degree
-  netplot_closeness <- ggraph(tg, layout = 'manual', x = V(tg)$long, y = V(tg)$lat) + 
-    geom_edge_link(aes(width = E(tg)$inv_weight, alpha = E(tg)$inv_weight), show.legend = FALSE) +
-    geom_node_point(aes(color = V(tg)$closeness), size = node_size) +  # Color nodes based on Percent_Littoral
-    scale_color_viridis(name = legend_label, option = "turbo") + # Use viridis color scale
-    geom_node_text(aes(label = name), repel = TRUE, 
-                   nudge_y = 0.1, 
-                   nudge_x = -0.04, size = 5, segment.size = 0.15) +
-    theme_classic() + 
-    labs(x = "Longitude",
-         y = "Latitude",
-         edge_width = "Normalized connectivity") +
-    guides(color = guide_colorbar(barwidth = 8, barheight = 1,
-                                  title.position = "top", label.position = "bottom",
-                                  title.hjust = 0.5,
-                                  ticks = FALSE,
-                                  breaks = seq(0, 100, by = 20))) + # Customize legend breaks and labels
-    theme(legend.position = "bottom") +
-    my_theme
-  
-  return(netplot_closeness)
-  
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
