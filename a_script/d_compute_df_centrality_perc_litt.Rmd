@@ -86,7 +86,6 @@ total_littoral_species_archip <- nrow(df_Galapagos_lowland[df_Galapagos_lowland$
 # Initialize a dataframe to store the results
 results <- data.frame(
   Island = character(),
-  Percent_local_floras = numeric(),
   Percent_regional_litt = numeric(),
   Total_Species = integer(),
   Total_Litt_archip = integer(),
@@ -103,7 +102,6 @@ for (island in island_cols) {
   
   # Calculate the percentage of littoral species relative to all species on the island
   littoral_species_island <- species_in_island[species_in_island$littoral %in% c("exclusive", "presence"), ]
-  Percent_local_floras <- (nrow(littoral_species_island) / total_species_island) * 100
   
   # Calculate the percentage of littoral species relative to the archipelago's littoral species
   Percent_regional_litt <- (nrow(littoral_species_island) / total_littoral_species_archip) * 100
@@ -111,7 +109,6 @@ for (island in island_cols) {
   # Add the results to the dataframe
   results <- rbind(results, data.frame(
     Island = island,
-    Percent_local_floras = Percent_local_floras,
     Percent_regional_litt = Percent_regional_litt,
     Littoral_Species_island = nrow(littoral_species_island),
     Total_Species_island = total_species_island,
@@ -139,7 +136,6 @@ total_littoral_species_archip <- nrow(df_Canaries_lowland[df_Canaries_lowland$li
 # Initialize a dataframe to store the results
 results <- data.frame(
   Island = character(),
-  Percent_local_floras = numeric(),
   Percent_regional_litt = numeric(),
   Total_Species_island = integer(),
   Littoral_Species_island = integer(),
@@ -157,7 +153,6 @@ for (island in island_cols) {
   
   # Calculate the percentage of littoral species relative to all species on the island
   littoral_species_island <- species_in_island[species_in_island$littoral %in% c("exclusive", "presence"), ]
-  Percent_local_floras <- (nrow(littoral_species_island) / total_species_island) * 100
   
   # Calculate the percentage of littoral species relative to the archipelago's littoral species
   Percent_regional_litt <- (nrow(littoral_species_island) / total_littoral_species_archip) * 100
@@ -165,7 +160,6 @@ for (island in island_cols) {
   # Add the results to the dataframe
   results <- rbind(results, data.frame(
     Island = island,
-    Percent_local_floras = Percent_local_floras,
     Percent_regional_litt = Percent_regional_litt,
     Littoral_Species_island = nrow(littoral_species_island),
     Total_Species_island = total_species_island,
@@ -193,7 +187,6 @@ total_littoral_species_archip <- nrow(df_Azores[df_Azores$littoral %in% 1, ])
 # Initialize a dataframe to store the results
 results <- data.frame(
   Island = character(),
-  Percent_local_floras = numeric(),
   Percent_regional_litt = numeric(),
   Total_Species_island = integer(),
   Littoral_Species_island = integer(),
@@ -211,7 +204,6 @@ for (island in island_cols) {
   
   # Calculate the percentage of littoral species relative to all species on the island
   littoral_species_island <- species_in_island[species_in_island$littoral %in% 1, ]
-  Percent_local_floras <- (nrow(littoral_species_island) / total_species_island) * 100
   
   # Calculate the percentage of littoral species relative to the archipelago's littoral species
   Percent_regional_litt <- (nrow(littoral_species_island) / total_littoral_species_archip) * 100
@@ -219,7 +211,6 @@ for (island in island_cols) {
   # Add the results to the dataframe
   results <- rbind(results, data.frame(
     Island = island,
-    Percent_local_floras = Percent_local_floras,
     Percent_regional_litt = Percent_regional_litt,
     Littoral_Species_island = nrow(littoral_species_island),
     Total_Species_island = total_species_island,
@@ -276,7 +267,7 @@ compute_df_percent_flora_degree <- function(mat_min_conn_currents, df_percent) {
   node_list <- data.frame(name = V(g)$name)
   
    # Merge the coordinates with the node list
-  node_list <- merge(node_list, df_percent[,c("Island", "Percent_local_floras", "Percent_regional_litt")], by.x = "name", by.y = "Island", all.x = TRUE)
+  node_list <- merge(node_list, df_percent[,c("Island", "Percent_regional_litt")], by.x = "name", by.y = "Island", all.x = TRUE)
   
   # Ensure the graph vertices match the island names
   V(g)$name <- as.character(V(g)$name)
@@ -303,7 +294,7 @@ compute_df_percent_flora_degree <- function(mat_min_conn_currents, df_percent) {
   V(tg)$out_degree <- strength(tg, mode = "out", weights = E(tg)$inv_weight)
   
     # Closeness
-  V(tg)$closeness <- closeness(tg, weights = E(tg)$weight)
+  V(tg)$closeness <- closeness(tg, mode = "in", weights = E(tg)$weight)
   
   # Betwenness
   V(tg)$betweenness <- betweenness(tg, weights = E(tg)$weight)
@@ -478,7 +469,6 @@ df_centrality_cur_geo_litt <- df_centrality_cur_geo_litt[, c(
   "closeness",
   "betweenness_geo",
   "betweenness",
-  "Percent_local_floras",
   "Percent_regional_litt",
   "Littoral_Species_island",
   "Total_Species_island",
@@ -492,7 +482,8 @@ df_centrality_cur_geo_litt
 **IMPORTANT NOTE**: the degree_geo, and in and out degree values for currents are inverted
 
 
-## Add island information for using it in the models
+
+## Add island information 
 
 #### Load island area matrices and convert to distance objects
 
@@ -589,7 +580,7 @@ save data
 ```{r}
 saveRDS(df_centrality_cur_geo_litt, here::here("c_output/df_centrality_cur_geo_litt.rds"))
 write.csv(df_centrality_cur_geo_litt, here::here("c_output/tables/df_centrality_cur_geo_litt.csv"))
-#df_centrality_cur_geo_litt <- readRDS(here::here("c_output/df_centrality_cur_geo_litt.rds"))
+#df_centrality_cur_geo_litt1 <- readRDS(here::here("c_output/df_centrality_cur_geo_litt.rds"))
 
 df_centrality_cur_geo_litt
 ```
@@ -598,7 +589,7 @@ df_centrality_cur_geo_litt
 
 ```{r}
 # Define colors for each archipelago
-colors <- c("Galapagos" = "Skyblue", "Canaries" = "Lightgreen", "Azores" = "Lightcoral")
+colors <- c("Galapagos" = "skyblue", "Canaries" = "#660099", "Azores" = "lightcoral")
 
 my_theme<-theme(axis.text=element_text(size=12),
         axis.title = element_text(size = 14),
@@ -620,20 +611,20 @@ my_theme<-theme(axis.text=element_text(size=12),
 
 create_plot_floras <- function(data, archipelago_name) {
   plot_data <- data %>%
-    filter(archipelago == archipelago_name) %>%
-    arrange(desc(Percent_local_floras)) %>%
-    mutate(island = factor(island, levels = unique(island)))  # Order islands by value
+    dplyr::filter(archipelago == archipelago_name) %>%
+    dplyr::arrange(desc(Percent_regional_litt)) %>%
+    dplyr::mutate(island = factor(island, levels = unique(island)))  # Order islands by value
   
-  y_limits <- c(0, max(plot_data$Percent_local_floras) * 1.3)
+  y_limits <- c(0, max(plot_data$Percent_regional_litt) * 1.3)
   
-  ggplot(plot_data, aes(x = island, y = Percent_local_floras, fill = archipelago)) +
+  ggplot(plot_data, aes(x = island, y = Percent_regional_litt, fill = archipelago)) +
     geom_bar(stat = "identity") +
-    scale_fill_manual(values = c("Galapagos" = "skyblue", "Canaries" = "lightgreen", "Azores" = "lightcoral")) +
+    scale_fill_manual(values = colors) +
     geom_text(aes(label = sprintf("%.1f", age)), vjust = -2, size = 3.2) +
     geom_text(aes(label = sprintf("%.0f", area)), vjust = -0.5, size = 3.2) +
-    ylim(y_limits) +
+    scale_y_continuous(limits = y_limits, breaks = seq(0, 100, by = 20), labels = function(x) ifelse(x <= 100, paste0(x, "%"), "")) +
     theme_classic() +
-    my_theme+
+    my_theme +
     theme(
       axis.text.x = element_text(angle = 45, hjust = 1),  # Angle labels for readability
       axis.title.x = element_blank(),
@@ -662,7 +653,7 @@ plot_percent_local_floras <- ggarrange(
 
 plot_percent_local_floras
 
-ggsave(here::here("c_output/figures/plot_perclitt_islands.png"), height = 9, width = 4)
+#ggsave(here::here("c_output/figures/plot_perclitt_islands1.png"), height = 9, width = 4)
 
 ```
 
@@ -732,16 +723,16 @@ for (archipelago in unique(df_long$archipelago)) {
 
 # Arrange plots into a 3x3 grid
 plot_geo_centrality_islands <- ggarrange(
-  plots[["Galapagos_degree_geo"]], plots[["Galapagos_closeness_geo"]], plots[["Galapagos_betweenness_geo"]],
-  plots[["Canaries_degree_geo"]], plots[["Canaries_closeness_geo"]], plots[["Canaries_betweenness_geo"]],
-  plots[["Azores_degree_geo"]], plots[["Azores_closeness_geo"]], plots[["Azores_betweenness_geo"]],
-  nrow = 3, ncol = 3,
-  labels = LETTERS[1:9]
+  plots[["Galapagos_closeness_geo"]],
+  plots[["Canaries_closeness_geo"]],
+  plots[["Azores_closeness_geo"]],
+  nrow = 3, ncol = 1,
+  labels = LETTERS[1:3]
 )
 
 plot_geo_centrality_islands
 
-#ggsave(here::here("c_output/figures/plot_geo_centrality_islands.png"), height = 10, width = 11)
+#ggsave(here::here("c_output/figures/plot_geo_centrality_islands.png"), height = 9, width = 4)
 
 ```
 
@@ -825,24 +816,17 @@ for (archipelago in unique(df_long_currents$archipelago)) {
 
 # Arrange plots into a 3x4 grid
 plot_currents_centrality_islands <- ggarrange(
-  plots_currents[["Galapagos_in_degree"]], plots_currents[["Galapagos_out_degree"]], 
+  
   plots_currents[["Galapagos_closeness"]],
-  plots_currents[["Galapagos_betweenness"]],
-  plots_currents[["Canaries_in_degree"]],
-  plots_currents[["Canaries_out_degree"]], 
   plots_currents[["Canaries_closeness"]],
-  plots_currents[["Canaries_betweenness"]],
-  plots_currents[["Azores_in_degree"]], 
-  plots_currents[["Azores_out_degree"]], 
   plots_currents[["Azores_closeness"]],
-  plots_currents[["Azores_betweenness"]],
-  nrow = 3, ncol = 4,
-  labels = LETTERS[1:12]
+  nrow = 3, ncol = 1,
+  labels = LETTERS[1:3]
 )
 
 plot_currents_centrality_islands
 
-#ggsave(here::here("c_output/figures/plot_currents_centrality_islands.png"), height = 10, width = 14)
+#ggsave(here::here("c_output/figures/plot_currents_centrality_islands.png"), height = 9, width = 4)
 
 ```
 

@@ -296,7 +296,7 @@ df_cor_az <- data.frame(
 df_cor <- rbind(df_cor_gal, df_cor_can, df_cor_az)
 
 
-write.csv(df_cor, here::here("c_output/tables/correlation_table_results.csv"))
+#write.csv(df_cor, here::here("c_output/tables/correlation_table_results.csv"))
 
 ```
 
@@ -402,7 +402,7 @@ plot_cor_floras <- ggplot(df_long, aes(x = Variable, y = Flora)) +
 
 plot_cor_floras
 
-ggsave(here::here("c_output/figures/corr_floras_heatmap.png"), height = 4, width = 8)
+#ggsave(here::here("c_output/figures/corr_floras_heatmap.png"), height = 4, width = 8)
 ```
 
 
@@ -466,7 +466,7 @@ df_cor_currents_factors_az <- data.frame(
 
 df_cor_curr_factors <- rbind(df_cor_currents_factors_gal, df_cor_currents_factors_can, df_cor_currents_factors_az)
 
-write.csv(df_cor_curr_factors, here::here("c_output/tables/cor_table_islandfactors_results.csv"))
+#write.csv(df_cor_curr_factors, here::here("c_output/tables/cor_table_islandfactors_results.csv"))
 
 ```
 
@@ -510,7 +510,7 @@ df_sign_currents_factors_az <- data.frame(
 
 df_sign_curr_factors <- rbind(df_sign_currents_factors_gal, df_sign_currents_factors_can, df_sign_currents_factors_az)
 
-write.csv(df_sign_curr_factors, here::here("c_output/tables/sign_table_islandfactors_results.csv"))
+#write.csv(df_sign_curr_factors, here::here("c_output/tables/sign_table_islandfactors_results.csv"))
 ```
 
 
@@ -542,7 +542,7 @@ plot_cor_currents_factors <- ggplot(df_long, aes(x = Variable, y = Island)) +
 
 plot_cor_currents_factors
 
-ggsave(here::here("c_output/figures/corr_currents_factors_heatmap.png"), height = 3, width = 6)
+#ggsave(here::here("c_output/figures/corr_currents_factors_heatmap.png"), height = 3, width = 6)
 ```
 
 
@@ -621,9 +621,7 @@ ggarrange(
 ```{r}
 
 
-
 # Kind 1
-
 
   png(here::here("c_output/figures/procrustes_kind1.png"), width = 25, height = 26, units = "cm", res = 600) 
   par(mfrow = c(3, 2))

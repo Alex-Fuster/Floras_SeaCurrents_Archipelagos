@@ -39,46 +39,10 @@ df_centrality_cur_geo_litt <- readRDS(here::here("c_output/df_centrality_cur_geo
 df_centrality_cur_geo_litt
 ```
 
-## correlations centrality geography-currents
 
 
-```{r}
+## correlations geo vs currents centrality
 
-
-# Function to calculate correlations for each group
-calculate_correlations <- function(data) {
-  cor_data <- data %>%
-    select(3:9) %>%  # Select the relevant columns
-    cor() %>%  # Calculate correlation matrix
-    as.data.frame() %>%  # Convert to dataframe
-    rownames_to_column(var = "variable1") %>%  # Convert row names to a column
-    pivot_longer(cols = -variable1, names_to = "variable2", values_to = "correlation")  # Reshape to long format
-  
-  return(cor_data)
-}
-
-# Calculate correlations for each archipelago
-correlation_results <- df_centrality_cur_geo_litt %>%
-  group_by(archipelago) %>%
-  nest() %>%
-  mutate(correlations = map(data, calculate_correlations)) %>%
-  unnest(correlations) %>%
-  select(-data)  # Remove the nested data column
-
-# View the results
-correlation_results
-
-#ggsave(here::here("c_output/figures/plot_cor_centrality_measures.png"), height = 5, width = 6)
-```
-
-
-## plot geo vs currents centrality
-
-```{r}
-df_percent_degree_all_p <- df_centrality_cur_geo_litt |> 
-  mutate(log_in_degree = log(in_degree),
-         log_out_degree = log(out_degree))
-```
 
 
 ```{r}
@@ -118,38 +82,11 @@ create_plot <- function(data, x_col, y_col, xlabel, ylabel, title) {
 
 
 
-# Data preparation
-df_percent_degree_all_p <- df_centrality_cur_geo_litt |> 
-  mutate(log_in_degree = log(in_degree),
-         log_out_degree = log(out_degree))
-
-# Plotting each centrality measure
-plot_in_degree <- create_plot(df_percent_degree_all_p, 
-                              x_col = "degree_geo", y_col = "log_in_degree", title = "",
-                              xlabel = "Degree (geographic)", ylabel = "log(In-degree) (currents)")
-
-plot_out_degree <- create_plot(df_percent_degree_all_p, 
-                               x_col = "degree_geo", y_col = "log_out_degree", title = "",
-                               xlabel = "Degree (geographic)", ylabel = "log(Out-degree) (currents)")
-
-plot_closeness <- create_plot(df_percent_degree_all_p, 
+plot_closeness <- create_plot(df_centrality_cur_geo_litt, 
                               x_col = "closeness_geo", y_col = "closeness", title = "",
                               xlabel = "Closeness (geographic)", ylabel = "Closeness (currents)")
 
-plot_betweenness <- create_plot(df_percent_degree_all_p, 
-                                x_col = "betweenness_geo", y_col = "betweenness", title = "",
-                                xlabel = "Betweenness (geographic)", ylabel = "Betweenness (currents)")
 
-# Display plots
-ggarrange(plot_in_degree, 
-          plot_out_degree, 
-          plot_closeness, 
-          plot_betweenness, 
-          ncol = 2, 
-          nrow = 2,
-          common.legend = TRUE,
-          legend = "top",
-          labels = LETTERS[1:4])
 
-ggsave(here::here("c_output/figures/plot_centrality_geo_currents.png"), height = 9, width = 9.3)
+#ggsave(here::here("c_output/figures/plot_centrality_geo_currents.png"), height = 6, width = 5)
 ```

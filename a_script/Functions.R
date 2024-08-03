@@ -888,7 +888,7 @@ load_order_convert_csv_to_distanceMat <- function(filepath) {
 
 #------------- Run Procrustes test between matrices
 
-perform_procrustes_analysis <- function(dist_mat1, dist_mat2, k = 2) {
+perform_procrustes_analysis2 <- function(dist_mat1, dist_mat2, k = 2) {
   # Convert matrices to dist objects
 #  dist1 <- as.dist(dist_mat1)
 #  dist2 <- as.dist(dist_mat2)
@@ -907,6 +907,26 @@ perform_procrustes_analysis <- function(dist_mat1, dist_mat2, k = 2) {
   result <- list(
     pcoa_THA = pcoa1,
     pcoa_Galapagos = pcoa2,
+    procrustes_result = procrustes_result,
+    procrustes_summary = summary(procrustes_result),
+    procrustes_corr = procrustes_corr
+  )
+  
+  return(result)
+}
+
+
+perform_procrustes_analysis <- function(dist_mat1, dist_mat2) {
+  
+
+  # Perform Procrustes analysis
+  procrustes_result <- procrustes(dist_mat1, dist_mat2)
+  
+  # Perform protest to get the Procrustes correlation
+  procrustes_corr <- protest(dist_mat1, dist_mat2)
+  
+  # Prepare the result list
+  result <- list(
     procrustes_result = procrustes_result,
     procrustes_summary = summary(procrustes_result),
     procrustes_corr = procrustes_corr

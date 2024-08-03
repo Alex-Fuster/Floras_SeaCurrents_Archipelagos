@@ -97,12 +97,6 @@ back_transform_log <- function(x) {
 ```
 
 
-```{r}
-# Define the mathematical symbols for labels
-in_degree_label <- expression(log(C[D-In]^W))
-closeness_label <- expression(C[C])
-```
-
 
 
 % Littoral & centrality
@@ -111,25 +105,25 @@ closeness_label <- expression(C[C])
 
 # maximum %
 
-max_perc_litt <- max(df_centrality_cur_geo_litt$Percent_local_floras)
+max_perc_litt <- max(df_centrality_cur_geo_litt$Percent_regional_litt)
 
 
 # Galapagos 
 
-plot_litt_degree_gal <- ggplot(df_centrality_cur_geo_litt[df_centrality_cur_geo_litt$archipelago == "Galapagos",], aes(x = log(in_degree), y = Percent_local_floras)) +
-  geom_point(size = 5, fill = "gray40", colour="white",pch=21) + # Add points
+plot_litt_geo_gal <- ggplot(df_centrality_cur_geo_litt[df_centrality_cur_geo_litt$archipelago == "Galapagos",], aes(x = closeness_geo, y = Percent_regional_litt)) +
+  geom_point(size = 5, fill = "gray40", colour="white",pch=21, size=2) + # Add points
   geom_smooth(method = "lm", se = FALSE, color = "black") + # Add trend lines
-  labs(x = in_degree_label, y = "% littoral plants") +
+      scale_x_continuous(labels = function(x) sprintf("%.2f", back_transform_log(x))) +
+  labs(x = "Closeness (geographic)", y = "% littoral plants") +
   ylim(0,max_perc_litt+1)+
   theme_classic() + # Use a minimal theme
   my_theme
 
-
-plot_litt_cc_gal <- ggplot(df_centrality_cur_geo_litt[df_centrality_cur_geo_litt$archipelago == "Galapagos",], aes(x = closeness, y = Percent_local_floras)) +
+plot_litt_cc_gal <- ggplot(df_centrality_cur_geo_litt[df_centrality_cur_geo_litt$archipelago == "Galapagos",], aes(x = closeness, y = Percent_regional_litt)) +
   geom_point(size = 5, fill = "gray40", colour="white",pch=21, size=2) + # Add points
   geom_smooth(method = "lm", se = FALSE, color = "black") + # Add trend lines
       scale_x_continuous(labels = function(x) sprintf("%.2f", back_transform_log(x))) +
-  labs(x = closeness_label, y = "% littoral plants") +
+  labs(x = "Closeness (currents)", y = "% littoral plants") +
   ylim(0,max_perc_litt+1)+
   theme_classic() + # Use a minimal theme
   my_theme
@@ -137,42 +131,43 @@ plot_litt_cc_gal <- ggplot(df_centrality_cur_geo_litt[df_centrality_cur_geo_litt
 
 # Canaries 
 
-plot_litt_degree_can <- ggplot(df_centrality_cur_geo_litt[df_centrality_cur_geo_litt$archipelago == "Canaries",], aes(x = log(in_degree), y = Percent_local_floras)) +
+plot_litt_geo_can <- ggplot(df_centrality_cur_geo_litt[df_centrality_cur_geo_litt$archipelago == "Canaries",], aes(x = closeness_geo, y = Percent_regional_litt)) +
   geom_point(size = 5, fill = "gray40", colour="white",pch=21, size=2) + # Add points
   geom_smooth(method = "lm", se = FALSE, color = "black") + # Add trend lines
-   scale_x_continuous(labels = function(x) sprintf("%.2f", back_transform_log(x))) +
-  labs(x = in_degree_label, y = "% littoral plants") +
+      scale_x_continuous(labels = function(x) sprintf("%.2f", back_transform_log(x))) +
+  labs(x = "Closeness (geographic)", y = "% littoral plants") +
   ylim(0,max_perc_litt+1)+
   theme_classic() + # Use a minimal theme
   my_theme
 
-
-plot_litt_cc_can <- ggplot(df_centrality_cur_geo_litt[df_centrality_cur_geo_litt$archipelago == "Canaries",], aes(x = closeness, y = Percent_local_floras)) +
+plot_litt_cc_can <- ggplot(df_centrality_cur_geo_litt[df_centrality_cur_geo_litt$archipelago == "Canaries",], aes(x = closeness, y = Percent_regional_litt)) +
   geom_point(size = 5, fill = "gray40", colour="white",pch=21, size=2) + # Add points
   geom_smooth(method = "lm", se = FALSE, color = "black") + # Add trend lines
-      scale_x_continuous(labels = function(x) sprintf("%.3f", back_transform_log(x))) +
-  labs(x = closeness_label, y = "% littoral plants") +
+      scale_x_continuous(labels = function(x) sprintf("%.2f", back_transform_log(x))) +
+  labs(x = "Closeness (currents)", y = "% littoral plants") +
   ylim(0,max_perc_litt+1)+
   theme_classic() + # Use a minimal theme
   my_theme
+
 
 
 # Azores 
 
-plot_litt_degree_az <- ggplot(df_centrality_cur_geo_litt[df_centrality_cur_geo_litt$archipelago == "Azores",], aes(x = log(in_degree), y = Percent_local_floras)) +
+
+plot_litt_geo_az <- ggplot(df_centrality_cur_geo_litt[df_centrality_cur_geo_litt$archipelago == "Azores",], aes(x = closeness_geo, y = Percent_regional_litt)) +
   geom_point(size = 5, fill = "gray40", colour="white",pch=21, size=2) + # Add points
   geom_smooth(method = "lm", se = FALSE, color = "black") + # Add trend lines
-  labs(x = in_degree_label, y = "% littoral plants") +
+      scale_x_continuous(labels = function(x) sprintf("%.2f", back_transform_log(x))) +
+  labs(x = "Closeness (geographic)", y = "% littoral plants") +
   ylim(0,max_perc_litt+1)+
   theme_classic() + # Use a minimal theme
   my_theme
 
-
-plot_litt_cc_az <- ggplot(df_centrality_cur_geo_litt[df_centrality_cur_geo_litt$archipelago == "Azores",], aes(x = closeness, y = Percent_local_floras)) +
+plot_litt_cc_az <- ggplot(df_centrality_cur_geo_litt[df_centrality_cur_geo_litt$archipelago == "Azores",], aes(x = closeness, y = Percent_regional_litt)) +
   geom_point(size = 5, fill = "gray40", colour="white",pch=21, size=2) + # Add points
   geom_smooth(method = "lm", se = FALSE, color = "black") + # Add trend lines
       scale_x_continuous(labels = function(x) sprintf("%.2f", back_transform_log(x))) +
-  labs(x = closeness_label, y = "% littoral plants") +
+  labs(x = "Closeness (currents)", y = "% littoral plants") +
   ylim(0,max_perc_litt+1)+
   theme_classic() + # Use a minimal theme
   my_theme
@@ -181,7 +176,7 @@ plot_litt_cc_az <- ggplot(df_centrality_cur_geo_litt[df_centrality_cur_geo_litt$
 
 
 plot_perc_litt_centrality <- ggarrange(
-  plot_litt_degree_gal+ labs(title = ""), plot_litt_degree_can + ylab(NULL)+ labs(title = ""), plot_litt_degree_az + ylab(NULL)+ labs(title = ""),
+  plot_litt_geo_gal+ labs(title = "")+ xlab(NULL), plot_litt_geo_can + ylab(NULL) + xlab(NULL)+ labs(title = ""), plot_litt_geo_az + ylab(NULL)+ labs(title = "") + xlab(NULL),
   plot_litt_cc_gal+ labs(title = ""), plot_litt_cc_can + ylab(NULL)+ labs(title = ""), plot_litt_cc_az + ylab(NULL)+ labs(title = ""),
   
   ncol = 3,
@@ -193,7 +188,20 @@ plot_perc_litt_centrality <- ggarrange(
 
 plot_perc_litt_centrality
 
-#ggsave(here::here("c_output/figures/plot_perc_litt_centrality.png"), height = 9, width = 9)
+#ggsave(here::here("c_output/figures/plot_litt_centr_cur_geo.png"), height = 9, width = 9)
+
+```
+
+
+```{r}
+df_azores <- df_centrality_cur_geo_litt |> 
+  filter(archipelago == "Azores") 
+
+df_canaries <- df_centrality_cur_geo_litt |> 
+  filter(archipelago == "Canaries")
+
+df_galapagos <- df_centrality_cur_geo_litt |> 
+  filter(archipelago == "Galapagos")
 
 ```
 
@@ -215,23 +223,15 @@ Currents
 
 ```{r}
 
-df_azores <- df_centrality_cur_geo_litt |> 
-  filter(archipelago == "Azores") 
-
-df_canaries <- df_centrality_cur_geo_litt |> 
-  filter(archipelago == "Canaries")
-
-df_galapagos <- df_centrality_cur_geo_litt |> 
-  filter(archipelago == "Galapagos")
 
 
 # Galapagos
 
 
-plot_network_litt_gal <- plot_network_littoral(weighted_matrix = mat_medianMin_sym_Galapagos,
+plot_network_litt_gal <- plot_network_littoral1(weighted_matrix = mat_median_min_singlepoints_gal,
                       centroids = coord_centroids_gal,
                       node_size = 8,
-                      percent_littoral = df_galapagos[,c("Percent_local_floras", "island")],
+                      percent_littoral = df_galapagos[,c("Percent_regional_litt", "island")],
                       scale = "none")
 
 
@@ -240,10 +240,10 @@ plot_network_litt_gal <- plot_network_littoral(weighted_matrix = mat_medianMin_s
 
 # Canaries
 
-plot_network_litt_can <- plot_network_littoral(weighted_matrix = mat_medianMin_sym_Canaries,
+plot_network_litt_can <- plot_network_littoral1(weighted_matrix = mat_median_min_singlepoints_can,
                       centroids = coord_centroids_can,
                       node_size = 8,
-                      percent_littoral = df_canaries[,c("Percent_local_floras", "island")],
+                      percent_littoral = df_canaries[,c("Percent_regional_litt", "island")],
                       scale = "log_scale")
 
 
@@ -254,10 +254,10 @@ plot_network_litt_can <- plot_network_littoral(weighted_matrix = mat_medianMin_s
 # Azores
 
 
-plot_network_litt_az <- plot_network_littoral(weighted_matrix = mat_medianMin_sym_Azores,
+plot_network_litt_az <- plot_network_littoral1(weighted_matrix = mat_median_min_singlepoints_az,
                       centroids = coord_centroids_az,
                       node_size = 8,
-                      percent_littoral = df_azores[,c("Percent_local_floras", "island")],
+                      percent_littoral = df_azores[,c("Percent_regional_litt", "island")],
                       scale = "sqrt_scale")
 
 
@@ -282,7 +282,7 @@ plot_network_litt_all <- ggarrange(
 
 plot_network_litt_all
 
-#ggsave(here::here("c_output/figures/plot_network_litt_all.png"), height = 12, width = 8)
+ggsave(here::here("c_output/figures/plot_network_litt_all.png"), height = 12, width = 8)
 
 
 
@@ -591,7 +591,7 @@ plot_network_regr_closeness <- ggarrange(
 
 plot_network_regr_closeness
 
-ggsave(here::here("c_output/figures/plot_network_regr_closeness.png"), height = 12, width = 12)
+#ggsave(here::here("c_output/figures/plot_network_regr_closeness.png"), height = 12, width = 12)
 
 
 ```
