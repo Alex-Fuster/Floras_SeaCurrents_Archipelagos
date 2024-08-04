@@ -581,10 +581,7 @@ plot_network_littoral <- function(weighted_matrix, centroids, node_size, percent
     geom_edge_link(aes(width = weight, alpha = weight), arrow = arrow(length = unit(4, 'mm')), end_cap = circle(3, 'mm'), show.legend = FALSE) +
     geom_node_point(aes(color = Percent_regional_litt), size = node_size) +
     geom_node_text(aes(label = name), repel = TRUE, nudge_y = 0.1, size = 5, segment.size = 0.15) +
-    scale_color_viridis_c(name = "% littoral\nspecies\n ", option = "turbo",
-                          limits = c(0, 100),
-                          breaks = c(25, 50, 75, 100),
-                          labels = c("25", "50", "75", "100")) +
+    scale_color_viridis_c(name = "% littoral\nspecies\n ", option = "turbo") +
     theme_classic() +
     labs(x = "Longitude", y = "Latitude") +
     theme(legend.position = "right")+

@@ -466,6 +466,8 @@ df_cor_currents_factors_az <- data.frame(
 
 df_cor_curr_factors <- rbind(df_cor_currents_factors_gal, df_cor_currents_factors_can, df_cor_currents_factors_az)
 
+df_cor_curr_factors[which(df_cor_curr_factors$Island == "Azores"), "Geographic.space"] <- 0.99 # avoid rounding to 1
+
 #write.csv(df_cor_curr_factors, here::here("c_output/tables/cor_table_islandfactors_results.csv"))
 
 ```
@@ -583,7 +585,6 @@ labels = LETTERS[1:2]
 #ggsave(here::here("c_output/figures/correlations_all1.png"), height = 8, width = 8)
 
 ```
-
 
 
 
