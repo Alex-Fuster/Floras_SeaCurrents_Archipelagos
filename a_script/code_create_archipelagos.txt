@@ -1,0 +1,53 @@
+
+library(terra)
+library(geodata)
+
+### import a world countries map:
+w<- geodata::world(resolution = 5, level=0,  path = "maps")  # you may choose a smaller (more detailed) resolution for the polygon borders, and a different folder path to save the imported map
+w <- terra::aggregate(w)
+w <- terra::crop(w, ext(c(-120, 20, -20, 60)))
+
+## Add box on archipelagos
+
+locations <- list(
+  Canary_Islands = list(xmin = -18.2, xmax = -13.3, ymin = 27.5, ymax = 29.5),
+  Azores = list(xmin = -31.3, xmax = -24.8, ymin = 36.7, ymax = 40.0),
+  Galapagos = list(xmin = -92.2, xmax = -89.0, ymin = -1.5, ymax = 1.5)
+)
+
+
+plot(w, col='grey', buffer=F, pax=list(cex.axis=1.8))
+for (loc in names(locations)) {
+  bbox <- locations[[loc]]
+  rect(bbox$xmin-0.5, bbox$ymin-0.5, bbox$xmax+0.5, bbox$ymax+0.5, border = "red", lwd = 1)
+}
+
+
+# Create a function to generate a polygon from bounding box coordinates
+create_polygon <- function(bbox) {
+  coords <- rbind(
+    c(bbox$xmin-0.5, bbox$ymin-0.5),
+    c(bbox$xmin-0.5, bbox$ymax+0.5),
+    c(bbox$xmax+0.5, bbox$ymax+0.5),
+    c(bbox$xmax+0.5, bbox$ymin-0.5),
+    c(bbox$xmin-0.5, bbox$ymin-0.5)
+  )
+  poly <- vect(coords, type = "polygons")
+  return(poly)
+}
+
+# Create an empty SpatVector to store all polygons
+polygons <- vect()
+
+# Generate polygons for each location and add to the SpatVector
+for (loc in names(locations)) {
+  bbox <- locations[[loc]]
+  poly <- create_polygon(bbox)
+  polygons <- rbind(polygons, poly)
+}
+
+plot(w, col='grey', buffer=F, pax=list(cex.axis=1.8))
+plot(polygons, border = "red", lwd = 1, add=T)
+
+writeVector(w, 'world.gpkg')
+writeVector(polygons, 'squares_archipelagos.gpkg')
