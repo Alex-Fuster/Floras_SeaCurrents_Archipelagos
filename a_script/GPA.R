@@ -75,7 +75,7 @@ combined_axes <- data.frame(
 rownames(combined_axes) <- rownames(dist_mat_all_litt_gal)
 
 # Perform Generalized Procrustes Analysis (GPA)
-gpa_result <- GPA(combined_axes, group = c(2, 2, 2))  # Grouping the axes (2 axes per group)
+gpa_result <- GPA(combined_axes[-1,], group = c(2, 2, 2))  # Grouping the axes (2 axes per group)
 
 # Print the GPA result
 print(gpa_result)
