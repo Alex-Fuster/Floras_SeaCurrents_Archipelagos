@@ -696,16 +696,32 @@ load_order_convert_csv_to_distanceMat <- function(filepath) {
 
 
 
+# Create a function to perform NMDS with different dimensions
+nmds_stress_plot <- function(dissimilarity_matrix) {
+  max_dimensions <- 6  # Set the maximum number of dimensions to test
+  stress_values <- numeric(max_dimensions)
+  
+  for (k in 1:max_dimensions) {
+    nmds_result <- metaMDS(dissimilarity_matrix, k = k, trymax = 100)
+    stress_values[k] <- nmds_result$stress
+  }
+  
+  # Plot stress vs number of dimensions
+  plot(1:max_dimensions, stress_values, type = "b", 
+       xlab = "Number of Dimensions", ylab = "Stress Value", 
+       main = "NMDS Stress vs Number of Dimensions")
+  abline(h = 0.1, col = "red", lty = 2)  # Add a reference line at stress = 0.1
+}
+
+
 #------------- Run Procrustes test between matrices
 
-perform_procrustes_analysis2 <- function(dist_mat1, dist_mat2, k = 2) {
-  # Convert matrices to dist objects
-#  dist1 <- as.dist(dist_mat1)
-#  dist2 <- as.dist(dist_mat2)
+perform_procrustes_analysis2 <- function(dist_mat1, dist_mat2, dim) {
+ 
   
   # Perform PCoA with the specified number of dimensions
-  pcoa1 <- cmdscale(dist_mat1, k = k)
-  pcoa2 <- cmdscale(dist_mat2, k = k)
+  pcoa1 <- cmdscale(dist_mat1, k = dim)
+  pcoa2 <- cmdscale(dist_mat2, k = dim)
   
   # Perform Procrustes analysis
   procrustes_result <- procrustes(pcoa1, pcoa2)

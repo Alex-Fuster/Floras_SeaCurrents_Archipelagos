@@ -94,7 +94,7 @@ mat_medianMin_sym_Azores <- read_rds(here::here("c_output/current_conn_matrices/
 
 
 
-#### Load currents geographic matrices and convert to distance objects [TODO]
+#### Load currents geographic matrices and convert to distance objects
 
 ```{r}
 
@@ -177,9 +177,47 @@ mat_age_az <-as.matrix(daisy(df_age1, metric="euclidean"))
 ```
 
 
-# Procrustes test
+
+# Procrustes analysis
+
+
+## determine number of dimensions
+
+
+
+Check dimensions-stress plots
 
 ```{r}
+# Galapagos (k = 2)
+
+# nmds_stress_plot(dist_mat_all_litt_gal) 
+# nmds_stress_plot(mat_geo_gal) #2
+# nmds_stress_plot(mat_medianMin_sym_Galapagos) #2
+# nmds_stress_plot(mat_age_gal)
+# nmds_stress_plot(mat_area_gal)
+# 
+# # Canaries
+# 
+# nmds_stress_plot(dist_mat_all_litt_can) #2
+# nmds_stress_plot(mat_geo_can) #2
+# nmds_stress_plot(mat_medianMin_sym_Canaries) #2
+# nmds_stress_plot(mat_age_can)
+# nmds_stress_plot(mat_area_can)
+# 
+# # Azores
+# 
+# nmds_stress_plot(dist_mat_all_litt_az) #2
+# nmds_stress_plot(mat_geo_az) #2
+# nmds_stress_plot(mat_medianMin_sym_Azores) 
+# nmds_stress_plot(mat_age_az)
+# nmds_stress_plot(mat_area_az)
+```
+
+
+
+```{r}
+
+ndim = 5
 
 # Galapagos
 
@@ -402,7 +440,7 @@ plot_cor_floras <- ggplot(df_long, aes(x = Variable, y = Flora)) +
 
 plot_cor_floras
 
-#ggsave(here::here("c_output/figures/corr_floras_heatmap.png"), height = 4, width = 8)
+#ggsave(here::here("c_output/figures/corr_floras_k2_excl_present.png"), height = 4, width = 8)
 ```
 
 

@@ -53,7 +53,8 @@ data_Galapagos <- read_csv(here::here("b_data/Data_Galapagos/data_galapagos.csv"
 data_Canaries <- read_csv(here::here("b_data/Data_Canaries/data_canaries.csv"), col_names = TRUE, trim_ws = TRUE)
 data_Azores <- read_csv(here::here("b_data/Data_Azores/data_azores.csv"), col_names = TRUE)
 
-df_Galapagos <- as.data.frame(data_Galapagos)
+df_Galapagos <- as.data.frame(data_Galapagos) |> 
+  rename(littoral = littoral...4)
 df_Canaries <- as.data.frame(data_Canaries)
 df_Azores <- as.data.frame(data_Azores)
 
@@ -112,25 +113,12 @@ df_Galapagos$name_species <- gsub('Pycreus_polystachyos', 'Cyperus_polystachyos'
 ```
 
 
-Filter lowland
-
-```{r}
-
-df_Galapagos_lowland <- subset(df_Galapagos, df_Galapagos$habitats_lessthan500m %in% "1")
-
-df_Galapagos_sensitivity <- df_Galapagos_lowland[,c(2,9:20)] 
-df_Galapagos_sensitivity[is.na(df_Galapagos_sensitivity)] <- 0
-
-#saveRDS(df_Galapagos_sensitivity, here::here("c_output/sensitivity/df_Galapagos_sensitivity.rds"))
-
-```
-
 
 
 Filter Littoral or no-Littoral
 
 ```{r}
-df_Galapagos_litt <- subset(df_Galapagos, df_Galapagos$littoral %in% c("exclusive", "presence"))[,c(2,9:20)]
+df_Galapagos_litt <- subset(df_Galapagos, df_Galapagos$littoral %in% c("exclusive"))[,c(2,9:20)]
 df_Galapagos_nolitt <- subset(df_Galapagos, is.na(littoral))[,c(2,9:20)]
 
 df_Galapagos_litt1 <- df_Galapagos_litt
@@ -139,8 +127,8 @@ df_Galapagos_nolitt1 <- df_Galapagos_nolitt
 df_Galapagos_litt1$name_species <- gsub("_", " ", df_Galapagos_litt1$name_species)
 df_Galapagos_nolitt1$name_species <- gsub("_", " ", df_Galapagos_nolitt1$name_species)
 
-#write.csv(df_Galapagos_litt1, here::here("c_output/tables/list_litt_gal.csv"))
-#write.csv(df_Galapagos_nolitt1, here::here("c_output/tables/list_nolitt_gal.csv"))
+write.csv(df_Galapagos_litt1, here::here("c_output/tables/list_litt_gal.csv"))
+write.csv(df_Galapagos_nolitt1, here::here("c_output/tables/list_nolitt_gal.csv"))
 
 ```
 
@@ -166,50 +154,6 @@ saveRDS(dist_mat_all_nolitt_gal, here::here("c_output/floristic_dist_matrices/di
 
 
 
-## compute % littoral
-
-```{r}
-# Define the columns for islands
-island_cols <- c("Espanola", "Fernandina", "Floreana", "Genovesa", "Isabela", "Marchena", "Pinta", "Pinzon", "San_Cristobal", "Santa_Cruz", "Santa_Fe", "Santiago")
-
-# Initialize a dataframe to store the results
-results <- data.frame(
-  Island = character(),
-  Percent_Littoral = numeric(),
-  Total_Species = integer(),
-  stringsAsFactors = FALSE
-)
-
-# Iterate over each island
-for (island in island_cols) {
-  # Subset the species present in the island
-  species_in_island <- df_Galapagos_lowland[complete.cases(df_Galapagos_lowland[, island]), ]
-  
-  # Calculate the total number of species in the island
-  total_species <- nrow(species_in_island)
-  
-  # Calculate the percentage of littoral species
-  littoral_species <- species_in_island[species_in_island$littoral %in% c("exclusive", "presence"), ]
-  percent_littoral <- (nrow(littoral_species) / total_species) * 100
-  
-  # Add the results to the dataframe
-  results <- rbind(results, data.frame(
-    Island = island,
-    Percent_Littoral = percent_littoral,
-    Total_Species = total_species,
-    stringsAsFactors = FALSE
-  ))
-}
-
-df_percent_flora_gal <- results
-
-#saveRDS(df_percent_flora_gal, here::here("c_output/tables/df_percent_flora_gal.rds"))
-
-
-```
-
-
-
 
 
 ## Canaries
@@ -221,11 +165,6 @@ Filter lowland
 
 df_Canaries_lowland <- subset(df_Canaries, df_Canaries$habitats_lessthan500m %in% "1")
 
-df_Canaries_sensitivity <- df_Canaries_lowland[,c(1,6:12)] 
-df_Canaries_sensitivity[is.na(df_Canaries_sensitivity)] <- 0
-
-#saveRDS(df_Canaries_sensitivity, here::here("c_output/sensitivity/df_Canaries_sensitivity.rds"))
-
 ```
 
 
@@ -234,7 +173,7 @@ Filter Littoral or no-Littoral
 
 ```{r}
 
-df_Canaries_litt <- subset(df_Canaries, df_Canaries$littoral %in% c("exclusive", "presence"))[,c(1,6:12)]
+df_Canaries_litt <- subset(df_Canaries, df_Canaries$littoral %in% c("exclusive"))[,c(1,6:12)]
 df_Canaries_nolitt <- subset(df_Canaries, is.na(littoral))[,c(1,6:12)] 
 
 df_Canaries_litt1 <- df_Canaries_litt
@@ -246,8 +185,8 @@ df_Canaries_nolitt1$name_species <- gsub("_", " ", df_Canaries_nolitt1$name_spec
 df_Canaries_litt1[df_Canaries_litt1 == 0] <- NA
 df_Canaries_nolitt1[df_Canaries_nolitt1 == 0] <- NA
 
-#write.csv(df_Canaries_litt1, here::here("c_output/tables/list_litt_can.csv"))
-#write.csv(df_Canaries_nolitt1, here::here("c_output/tables/list_nolitt_can.csv"))
+write.csv(df_Canaries_litt1, here::here("c_output/tables/list_litt_can.csv"))
+write.csv(df_Canaries_nolitt1, here::here("c_output/tables/list_nolitt_can.csv"))
 
 ```
 
@@ -280,9 +219,6 @@ saveRDS(dist_mat_all_nolitt_can, here::here("c_output/floristic_dist_matrices/di
 
 ```{r}
 df_Azores_sensitivity <- df_Azores[,c(2,10:18)] 
-df_Azores_sensitivity[is.na(df_Azores_sensitivity)] <- 0
-
-#saveRDS(df_Azores_sensitivity, here::here("c_output/sensitivity/df_Azores_sensitivity.rds"))
 ```
 
 
@@ -304,8 +240,8 @@ df_Azores_nolitt1$name_species <- gsub("_", " ", df_Azores_nolitt1$name_species)
 df_Azores_litt1[df_Azores_litt1 == 0] <- NA
 df_Azores_nolitt1[df_Azores_nolitt1 == 0] <- NA
 
-#write.csv(df_Azores_litt1, here::here("c_output/tables/list_litt_az.csv"))
-#write.csv(df_Azores_nolitt1, here::here("c_output/tables/list_nolitt_az.csv"))
+write.csv(df_Azores_litt1, here::here("c_output/tables/list_litt_az.csv"))
+write.csv(df_Azores_nolitt1, here::here("c_output/tables/list_nolitt_az.csv"))
 
 ```
 

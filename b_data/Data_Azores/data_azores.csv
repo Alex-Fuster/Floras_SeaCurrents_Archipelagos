@@ -10,7 +10,7 @@ Apiaceae,Ammi_seubertianum,1,1,,,,,hydrochorous,1,0,0,0,0,1,0,0,0
 Apiaceae,Ammi_trifoliatum,,1,,,,,hydrochorous,0,1,1,0,1,1,1,1,1
 Myrsinaceae,Anagallis_minima,,1,,,,,epizoochorous,1,0,0,0,0,0,0,1,1
 Myrsinaceae,Anagallis_tenella,,1,,,,,epizoochorous,0,0,0,0,1,1,1,1,0
-Apiaceae,Angelica_lignescens,1,,,,0.5,0.5,hydrochorous,0,1,1,0,0,1,1,1,0
+Apiaceae,Angelica_lignescens,,,,,0.5,0.5,hydrochorous,0,1,1,0,0,1,1,1,0
 Poaceae,Anthoxanthum_odoratum,,0.5,,,,0.5,epizoochorous,1,1,1,1,1,1,1,1,1
 Apiaceae,Apium_graveolens,,1,,,,,hydrochorous,1,1,1,1,1,1,1,1,1
 Loranthaceae,Arceuthobium_azoricum,,0.5,,0.5,,,epizoochorous,0,0,1,0,1,1,1,0,0
@@ -33,7 +33,7 @@ Cyperaceae,Carex_pilulifera,,1,,,,,hydrochorous,0,1,1,0,1,1,1,1,0
 Cyperaceae,Carex_punctata,,1,,,,,hydrochorous,1,1,1,1,1,1,1,1,0
 Cyperaceae,Carex_viridula,,1,,,,,hydrochorous,0,1,1,0,1,1,1,1,0
 Cyperaceae,Carex_vulcani,,1,,,,,hydrochorous,1,1,1,0,1,1,1,1,0
-Gentianaceae,Centaurium_scilloides,1,,,,1,,hydrochorous,1,1,1,0,1,1,1,1,1
+Gentianaceae,Centaurium_scilloides,,,,,1,,hydrochorous,1,1,1,0,1,1,1,1,1
 Caryophyllaceae,Cerastium_azoricum,,1,,,,,hydrochorous,0,0,0,0,0,0,0,1,1
 Caryophyllaceae,Cerastium_fontanum,,1,,,,,endozoochorous,1,1,1,1,1,1,1,1,1
 Ceratophyllaceae,Ceratophyllum_demersum,,0.5,,0.5,,,hydrochorous,0,1,0,0,0,1,0,1,0
@@ -54,7 +54,7 @@ Elatinaceae,Elatine_hexandra,,1,,,,,epizoochorous,0,1,1,1,0,1,1,1,1
 Cyperaceae,Eleocharis_multicaulis,,1,,,,,epizoochorous,0,1,1,0,1,1,1,1,1
 Ericaceae,Erica_azorica,,1,,,,,anemochorous,1,1,1,1,1,1,1,1,1
 Euphorbiaceae,Euphorbia_azorica,1,0.5,,,0.5,,autochorous,1,1,1,1,1,1,1,1,1
-Euphorbiaceae,Euphorbia_stygiana,1,0.5,,,0.5,,autochorous,1,1,1,0,1,1,1,1,1
+Euphorbiaceae,Euphorbia_stygiana,,0.5,,,0.5,,autochorous,1,1,1,0,1,1,1,1,1
 Orobanchaceae,Euphrasia_azorica,,1,,,,,anemochorous,0,0,0,0,0,0,0,1,1
 Orobanchaceae,Euphrasia_grandiflora,,1,,,,,anemochorous,0,0,0,0,1,1,0,0,0
 Poaceae,Festuca_francoi,,1,,,,,epizoochorous,1,1,1,0,1,1,1,1,1
@@ -62,6 +62,7 @@ Poaceae,Festuca_petraea,1,1,,,,,epizoochorous,1,1,1,1,1,1,1,1,1
 Asteraceae,Filago_minima,,,,,,1,anemochorous,0,0,0,0,0,1,0,0,0
 Rosaceae,Fragaria_vesca,,,1,,,,endozoochorous,1,1,1,1,1,1,1,1,1
 Rhamnaceae,Frangula_azorica,,,1,,,,endozoochorous,0,1,1,0,1,1,1,1,0
+Frankeniaceae,Frankenia_laevis,1,,,,,,,0,0,0,0,0,1,0,0,1
 Frankeniaceae,Frankenia_pulverulenta,1,0.33,,0.33,0.33,,anemochorous,1,1,1,1,1,1,1,1,1
 Rubiaceae,Galium_saxatile,,1,,,,,epizoochorous,0,0,0,0,0,0,1,0,0
 Poaceae,Gaudinia_coarctata,,0.5,,,,0.5,epizoochorous,1,1,1,1,1,1,1,1,1
@@ -70,7 +71,7 @@ Araliaceae,Hedera_azorica,,,1,,,,endozoochorous,1,1,1,1,1,1,1,1,1
 Apiaceae,Helosciadium_nodiflorum,,1,,,,,hydrochorous,1,1,1,0,1,0,0,1,0
 Poaceae,Holcus_azoricus,,0.33,,0.33,,0.33,hydrochorous,1,1,1,0,1,1,1,0,0
 Poaceae,Holcus_rigidus,,0.33,,0.33,,0.33,hydrochorous,1,1,1,1,1,1,1,1,1
-Apiaceae,Hydrocotyle_vulgaris,1,0.5,,,0.5,,hydrochorous,0,1,1,0,1,1,1,1,0
+Apiaceae,Hydrocotyle_vulgaris,,0.5,,,0.5,,hydrochorous,0,1,1,0,1,1,1,1,0
 Hypericaceae,Hypericum_elodes,,1,,,,,epizoochorous,0,1,0,0,0,1,0,0,0
 Hypericaceae,Hypericum_foliosum,,1,,,,,anemochorous,1,1,1,1,1,1,1,1,1
 Hypericaceae,Hypericum_humifusum,,1,,,,,epizoochorous,1,1,1,1,1,1,1,1,1
@@ -90,7 +91,7 @@ Lauraceae,Laurus_azorica,,,1,,,,endozoochorous,1,1,1,1,1,1,1,1,1
 Asteraceae,Leontodon_filii,,,,,,1,anemochorous,0,0,1,0,1,1,1,0,0
 Asteraceae,Leontodon_rigens,,,,,,1,anemochorous,0,0,0,0,0,0,0,1,1
 Asteraceae,Leontodon_sp,,,,,,1,anemochorous,0,1,0,0,0,0,0,0,0
-Plumbaginaceae,Limonium_sp,1,,,,0.5,0.5,anemochorous,1,1,1,0,0,1,0,0,1
+Plumbaginaceae,Limonium_eduardi-diasii,1,,,,0.5,0.5,anemochorous,1,1,1,0,0,1,0,0,1
 Plantaginaceae,Littorella_uniflora,,1,,,,,epizoochorous,0,1,1,0,1,1,1,1,1
 Campanulaceae,Lobelia_urens,,1,,,,,anemochorous,0,0,1,0,0,0,1,1,0
 Fabaceae,Lotus_azoricus,,1,,,,,autochorous,1,1,0,0,1,1,0,1,0
@@ -125,7 +126,7 @@ Polygonaceae,Rumex_azoricus,,0.5,,,,0.5,anemochorous,0,1,1,0,1,0,1,0,1
 Ruppiaceae,Ruppia_maritima,1,,,0.5,0.5,,hydrochorous,0,0,1,0,1,0,0,0,0
 Caryophyllaceae,Sagina_maritima,1,0.5,,,0.5,,hydrochorous,1,1,1,1,1,1,1,1,1
 Caryophyllaceae,Sagina_procumbens,,1,,,,,epizoochorous,1,1,1,1,1,1,1,1,1
-Theophrastaceae,Samolus_valerandi,1,0.5,,,0.5,,epizoochorous,0,0,0,0,1,0,0,1,0
+Theophrastaceae,Samolus_valerandi,,0.5,,,0.5,,epizoochorous,0,0,0,0,1,0,0,1,0
 Apiaceae,Sanicula_azorica,,,,1,,,epizoochorous,1,1,1,0,1,1,1,0,0
 Dipsacaceae,Scabiosa_nitens,,,,0.5,,0.5,epizoochorous,1,1,1,0,1,1,1,1,1
 Orchidaceae,Serapias_cordigera,,0.5,,,,0.5,anemochorous,1,1,1,1,1,1,1,0,0
