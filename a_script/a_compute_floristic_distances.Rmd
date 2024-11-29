@@ -118,8 +118,8 @@ df_Galapagos$name_species <- gsub('Pycreus_polystachyos', 'Cyperus_polystachyos'
 Filter Littoral or no-Littoral
 
 ```{r}
-df_Galapagos_litt <- subset(df_Galapagos, df_Galapagos$littoral %in% c("exclusive"))[,c(2,9:20)]
-df_Galapagos_nolitt <- subset(df_Galapagos, is.na(littoral))[,c(2,9:20)]
+df_Galapagos_litt <- subset(df_Galapagos, df_Galapagos$littoral %in% c("exclusive"))[,c(2,10:21)]
+df_Galapagos_nolitt <- subset(df_Galapagos, is.na(littoral))[,c(2,10:21)]
 
 df_Galapagos_litt1 <- df_Galapagos_litt
 df_Galapagos_nolitt1 <- df_Galapagos_nolitt
