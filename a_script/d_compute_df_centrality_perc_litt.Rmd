@@ -66,7 +66,7 @@ df_Azores <- df_Azores %>%
 Filter lowland (azores database already filtered)
 
 ```{r}
-df_Galapagos_lowland <- subset(df_Galapagos, df_Galapagos$habitats_lessthan500m %in% "1")
+df_Galapagos_lowland <-df_Galapagos
 df_Canaries_lowland <- subset(df_Canaries, df_Canaries$habitats_lessthan500m %in% "1")
 ```
 

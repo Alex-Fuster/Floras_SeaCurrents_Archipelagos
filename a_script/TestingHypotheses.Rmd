@@ -1,0 +1,839 @@
+---
+title: "Testing hypotheses"
+author: "Yurena Arjona"
+date: "2024-12-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(stringr)
+library(gdm)
+library(dplyr)
+library(tidyverse)
+```
+
+
+## Hypothesis testing using **Generalized Dissimilarity Modeling (GDM)**
+
+Generalized linear matrix regression, as an extension of the Mantel approach in which a single response matrix can be modelled as a function of distance matrices for any number of explanatory variables, overcoming problems of non-linearity between response and predictor variables (Ferrier et al., 2007). GDM are used to anlayse spatial patterns of biodiversity. In particular, they model the species dissimilarity between sites as a function of environment and geography using distance matrices. We use the *gdm* package (https://github.com/fitzlab-AL/GDM).
+
+We use as response the **floristic dissimilarity matrices** obtained for previous analyses (https://github.com/Alex-Fuster/Floras_SeaCurrents_Archipelagos/tree/main/c_output/floristic_dist_matrices). As predictor matrices we use the **geographic distance matrix** and the **sea-currents cost matrix** (https://github.com/Alex-Fuster/Floras_SeaCurrents_Archipelagos/tree/main/c_output/current_conn_matrices) obtained for each archipelago. We include as predictors **island age and area** as well (https://github.com/Alex-Fuster/Floras_SeaCurrents_Archipelagos/tree/main/b_data).
+
+
+
+### Littoral flora:
+
+
+```{r loading data, warning=FALSE, results=FALSE}
+
+## (1) Floristic dissimilarity matrices:
+##--------------------------------------
+dist_mat_all_litt_gal <- as.matrix(read_rds(here::here("c_output/floristic_dist_matrices/dist_mat_all_litt_gal.rds")))
+dist_mat_all_litt_can <- as.matrix(read_rds(here::here("c_output/floristic_dist_matrices/dist_mat_all_litt_can.rds")))
+dist_mat_all_litt_az <- as.matrix(read_rds(here::here("c_output/floristic_dist_matrices/dist_mat_all_litt_az.rds")))
+
+
+## (2) Sea current distance matrix:
+##---------------------------------
+mat_medianMin_sym_Galapagos <- read_rds(here::here("c_output/current_conn_matrices/mat_medianMin_sym_Galapagos.rds"))
+mat_medianMin_sym_Canaries <- read_rds(here::here("c_output/current_conn_matrices/mat_medianMin_sym_Canaries.rds"))
+mat_medianMin_sym_Azores <- read_rds(here::here("c_output/current_conn_matrices/mat_medianMin_sym_Azores.rds"))
+
+
+## (3) Geographic distance matrix:
+##--------------------------------
+mat_geo_gal <- read.csv(here::here("b_data/Data_Galapagos/geographic_distance_galap.csv"))
+rownames(mat_geo_gal) <- mat_geo_gal[,1]
+mat_geo_gal<-mat_geo_gal[,-1]
+## order names and convert to matrices
+mat_geo_gal <- as.matrix(mat_geo_gal[order(rownames(mat_geo_gal)), order(colnames(mat_geo_gal))])
+
+mat_geo_can <- read.csv(here::here("b_data/Data_Canaries/geographic_distance_canaries.csv"))
+rownames(mat_geo_can) <- mat_geo_can[,1]
+mat_geo_can<-mat_geo_can[,-1]
+## order names and convert to matrices
+mat_geo_can <- as.matrix(mat_geo_can[order(rownames(mat_geo_can)), order(colnames(mat_geo_can))])
+
+mat_geo_az <- read.csv(here::here("b_data/Data_Azores/geographic_distance_azores.csv"))
+rownames(mat_geo_az) <- mat_geo_az[,1]
+mat_geo_az<-mat_geo_az[,-1]
+## order names and convert to matrices
+mat_geo_az <- as.matrix(mat_geo_az[order(rownames(mat_geo_az)), order(colnames(mat_geo_az))])
+
+
+## (4) Other data:
+##----------------
+age.gal<-read.csv(here::here("b_data/Data_Galapagos/ages_islands_galap.csv"), header = T, sep=";")
+names(age.gal)
+area.gal<-read.csv(here::here("b_data/Data_Galapagos/area_islands_galap.csv"), header=T)
+names(area.gal)
+names(area.gal)[1]<-"island"
+
+age.can<-read.csv(here::here("b_data/Data_Canaries/ages_islands_canaries.csv"), header = T, sep=";")
+names(age.can)
+area.can<-read.csv(here::here("b_data/Data_Canaries/area_islands_canaries.csv"), header=T)
+names(area.can)
+names(area.can)[1]<-"island"
+
+age.az<-read.csv(here::here("b_data/Data_Azores/ages_islands_azores.csv"), header = T, sep=";")
+names(age.az)
+area.az<-read.csv(here::here("b_data/Data_Azores/area_islands_azores.csv"), header=T)
+names(area.az)
+names(area.az)[1]<-"island"
+
+```
+
+
+
+**Preparing data for GDMs:** 
+
+
+The input for the response can be a site-by-species matrix (bioFormat=1) a x-y spp list (bioFormat=2) or a dissimilarity matrix (with a column of siteID; bioFormat=3). Long-lat coordinates must be included in either the spp or the environmental matrix.
+
+The rows and their order must match in all the biological and environmental datasets and must not include NAs.
+
+Raw predictor variable table: sites in rows, predictors in columns.
+
+The input for GDMs is a "site-pair" table combining biological and environmental data.
+
+
+
+```{r preparing data, warning=FALSE, results=FALSE}
+
+## 1. Response as a dissimilarity matrix:
+##---------------------------------------
+## It should have a numerical site ID (island ID)
+flor_dis_gal<-cbind(seq(1:nrow(dist_mat_all_litt_gal)), dist_mat_all_litt_gal)
+colnames(flor_dis_gal)[1]<-"Island"
+gal.islandsID<-as.data.frame(cbind(rownames(flor_dis_gal), flor_dis_gal[,1])) #correspondence between island and islandID
+names(gal.islandsID)<-c("island", "islandID")
+gal.islandsID$islandID<-as.numeric(gal.islandsID$islandID)
+
+flor_dis_can<-cbind(seq(1:nrow(dist_mat_all_litt_can)), dist_mat_all_litt_can)
+colnames(flor_dis_can)[1]<-"Island"
+can.islandsID<-as.data.frame(cbind(rownames(flor_dis_can), flor_dis_can[,1])) #correspondence between island and islandID
+names(can.islandsID)<-c("island", "islandID")
+can.islandsID$islandID<-as.numeric(can.islandsID$islandID)
+
+flor_dis_az<-cbind(seq(1:nrow(dist_mat_all_litt_az)), dist_mat_all_litt_az)
+colnames(flor_dis_az)[1]<-"Island"
+az.islandsID<-as.data.frame(cbind(rownames(flor_dis_az), flor_dis_az[,1])) #correspondence between island and islandID
+names(az.islandsID)<-c("island", "islandID")
+az.islandsID$islandID<-as.numeric(az.islandsID$islandID)
+
+
+## 1.2. Predictors (distance matrices):
+##-------------------------------------
+## To include distance matrices as predictor variables we need to use the option "distPreds". 
+## These variables should be used in combination with "predData", thus the predData table must include 
+## at least one predictor variable (it could be fake e.g. with the same value for all sites), plus site 
+## and coordinate columns. 
+
+## Preparing the distance matrices:
+## They should be matrix objects not dist objects.
+## Each distance matrix must have as the first column the ID of the sites (the matrix is not square).
+
+## Galapagos:
+class(mat_geo_gal)
+rownames(mat_geo_gal)==rownames(flor_dis_gal)
+id<-vector()
+for(i in 1:nrow(mat_geo_gal)){
+  id<-c(id, gal.islandsID$islandID[which(gal.islandsID$island==rownames(mat_geo_gal)[i])])
+}
+geo_dist_gal<-cbind(id, mat_geo_gal)
+colnames(geo_dist_gal)[1]<-"Island"
+flor_dis_gal[,1]==geo_dist_gal[,1]
+
+class(mat_medianMin_sym_Galapagos)
+rownames(flor_dis_gal)==rownames(mat_medianMin_sym_Galapagos) #FALSE in the cases of two-word islands because no separation in sea_dist_gal
+rownames(mat_medianMin_sym_Galapagos) <- gsub('SanCristobal', 'San_Cristobal', rownames(mat_medianMin_sym_Galapagos))
+rownames(mat_medianMin_sym_Galapagos) <- gsub('SantaCruz', 'Santa_Cruz', rownames(mat_medianMin_sym_Galapagos))
+rownames(mat_medianMin_sym_Galapagos) <- gsub('SantaFe', 'Santa_Fe', rownames(mat_medianMin_sym_Galapagos))
+rownames(flor_dis_gal)==rownames(mat_medianMin_sym_Galapagos)
+id<-vector()
+for(i in 1:nrow(mat_medianMin_sym_Galapagos)){
+  id<-c(id, gal.islandsID$islandID[which(gal.islandsID$island==rownames(mat_medianMin_sym_Galapagos)[i])])
+}
+sea_dist_gal<-cbind(id, mat_medianMin_sym_Galapagos)
+colnames(sea_dist_gal)[1]<-"Island"
+flor_dis_gal[,1]==sea_dist_gal[,1]
+
+predictors.diss.gal<-list(geo_dist_gal, sea_dist_gal)
+names(predictors.diss.gal)<-c("geo.dist", "sea.currents")
+
+
+## The Canaries:
+class(mat_geo_can)
+rownames(mat_geo_can)==rownames(flor_dis_can) #different order, but same names
+id<-vector()
+for(i in 1:nrow(mat_geo_can)){
+  id<-c(id, can.islandsID$islandID[which(can.islandsID$island==rownames(mat_geo_can)[i])])
+}
+geo_dist_can<-cbind(id, mat_geo_can)
+colnames(geo_dist_can)[1]<-"Island"
+geo_dist_can<-geo_dist_can[order(geo_dist_can[,1]),]
+flor_dis_can[,1]==geo_dist_can[,1]
+
+class(mat_medianMin_sym_Canaries)
+rownames(flor_dis_can)==rownames(mat_medianMin_sym_Canaries) #Two-word islands has no separation in sea_dist_can
+rownames(mat_medianMin_sym_Canaries) <- gsub('ElHierro', 'El_Hierro', rownames(mat_medianMin_sym_Canaries))
+rownames(mat_medianMin_sym_Canaries) <- gsub('LaPalma', 'La_Palma', rownames(mat_medianMin_sym_Canaries))
+rownames(mat_medianMin_sym_Canaries) <- gsub('GranCanaria', 'Gran_Canaria', rownames(mat_medianMin_sym_Canaries))
+rownames(mat_medianMin_sym_Canaries) <- gsub('LaGomera', 'La_Gomera', rownames(mat_medianMin_sym_Canaries))
+rownames(flor_dis_can)==rownames(mat_medianMin_sym_Canaries)
+id<-vector()
+for(i in 1:nrow(mat_medianMin_sym_Canaries)){
+  id<-c(id, can.islandsID$islandID[which(can.islandsID$island==rownames(mat_medianMin_sym_Canaries)[i])])
+}
+sea_dist_can<-cbind(id, mat_medianMin_sym_Canaries)
+colnames(sea_dist_can)[1]<-"Island"
+sea_dist_can<-sea_dist_can[order(sea_dist_can[,1]),]
+flor_dis_can[,1]==sea_dist_can[,1]
+
+predictors.diss.can<-list(geo_dist_can, sea_dist_can)
+names(predictors.diss.can)<-c("geo.dist", "sea.currents")
+
+
+## Azores:
+class(mat_geo_az)
+rownames(mat_geo_az)==rownames(flor_dis_az) #different order, same names
+id<-vector()
+for(i in 1:nrow(mat_geo_az)){
+  id<-c(id, az.islandsID$islandID[which(az.islandsID$island==rownames(mat_geo_az)[i])])
+}
+geo_dist_az<-cbind(id, mat_geo_az)
+colnames(geo_dist_az)[1]<-"Island"
+geo_dist_az<-geo_dist_az[order(geo_dist_az[,1]),]
+flor_dis_az[,1]==geo_dist_az[,1]
+
+class(mat_medianMin_sym_Azores)
+rownames(flor_dis_az)==rownames(mat_medianMin_sym_Azores) #different order, same names
+id<-vector()
+for(i in 1:nrow(mat_medianMin_sym_Azores)){
+  id<-c(id, az.islandsID$islandID[which(az.islandsID$island==rownames(mat_medianMin_sym_Azores)[i])])
+}
+sea_dist_az<-cbind(id, mat_medianMin_sym_Azores)
+colnames(sea_dist_az)[1]<-"Island"
+sea_dist_az<-sea_dist_az[order(sea_dist_az[,1]),]
+flor_dis_az[,1]==sea_dist_az[,1]
+
+predictors.diss.az<-list(geo_dist_az, sea_dist_az)
+names(predictors.diss.az)<-c("geo.dist", "sea.currents")
+
+
+## 1.3. Predictor table (raw data):
+##---------------------------------
+## We include here Island variables such as age and area. We need also to include here long and lat coordinates.
+## Including coordinates is REQUIRED, and as we include as response a dissimilarity matrix, the coordinates
+## must be included in the predictor table. These coordinates are used to calculate geographic distance
+## and use it as another predictor (geo=T). However, if we do not intend to use it as a predictor (which
+## is our case as we include geographic distance as a dissimilarity matrix), columns can be loaded with dummy
+## data (geo=F, default).
+
+## Galapagos:
+predictors.gal<-merge(age.gal, area.gal, by = "island")
+predictors.gal$Lon<-rep(1, nrow(predictors.gal))
+predictors.gal$Lat<-rep(1, nrow(predictors.gal))
+names(predictors.gal)[1]<-"Island"
+for(i in 1:nrow(predictors.gal)){
+  predictors.gal$Island[i]<-gal.islandsID$islandID[which(gal.islandsID$island==predictors.gal$Island[i])]
+}
+predictors.gal$Island==flor_dis_gal[,1] #same order of sites in all matrices
+
+## Canaries:
+predictors.can<-merge(age.can, area.can, by = "island")
+predictors.can$Lon<-rep(1, nrow(predictors.can))
+predictors.can$Lat<-rep(1, nrow(predictors.can))
+names(predictors.can)[1]<-"Island"
+for(i in 1:nrow(predictors.can)){
+  predictors.can$Island[i]<-can.islandsID$islandID[which(can.islandsID$island==predictors.can$Island[i])]
+}
+predictors.can$Island==flor_dis_can[,1] 
+predictors.can<-predictors.can[order(predictors.can$Island),]
+predictors.can$Island==flor_dis_can[,1] #same order of sites in all matrices
+
+## Azores:
+predictors.az<-merge(age.az, area.az, by = "island")
+predictors.az$Lon<-rep(1, nrow(predictors.az))
+predictors.az$Lat<-rep(1, nrow(predictors.az))
+names(predictors.az)[1]<-"Island"
+for(i in 1:nrow(predictors.az)){
+  predictors.az$Island[i]<-az.islandsID$islandID[which(az.islandsID$island==predictors.az$Island[i])]
+}
+predictors.az$Island==flor_dis_az[,1]
+predictors.az<-predictors.az[order(predictors.az$Island),]
+predictors.az$Island==flor_dis_az[,1] #same order of sites in all matrices
+
+
+## 1.4. Formatting a site-pair table to perform GDM
+##-------------------------------------------------
+gdmTab.GAL <- formatsitepair(bioData=flor_dis_gal, 
+                             bioFormat=3, #diss matrix 
+                             XColumn="Lon", 
+                             YColumn="Lat", 
+                             predData=predictors.gal, 
+                             siteColumn="Island",
+                             distPreds = predictors.diss.gal)
+
+gdmTab.CAN <- formatsitepair(bioData=flor_dis_can, 
+                             bioFormat=3, #diss matrix 
+                             XColumn="Lon", 
+                             YColumn="Lat", 
+                             predData=predictors.can, 
+                             siteColumn="Island",
+                             distPreds = predictors.diss.can)
+
+gdmTab.AZ <- formatsitepair(bioData=flor_dis_az, 
+                             bioFormat=3, #diss matrix 
+                             XColumn="Lon", 
+                             YColumn="Lat", 
+                             predData=predictors.az, 
+                             siteColumn="Island",
+                             distPreds = predictors.diss.az)
+```
+
+
+**GDM fitting:** 
+
+https://github.com/fitzlab-AL/GDM
+
+To be specified:
+
+  (1)   Whether or not the model should be fit with geographical distance as a predictor variable.
+  (2)   No. of I-spline basis functions (default=3).
+  (3)   Location of "knots" (~inflexion points) (defaults to 0, 50, and 100 quantiles when 3 I-splines functions are used).
+
+Recommendation: leaving (2) and (3) at default values, this will work fine for most applications.
+
+Here we fit GDM with geo=F as we include already geographical distance as a predictor matrix (matrix_1). We leave the other parameters at default values.
+
+The *summary* function provides an overview of the model, the most important items to note are:
+
+  +   Percent Deviance Explained: goodness-of-fit
+  +   Intercept: expected dissimilarity between sites that do not differ in the predictors
+  +   Summary of the fitted I-splines for each predictor, including the values of the coefficients and their sum. The sum indicates the amount of compositional turnover associated with that variable, holding all other variables constant. I-spline summaries are order by coefficient sum. Variables with all coefficients=0 have no relationship with the modeled biological pattern.
+  
+
+```{r gdm fitting, warning=FALSE}
+
+## Galápagos:
+gdm.GAL<-gdm(data=gdmTab.GAL, geo=F)
+summary(gdm.GAL)
+
+## Canaries:
+gdm.CAN<-gdm(data=gdmTab.CAN, geo=F)
+summary(gdm.CAN)
+
+
+## Azores:
+gdm.AZ<-gdm(data=gdmTab.AZ, geo=F)
+summary(gdm.AZ)
+```
+
+
+**Results:**
+
+**Galápagos:** 30.185 % of the deviance explained. The most important predictor variable is the **geographic distance** (0.395), followed by the island area (0.24), and island age with low importance (0.087).
+
+**The Canary Islands:** 56.82 % of the deviance explained. The most important predictor variable is the **island area** (1.937), distantly followed by the island age (0.313), and geographic distance and sea-currents cost with low importance (0.082 and 0.013, respectively).
+
+**Azores:** 14.022 % of the deviance explained. The most important predictor variable is the **island area** (0.06), distantly followed by the geographic distance (0.045), and island age (0.035).
+
+**Sea currents** had no importance in determining littoral species dissimilarity between islands in Galápagos and Azores based on our models.
+
+
+
+### Non-littoral flora:
+
+```{r nonlittoral flora, warning=FALSE, results=FALSE}
+
+
+## (1) Loading floristic dissimilarity matrices:
+##----------------------------------------------
+dist_mat_all_nolitt_gal <- as.matrix(read_rds(here::here("c_output/floristic_dist_matrices/dist_mat_all_nolitt_gal.rds")))
+dist_mat_all_nolitt_can <- as.matrix(read_rds(here::here("c_output/floristic_dist_matrices/dist_mat_all_nolitt_can.rds")))
+dist_mat_all_nolitt_az <- as.matrix(read_rds(here::here("c_output/floristic_dist_matrices/dist_mat_all_nolitt_az.rds")))
+
+
+## (2) Response as a dissimilarity matrix:
+##----------------------------------------
+## It should have a numerical site ID (island ID)
+## Checking island order and including the numerical siteID:
+gal.is<-vector()
+for(i in 1:nrow(dist_mat_all_nolitt_gal)){
+  stopifnot(length(which(gal.islandsID$island==rownames(dist_mat_all_nolitt_gal)[i]))==1)
+  gal.is<-c(gal.is, gal.islandsID$islandID[which(gal.islandsID$island==rownames(dist_mat_all_nolitt_gal)[i])])
+}
+flor_dis_nolitt_gal<-cbind(gal.is, dist_mat_all_nolitt_gal)
+colnames(flor_dis_nolitt_gal)[1]<-"Island"
+flor_dis_nolitt_gal[,1]==flor_dis_gal[,1]
+
+can.is<-vector()
+for(i in 1:nrow(dist_mat_all_nolitt_can)){
+  stopifnot(length(which(can.islandsID$island==rownames(dist_mat_all_nolitt_can)[i]))==1)
+  can.is<-c(can.is, can.islandsID$islandID[which(can.islandsID$island==rownames(dist_mat_all_nolitt_can)[i])])
+}
+flor_dis_nolitt_can<-cbind(can.is, dist_mat_all_nolitt_can)
+colnames(flor_dis_nolitt_can)[1]<-"Island"
+flor_dis_nolitt_can[,1]==flor_dis_can[,1]
+
+az.is<-vector()
+for(i in 1:nrow(dist_mat_all_nolitt_az)){
+  stopifnot(length(which(az.islandsID$island==rownames(dist_mat_all_nolitt_az)[i]))==1)
+  az.is<-c(az.is, az.islandsID$islandID[which(az.islandsID$island==rownames(dist_mat_all_nolitt_az)[i])])
+}
+flor_dis_nolitt_az<-cbind(az.is, dist_mat_all_nolitt_az)
+colnames(flor_dis_nolitt_az)[1]<-"Island"
+flor_dis_nolitt_az[,1]==flor_dis_az[,1]
+
+
+## (3) Formatting a site-pair table to perform GDM:
+##-------------------------------------------------
+gdmTab.nolitt.GAL <- formatsitepair(bioData=flor_dis_nolitt_gal, 
+                             bioFormat=3, #diss matrix 
+                             XColumn="Lon", 
+                             YColumn="Lat", 
+                             predData=predictors.gal, 
+                             siteColumn="Island",
+                             distPreds = predictors.diss.gal)
+
+gdmTab.nolitt.CAN <- formatsitepair(bioData=flor_dis_nolitt_can, 
+                             bioFormat=3, #diss matrix 
+                             XColumn="Lon", 
+                             YColumn="Lat", 
+                             predData=predictors.can, 
+                             siteColumn="Island",
+                             distPreds = predictors.diss.can)
+
+gdmTab.nolitt.AZ <- formatsitepair(bioData=flor_dis_nolitt_az, 
+                             bioFormat=3, #diss matrix 
+                             XColumn="Lon", 
+                             YColumn="Lat", 
+                             predData=predictors.az, 
+                             siteColumn="Island",
+                             distPreds = predictors.diss.az)
+
+```
+
+
+**GDM fitting:**
+
+```{r gdm fitting nonlitt, warning=FALSE}
+
+## Galápagos:
+gdm.nolitt.GAL<-gdm(data=gdmTab.nolitt.GAL, geo=F)
+summary(gdm.nolitt.GAL)
+
+## Canaries:
+gdm.nolitt.CAN<-gdm(data=gdmTab.nolitt.CAN, geo=F)
+summary(gdm.nolitt.CAN)
+
+
+## Azores:
+gdm.nolitt.AZ<-gdm(data=gdmTab.nolitt.AZ, geo=F)
+summary(gdm.nolitt.AZ)
+```
+
+
+**Results:**
+
+**Galápagos:** 28.945 % of the deviance explained. The most important predictor variable is the **island area** (0.433), followed by the geographic distance (0.241), and island age (0.161).
+
+**The Canary Islands:** 47.831 % of the deviance explained. The most important predictor variable is the **geographic distance** (0.249), followed by the island age (0.242), and island area (0.031).
+
+**Azores:** 38.796 % of the deviance explained. The most important predictor variable is the **island area** (0.249), distantly followed by island age (0.117), and the geographic distance (0.043).
+
+**Sea currents** had no importance in determining no littoral species dissimilarity between islands in any of the three archipelagos based on our models.
+
+
+
+
+
+
+## **RECIPROCAL CAUSAL MODELING**
+
+
+We use **Reciprocal Causal Modelling** as an alternative method to hypothesis testing. The objective of including it here is to confirm the GDM's results. In this case we compared the isolation by distance vs the isolation by resistance (sea currents) hypotheses.
+
+
+**Reciprocal Causal Modelling (Cushman et al. 2013)**
+
+Partial Mantel correlations: 
+
+Hypothesis: IBD (hypothesis D) vs IBR (hypothesis R).  
+Pairwise genetic data = G.
+
+1. G ~ R|D
+2. G ~ D|R
+3. R|D - D|R -> measure of the relative support of hypothesis R relative to hypothesis D: if (3) is possitive -> R is correct; if (3) is negative -> D is correct.  
+
+Repeat the process with the alternative hypothesis. Results stored in a matrix:  
+```{r echo = FALSE, results='asis'}
+library(knitr)
+h1<-c(" ","-","-")
+h2<-c("+"," ","-")
+h3<-c("+","+"," ")
+df<-as.data.frame(rbind(h1,h2,h3))
+names(df)<-c("R1","R2","D")
+rownames(df)<-c("R1","R2","D")
+kable(df)
+```
+
+In this case, the hypothesis R1 is supported: positive in column, negative in row, i.e:
+
+- [2,1] = R1|R2 - R2|R1 -> + R1 correct
+- [3,1] = R1|D - D|R1 -> + R1 correct
+- [1,2] = R2|R1 - R1|R2 -> - R1 correct
+- [1,3] = D|R1 - R1|D -> - R1 correct
+
+
+
+
+**Galápagos littoral flora:**
+
+
+```{r RCM gal litt, message=FALSE}
+library(vegan)
+
+## Checking linear relationship of each of the predictors and the response:
+plot(as.vector(geo_dist_gal[,-1]), as.vector(flor_dis_gal[,-1]))
+plot(as.vector(log(geo_dist_gal[,-1])), as.vector(flor_dis_gal[,-1])) #no transformation needed
+plot(as.vector(sea_dist_gal[,-1]), as.vector(flor_dis_gal[,-1]))
+plot(as.vector(log(sea_dist_gal[,-1])), as.vector(flor_dis_gal[,-1])) #no transformation needed
+
+## RCM:
+nhyp<-2 #no. hypotheses to be compared
+reciprocalMatrix<-matrix(NA,nhyp,nhyp)
+row.names(reciprocalMatrix)<-c("IBD","IBR")
+colnames(reciprocalMatrix)<-c("IBD","IBR")
+
+DR<-mantel.partial(geo_dist_gal[,-1],flor_dis_gal[,-1],sea_dist_gal[,-1],permutations = 9999) #IBD|IBR
+RD<-mantel.partial(sea_dist_gal[,-1],flor_dis_gal[,-1],geo_dist_gal[,-1],permutations = 9999) #IBR|IBD
+
+reciprocalMatrix[2,1]<-DR$statistic-RD$statistic
+reciprocalMatrix[1,2]<-RD$statistic-DR$statistic
+reciprocalMatrix
+```
+
+
+**Results:** The hypothesis of **isolation by geographic distance** is supported and better explain the littoral species dissimilarities between islands in the Galápagos.
+
+
+
+**Galápagos non-littoral flora:**
+
+
+```{r RCM gal nolitt, message=FALSE}
+
+## Checking linear relationship of each of the predictors and the response:
+plot(as.vector(geo_dist_gal[,-1]), as.vector(flor_dis_nolitt_gal[,-1]))
+plot(as.vector(log(geo_dist_gal[,-1])), as.vector(flor_dis_nolitt_gal[,-1])) #no transformation needed
+plot(as.vector(sea_dist_gal[,-1]), as.vector(flor_dis_nolitt_gal[,-1]))
+plot(as.vector(log(sea_dist_gal[,-1])), as.vector(flor_dis_nolitt_gal[,-1])) #no transformation needed
+
+## RCM:
+nhyp<-2 #no. hypotheses to be compared
+reciprocalMatrix<-matrix(NA,nhyp,nhyp)
+row.names(reciprocalMatrix)<-c("IBD","IBR")
+colnames(reciprocalMatrix)<-c("IBD","IBR")
+
+DR<-mantel.partial(geo_dist_gal[,-1],flor_dis_nolitt_gal[,-1],sea_dist_gal[,-1],permutations = 9999) #IBD|IBR
+RD<-mantel.partial(sea_dist_gal[,-1],flor_dis_nolitt_gal[,-1],geo_dist_gal[,-1],permutations = 9999) #IBR|IBD
+
+reciprocalMatrix[2,1]<-DR$statistic-RD$statistic
+reciprocalMatrix[1,2]<-RD$statistic-DR$statistic
+reciprocalMatrix
+```
+
+
+**Results:** The hypothesis of **isolation by geographic distance** is supported and better explain the non-littoral species dissimilarities between islands in the Galápagos.
+
+
+
+
+**Canarian littoral flora:**
+
+
+```{r RCM can litt, message=FALSE}
+
+## Checking linear relationship of each of the predictors and the response:
+plot(as.vector(geo_dist_can[,-1]), as.vector(flor_dis_can[,-1]))
+plot(as.vector(log(geo_dist_can[,-1])), as.vector(flor_dis_can[,-1])) #no transformation needed
+plot(as.vector(sea_dist_can[,-1]), as.vector(flor_dis_can[,-1]))
+plot(as.vector(log(sea_dist_can[,-1])), as.vector(flor_dis_can[,-1])) #no transformation needed
+
+## RCM:
+nhyp<-2 #no. hypotheses to be compared
+reciprocalMatrix<-matrix(NA,nhyp,nhyp)
+row.names(reciprocalMatrix)<-c("IBD","IBR")
+colnames(reciprocalMatrix)<-c("IBD","IBR")
+
+DR<-mantel.partial(geo_dist_can[,-1],flor_dis_can[,-1],sea_dist_can[,-1],permutations = 9999) #IBD|IBR
+RD<-mantel.partial(sea_dist_can[,-1],flor_dis_can[,-1],geo_dist_can[,-1],permutations = 9999) #IBR|IBD
+
+reciprocalMatrix[2,1]<-DR$statistic-RD$statistic
+reciprocalMatrix[1,2]<-RD$statistic-DR$statistic
+reciprocalMatrix
+```
+
+
+**Results:** The hypothesis of **isolation by geographic distance** is supported and better explain the littoral species dissimilarities between islands in the Canaries.
+
+
+
+**Canarian non-littoral flora:**
+
+
+```{r RCM can nolitt, message=FALSE}
+
+## Checking linear relationship of each of the predictors and the response:
+plot(as.vector(geo_dist_can[,-1]), as.vector(flor_dis_nolitt_can[,-1]))
+plot(as.vector(log(geo_dist_can[,-1])), as.vector(flor_dis_nolitt_can[,-1])) #no transformation needed
+plot(as.vector(sea_dist_can[,-1]), as.vector(flor_dis_nolitt_can[,-1]))
+plot(as.vector(log(sea_dist_can[,-1])), as.vector(flor_dis_nolitt_can[,-1])) #no transformation needed
+
+## RCM:
+nhyp<-2 #no. hypotheses to be compared
+reciprocalMatrix<-matrix(NA,nhyp,nhyp)
+row.names(reciprocalMatrix)<-c("IBD","IBR")
+colnames(reciprocalMatrix)<-c("IBD","IBR")
+
+DR<-mantel.partial(geo_dist_can[,-1],flor_dis_nolitt_can[,-1],sea_dist_can[,-1],permutations = 9999) #IBD|IBR
+RD<-mantel.partial(sea_dist_can[,-1],flor_dis_nolitt_can[,-1],geo_dist_can[,-1],permutations = 9999) #IBR|IBD
+
+reciprocalMatrix[2,1]<-DR$statistic-RD$statistic
+reciprocalMatrix[1,2]<-RD$statistic-DR$statistic
+reciprocalMatrix
+```
+
+
+**Results:** The hypothesis of **isolation by geographic distance** is supported and better explain the non-littoral species dissimilarities between islands in the Canaries.
+
+
+
+
+**Azorean littoral flora:**
+
+
+```{r RCM az litt, message=FALSE}
+
+## Checking linear relationship of each of the predictors and the response:
+plot(as.vector(geo_dist_az[,-1]), as.vector(flor_dis_az[,-1]))
+plot(as.vector(log(geo_dist_az[,-1])), as.vector(flor_dis_az[,-1])) #no transformation needed
+plot(as.vector(sea_dist_az[,-1]), as.vector(flor_dis_az[,-1]))
+plot(as.vector(log(sea_dist_az[,-1])), as.vector(flor_dis_az[,-1])) #no transformation needed
+
+## RCM:
+nhyp<-2 #no. hypotheses to be compared
+reciprocalMatrix<-matrix(NA,nhyp,nhyp)
+row.names(reciprocalMatrix)<-c("IBD","IBR")
+colnames(reciprocalMatrix)<-c("IBD","IBR")
+
+DR<-mantel.partial(geo_dist_az[,-1],flor_dis_az[,-1],sea_dist_az[,-1],permutations = 9999) #IBD|IBR
+RD<-mantel.partial(sea_dist_az[,-1],flor_dis_az[,-1],geo_dist_az[,-1],permutations = 9999) #IBR|IBD
+
+reciprocalMatrix[2,1]<-DR$statistic-RD$statistic
+reciprocalMatrix[1,2]<-RD$statistic-DR$statistic
+reciprocalMatrix
+```
+
+
+**Results:** The hypothesis of **isolation by geographic distance** is supported and better explain the littoral species dissimilarities between islands in the Azores.
+
+
+
+**Azorean non-littoral flora:**
+
+
+```{r RCM az nolitt, message=FALSE}
+
+## Checking linear relationship of each of the predictors and the response:
+plot(as.vector(geo_dist_az[,-1]), as.vector(flor_dis_nolitt_az[,-1]))
+plot(as.vector(log(geo_dist_az[,-1])), as.vector(flor_dis_nolitt_az[,-1])) #no transformation needed
+plot(as.vector(sea_dist_az[,-1]), as.vector(flor_dis_nolitt_az[,-1]))
+plot(as.vector(log(sea_dist_az[,-1])), as.vector(flor_dis_nolitt_az[,-1])) #no transformation needed
+
+## RCM:
+nhyp<-2 #no. hypotheses to be compared
+reciprocalMatrix<-matrix(NA,nhyp,nhyp)
+row.names(reciprocalMatrix)<-c("IBD","IBR")
+colnames(reciprocalMatrix)<-c("IBD","IBR")
+
+DR<-mantel.partial(geo_dist_az[,-1],flor_dis_nolitt_az[,-1],sea_dist_az[,-1],permutations = 9999) #IBD|IBR
+RD<-mantel.partial(sea_dist_az[,-1],flor_dis_nolitt_az[,-1],geo_dist_az[,-1],permutations = 9999) #IBR|IBD
+
+reciprocalMatrix[2,1]<-DR$statistic-RD$statistic
+reciprocalMatrix[1,2]<-RD$statistic-DR$statistic
+reciprocalMatrix
+```
+
+
+**Results:** The hypothesis of **isolation by geographic distance** is supported and better explain the non-littoral species dissimilarities between islands in the Azores.
+
+
+
+## **Conclusion**
+
+
+It is confirmed that the **geographic distances** explain better the species dissimilarities between islands of the three archipelagos, for both littoral and non-littoral species. However, in some cases, other variables such **island area or age** are even more important than geographic differences in explaining species dissimilarities between islands.
+
+
+
+
+##############################
+
+
+```{r}
+# Extract coefficients for each archipelago
+extract_gdm_coefficients <- function(gdm_model) {
+  predictors <- gdm_model$predictors
+  coefficients <- gdm_model$coefficients
+  num_splines <- gdm_model$splines
+  coeff_split <- split(coefficients, rep(predictors, each = num_splines))
+  coeff_importance <- sapply(coeff_split, sum) # Sum coefficients
+  total_importance <- coeff_importance / sum(coeff_importance) # Normalize
+  data.frame(Predictor = names(total_importance), Importance = total_importance)
+}
+
+# Extract results for Galápagos, Canaries, and Azores
+gal_importance <- extract_gdm_coefficients(gdm.GAL) %>% mutate(Archipelago = "Galápagos")
+can_importance <- extract_gdm_coefficients(gdm.CAN) %>% mutate(Archipelago = "Canaries")
+az_importance <- extract_gdm_coefficients(gdm.AZ) %>% mutate(Archipelago = "Azores")
+
+# Combine into a single data frame
+combined_importance <- bind_rows(gal_importance, can_importance, az_importance)
+
+
+
+# Plotting the combined results
+ggplot(combined_importance, aes(x = Predictor, y = Importance, fill = Archipelago)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  labs(title = "Relative Importance of Predictors for Littoral Flora",
+       y = "Relative Importance",
+       x = "Predictor") +
+  scale_fill_brewer(palette = "Set2") +
+  theme_classic()
+```
+
+```{r}
+library(ggpattern)
+
+extract_gdm_coefficients <- function(gdm_model) {
+  predictors <- gdm_model$predictors
+  coefficients <- gdm_model$coefficients
+  num_splines <- gdm_model$splines
+  coeff_split <- split(coefficients, rep(predictors, each = num_splines))
+  coeff_importance <- sapply(coeff_split, sum) # Sum coefficients
+  total_importance <- coeff_importance / sum(coeff_importance) # Normalize
+  data.frame(Predictor = names(total_importance), Importance = total_importance)
+}
+
+# Extract coefficients for littoral flora
+# Replace gdm.GAL, gdm.CAN, and gdm.AZ with your actual GDM model objects
+littoral_gal_importance <- extract_gdm_coefficients(gdm.GAL) %>% 
+  mutate(Archipelago = "Galápagos", Flora = "Littoral")
+littoral_can_importance <- extract_gdm_coefficients(gdm.CAN) %>% 
+  mutate(Archipelago = "Canaries", Flora = "Littoral")
+littoral_az_importance <- extract_gdm_coefficients(gdm.AZ) %>% 
+  mutate(Archipelago = "Azores", Flora = "Littoral")
+
+# Extract coefficients for non-littoral flora
+# Replace gdm.nolitt.GAL, gdm.nolitt.CAN, and gdm.nolitt.AZ with your actual GDM model objects
+nonlittoral_gal_importance <- extract_gdm_coefficients(gdm.nolitt.GAL) %>% 
+  mutate(Archipelago = "Galápagos", Flora = "Non-Littoral")
+nonlittoral_can_importance <- extract_gdm_coefficients(gdm.nolitt.CAN) %>% 
+  mutate(Archipelago = "Canaries", Flora = "Non-Littoral")
+nonlittoral_az_importance <- extract_gdm_coefficients(gdm.nolitt.AZ) %>% 
+  mutate(Archipelago = "Azores", Flora = "Non-Littoral")
+
+# Combine littoral and non-littoral results
+combined_importance <- bind_rows(
+  littoral_gal_importance, littoral_can_importance, littoral_az_importance,
+  nonlittoral_gal_importance, nonlittoral_can_importance, nonlittoral_az_importance
+)
+
+# Define colors
+colors <- c("Galápagos" = "skyblue", "Canaries" = "#660099", "Azores" = "lightcoral")
+
+# Create individual plots for each archipelago
+library(ggplot2)
+gal_plot <- ggplot(combined_importance %>% filter(Archipelago == "Galápagos"),
+                   aes(x = Predictor, y = Importance, fill = Flora)) +
+  geom_bar(
+    stat = "identity", 
+    position = position_dodge(width = 0.7),
+    aes(color = ifelse(Flora == "Littoral", "black", NA)),
+    size = 0.8,
+    width = 0.6
+  ) +
+  scale_fill_manual(values = c("Littoral" = "skyblue", "Non-Littoral" = "skyblue")) +
+  scale_color_identity() +
+  labs(
+    title = "Galápagos",
+    y = "Relative Importance",
+    x = "Predictor"
+  ) +
+  ylim(0, 1) +
+  theme_classic() +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 9)
+  )
+
+can_plot <- ggplot(combined_importance %>% filter(Archipelago == "Canaries"),
+                   aes(x = Predictor, y = Importance, fill = Flora)) +
+  geom_bar(
+    stat = "identity", 
+    position = position_dodge(width = 0.7),
+    aes(color = ifelse(Flora == "Littoral", "black", NA)),
+    size = 0.8,
+    width = 0.6
+  ) +
+  scale_fill_manual(values = c("Littoral" = "#660099", "Non-Littoral" = "#660099")) +
+  scale_color_identity() +
+  labs(
+    title = "Canaries",
+    y = "Relative Importance",
+    x = "Predictor"
+  ) +
+  ylim(0, 1) +
+  theme_classic() +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 9)
+  )
+
+az_plot <- ggplot(combined_importance %>% filter(Archipelago == "Azores"),
+                  aes(x = Predictor, y = Importance, fill = Flora)) +
+  geom_bar(
+    stat = "identity", 
+    position = position_dodge(width = 0.7),
+    aes(color = ifelse(Flora == "Littoral", "black", NA)),
+    size = 0.8,
+    width = 0.6
+  ) +
+  scale_fill_manual(values = c("Littoral" = "lightcoral", "Non-Littoral" = "lightcoral")) +
+  scale_color_identity() +
+  labs(
+    title = "Azores",
+    y = "Relative Importance",
+    x = "Predictor"
+  ) +
+  ylim(0, 1) +
+  theme_classic() +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_text(size = 10),
+    legend.text = element_text(size = 9)
+  )
+
+# Combine the three plots using ggarrange
+library(ggpubr)
+ggarrange(gal_plot, can_plot, az_plot, ncol = 1, nrow = 3, common.legend = TRUE, legend = "bottom")
+
+```
+
