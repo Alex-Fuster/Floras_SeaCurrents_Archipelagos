@@ -38,7 +38,7 @@ dist_mat_all_litt_az <- as.matrix(read_rds(here::here("c_output/floristic_dist_m
 ## (2) Sea current distance matrix:
 ##---------------------------------
 mat_medianMin_sym_Galapagos <- read_rds(here::here("c_output/current_conn_matrices/mat_medianMin_sym_Galapagos.rds"))
-mat_medianMin_sym_Canaries <- read_rds(here::here("c_output/current_conn_matrices/mat_medianMin_sym_Canaries.rds"))
+mat_medianMin_sym_Canaries <- read_rds(here::here(here("c_output/current_conn_matrices/mat_medianMin_sym_Canaries.rds")))
 mat_medianMin_sym_Azores <- read_rds(here::here("c_output/current_conn_matrices/mat_medianMin_sym_Azores.rds"))
 
 
@@ -295,6 +295,56 @@ gdmTab.AZ <- formatsitepair(bioData=flor_dis_az,
 ```
 
 
+**Checking the correlation between site-pair distances of predictor variables:**
+
+It is worthwhile exploring the correlation between site-pair distance of predictor variables, as the existence of correlation may violate the assumptions of independence of the data of GDM (Mokany et al., 2022).
+
+
+```{r site-pair correlation, warning=F}
+## GAL:
+env.preds<-c("age","area","matrix_1","matrix_2") #order in the gdm.Tab
+env.pair.dif <- matrix(0, ncol = length(env.preds), nrow = nrow(gdmTab.GAL))
+colnames(env.pair.dif) <- paste0(env.preds,"_diff")
+for(i in 1:length(env.preds))
+{
+   env.pair.dif[,i] <- abs(gdmTab.GAL[,which(colnames(gdmTab.GAL) == paste0("s1.",env.preds[i]))] -
+                               gdmTab.GAL[,which(colnames(gdmTab.GAL) == paste0("s2.",env.preds[i]))])
+} # end for i
+env.dif.cor <- cor(env.pair.dif, method = "pearson")
+env.dif.cor
+#cor=0.794 between matrix_1-matrix_2 site-pair differences
+
+
+## CAN:
+env.preds<-c("age","area","matrix_1","matrix_2") #order in the gdm.Tab
+env.pair.dif <- matrix(0, ncol = length(env.preds), nrow = nrow(gdmTab.CAN))
+colnames(env.pair.dif) <- paste0(env.preds,"_diff")
+for(i in 1:length(env.preds))
+{
+   env.pair.dif[,i] <- abs(gdmTab.CAN[,which(colnames(gdmTab.CAN) == paste0("s1.",env.preds[i]))] -
+                               gdmTab.CAN[,which(colnames(gdmTab.CAN) == paste0("s2.",env.preds[i]))])
+} # end for i
+env.dif.cor <- cor(env.pair.dif, method = "pearson")
+env.dif.cor
+#cor=0.986 between matrix_1-matrix_2 site-pair differences
+
+
+## AZ:
+env.preds<-c("age","area","matrix_1","matrix_2") #order in the gdm.Tab
+env.pair.dif <- matrix(0, ncol = length(env.preds), nrow = nrow(gdmTab.AZ))
+colnames(env.pair.dif) <- paste0(env.preds,"_diff")
+for(i in 1:length(env.preds))
+{
+   env.pair.dif[,i] <- abs(gdmTab.AZ[,which(colnames(gdmTab.AZ) == paste0("s1.",env.preds[i]))] -
+                               gdmTab.AZ[,which(colnames(gdmTab.AZ) == paste0("s2.",env.preds[i]))])
+} # end for i
+env.dif.cor <- cor(env.pair.dif, method = "pearson")
+env.dif.cor
+#cor=0.994 between matrix_1-matrix_2 site-pair differences
+```
+
+
+
 **GDM fitting:** 
 
 https://github.com/fitzlab-AL/GDM
@@ -321,15 +371,26 @@ The *summary* function provides an overview of the model, the most important ite
 ## Galápagos:
 gdm.GAL<-gdm(data=gdmTab.GAL, geo=F)
 summary(gdm.GAL)
+#plot(gdm.GAL)
+
 
 ## Canaries:
 gdm.CAN<-gdm(data=gdmTab.CAN, geo=F)
 summary(gdm.CAN)
+#plot(gdm.CAN)
 
 
 ## Azores:
 gdm.AZ<-gdm(data=gdmTab.AZ, geo=F)
 summary(gdm.AZ)
+#plot(gdm.AZ)
+```
+
+
+```{r}
+# saveRDS(gdm.GAL, here::here("c_output/gdm/gdm.GAL.rds"))
+# saveRDS(gdm.CAN, here::here("c_output/gdm/gdm.CAN.rds"))
+# saveRDS(gdm.AZ, here::here("c_output/gdm/gdm.AZ.rds"))
 ```
 
 
@@ -342,6 +403,72 @@ summary(gdm.AZ)
 **Azores:** 14.022 % of the deviance explained. The most important predictor variable is the **island area** (0.06), distantly followed by the geographic distance (0.045), and island age (0.035).
 
 **Sea currents** had no importance in determining littoral species dissimilarity between islands in Galápagos and Azores based on our models.
+
+
+Because of the high correlation between site-pair differences of geographical distances and sea-currents cost, we fit new models considering these two variables separately.
+
+
+```{r geo and sea models, warning=FALSE}
+gdmTab.GAL.geo <- formatsitepair(bioData=flor_dis_gal, 
+                             bioFormat=3, #diss matrix 
+                             XColumn="Lon", 
+                             YColumn="Lat", 
+                             predData=predictors.gal, 
+                             siteColumn="Island",
+                             distPreds = list(geo_dist_gal))
+gdm.GAL.geo<-gdm(gdmTab.GAL.geo, geo = F)
+summary(gdm.GAL.geo)
+
+gdmTab.GAL.sea <- formatsitepair(bioData=flor_dis_gal, 
+                             bioFormat=3, #diss matrix 
+                             XColumn="Lon", 
+                             YColumn="Lat", 
+                             predData=predictors.gal, 
+                             siteColumn="Island",
+                             distPreds = list(sea_dist_gal))
+gdm.GAL.sea<-gdm(gdmTab.GAL.sea, geo = F)
+summary(gdm.GAL.sea)
+
+gdmTab.CAN.geo <- formatsitepair(bioData=flor_dis_can, 
+                             bioFormat=3, #diss matrix 
+                             XColumn="Lon", 
+                             YColumn="Lat", 
+                             predData=predictors.can, 
+                             siteColumn="Island",
+                             distPreds = list(geo_dist_can))
+gdm.CAN.geo<-gdm(gdmTab.CAN.geo, geo = F)
+summary(gdm.CAN.geo)
+
+gdmTab.CAN.sea <- formatsitepair(bioData=flor_dis_can, 
+                             bioFormat=3, #diss matrix 
+                             XColumn="Lon", 
+                             YColumn="Lat", 
+                             predData=predictors.can, 
+                             siteColumn="Island",
+                             distPreds = list(sea_dist_can))
+gdm.CAN.sea<-gdm(gdmTab.CAN.sea, geo = F)
+summary(gdm.CAN.sea)
+
+gdmTab.AZ.geo <- formatsitepair(bioData=flor_dis_az, 
+                             bioFormat=3, #diss matrix 
+                             XColumn="Lon", 
+                             YColumn="Lat", 
+                             predData=predictors.az, 
+                             siteColumn="Island",
+                             distPreds = list(geo_dist_az))
+gdm.AZ.geo<-gdm(gdmTab.AZ.geo, geo = F)
+summary(gdm.AZ.geo)
+
+gdmTab.AZ.sea <- formatsitepair(bioData=flor_dis_az, 
+                             bioFormat=3, #diss matrix 
+                             XColumn="Lon", 
+                             YColumn="Lat", 
+                             predData=predictors.az, 
+                             siteColumn="Island",
+                             distPreds = list(sea_dist_az))
+gdm.AZ.sea<-gdm(gdmTab.AZ.sea, geo = F)
+summary(gdm.AZ.sea)
+```
 
 
 
@@ -418,6 +545,7 @@ gdmTab.nolitt.AZ <- formatsitepair(bioData=flor_dis_nolitt_az,
 ```
 
 
+
 **GDM fitting:**
 
 ```{r gdm fitting nonlitt, warning=FALSE}
@@ -448,7 +576,70 @@ summary(gdm.nolitt.AZ)
 **Sea currents** had no importance in determining no littoral species dissimilarity between islands in any of the three archipelagos based on our models.
 
 
+Modelling separately geographic distances and sea-currents costs:
 
+
+```{r geo and sea models nonlit, warning=FALSE}
+gdmTab.GAL.geo <- formatsitepair(bioData=flor_dis_nolitt_gal, 
+                             bioFormat=3, #diss matrix 
+                             XColumn="Lon", 
+                             YColumn="Lat", 
+                             predData=predictors.gal, 
+                             siteColumn="Island",
+                             distPreds = list(geo_dist_gal))
+gdm.GAL.geo<-gdm(gdmTab.GAL.geo, geo = F)
+summary(gdm.GAL.geo)
+
+gdmTab.GAL.sea <- formatsitepair(bioData=flor_dis_nolitt_gal, 
+                             bioFormat=3, #diss matrix 
+                             XColumn="Lon", 
+                             YColumn="Lat", 
+                             predData=predictors.gal, 
+                             siteColumn="Island",
+                             distPreds = list(sea_dist_gal))
+gdm.GAL.sea<-gdm(gdmTab.GAL.sea, geo = F)
+summary(gdm.GAL.sea)
+
+gdmTab.CAN.geo <- formatsitepair(bioData=flor_dis_nolitt_can, 
+                             bioFormat=3, #diss matrix 
+                             XColumn="Lon", 
+                             YColumn="Lat", 
+                             predData=predictors.can, 
+                             siteColumn="Island",
+                             distPreds = list(geo_dist_can))
+gdm.CAN.geo<-gdm(gdmTab.CAN.geo, geo = F)
+summary(gdm.CAN.geo)
+
+gdmTab.CAN.sea <- formatsitepair(bioData=flor_dis_nolitt_can, 
+                             bioFormat=3, #diss matrix 
+                             XColumn="Lon", 
+                             YColumn="Lat", 
+                             predData=predictors.can, 
+                             siteColumn="Island",
+                             distPreds = list(sea_dist_can))
+gdm.CAN.sea<-gdm(gdmTab.CAN.sea, geo = F)
+summary(gdm.CAN.sea)
+
+gdmTab.AZ.geo <- formatsitepair(bioData=flor_dis_nolitt_az, 
+                             bioFormat=3, #diss matrix 
+                             XColumn="Lon", 
+                             YColumn="Lat", 
+                             predData=predictors.az, 
+                             siteColumn="Island",
+                             distPreds = list(geo_dist_az))
+gdm.AZ.geo<-gdm(gdmTab.AZ.geo, geo = F)
+summary(gdm.AZ.geo)
+
+gdmTab.AZ.sea <- formatsitepair(bioData=flor_dis_nolitt_az, 
+                             bioFormat=3, #diss matrix 
+                             XColumn="Lon", 
+                             YColumn="Lat", 
+                             predData=predictors.az, 
+                             siteColumn="Island",
+                             distPreds = list(sea_dist_az))
+gdm.AZ.sea<-gdm(gdmTab.AZ.sea, geo = F)
+summary(gdm.AZ.sea)
+```
 
 
 
@@ -678,162 +869,3 @@ reciprocalMatrix
 
 
 It is confirmed that the **geographic distances** explain better the species dissimilarities between islands of the three archipelagos, for both littoral and non-littoral species. However, in some cases, other variables such **island area or age** are even more important than geographic differences in explaining species dissimilarities between islands.
-
-
-
-
-##############################
-
-
-```{r}
-# Extract coefficients for each archipelago
-extract_gdm_coefficients <- function(gdm_model) {
-  predictors <- gdm_model$predictors
-  coefficients <- gdm_model$coefficients
-  num_splines <- gdm_model$splines
-  coeff_split <- split(coefficients, rep(predictors, each = num_splines))
-  coeff_importance <- sapply(coeff_split, sum) # Sum coefficients
-  total_importance <- coeff_importance / sum(coeff_importance) # Normalize
-  data.frame(Predictor = names(total_importance), Importance = total_importance)
-}
-
-# Extract results for Galápagos, Canaries, and Azores
-gal_importance <- extract_gdm_coefficients(gdm.GAL) %>% mutate(Archipelago = "Galápagos")
-can_importance <- extract_gdm_coefficients(gdm.CAN) %>% mutate(Archipelago = "Canaries")
-az_importance <- extract_gdm_coefficients(gdm.AZ) %>% mutate(Archipelago = "Azores")
-
-# Combine into a single data frame
-combined_importance <- bind_rows(gal_importance, can_importance, az_importance)
-
-
-
-# Plotting the combined results
-ggplot(combined_importance, aes(x = Predictor, y = Importance, fill = Archipelago)) +
-  geom_bar(stat = "identity", position = position_dodge()) +
-  labs(title = "Relative Importance of Predictors for Littoral Flora",
-       y = "Relative Importance",
-       x = "Predictor") +
-  scale_fill_brewer(palette = "Set2") +
-  theme_classic()
-```
-
-```{r}
-library(ggpattern)
-
-extract_gdm_coefficients <- function(gdm_model) {
-  predictors <- gdm_model$predictors
-  coefficients <- gdm_model$coefficients
-  num_splines <- gdm_model$splines
-  coeff_split <- split(coefficients, rep(predictors, each = num_splines))
-  coeff_importance <- sapply(coeff_split, sum) # Sum coefficients
-  total_importance <- coeff_importance / sum(coeff_importance) # Normalize
-  data.frame(Predictor = names(total_importance), Importance = total_importance)
-}
-
-# Extract coefficients for littoral flora
-# Replace gdm.GAL, gdm.CAN, and gdm.AZ with your actual GDM model objects
-littoral_gal_importance <- extract_gdm_coefficients(gdm.GAL) %>% 
-  mutate(Archipelago = "Galápagos", Flora = "Littoral")
-littoral_can_importance <- extract_gdm_coefficients(gdm.CAN) %>% 
-  mutate(Archipelago = "Canaries", Flora = "Littoral")
-littoral_az_importance <- extract_gdm_coefficients(gdm.AZ) %>% 
-  mutate(Archipelago = "Azores", Flora = "Littoral")
-
-# Extract coefficients for non-littoral flora
-# Replace gdm.nolitt.GAL, gdm.nolitt.CAN, and gdm.nolitt.AZ with your actual GDM model objects
-nonlittoral_gal_importance <- extract_gdm_coefficients(gdm.nolitt.GAL) %>% 
-  mutate(Archipelago = "Galápagos", Flora = "Non-Littoral")
-nonlittoral_can_importance <- extract_gdm_coefficients(gdm.nolitt.CAN) %>% 
-  mutate(Archipelago = "Canaries", Flora = "Non-Littoral")
-nonlittoral_az_importance <- extract_gdm_coefficients(gdm.nolitt.AZ) %>% 
-  mutate(Archipelago = "Azores", Flora = "Non-Littoral")
-
-# Combine littoral and non-littoral results
-combined_importance <- bind_rows(
-  littoral_gal_importance, littoral_can_importance, littoral_az_importance,
-  nonlittoral_gal_importance, nonlittoral_can_importance, nonlittoral_az_importance
-)
-
-# Define colors
-colors <- c("Galápagos" = "skyblue", "Canaries" = "#660099", "Azores" = "lightcoral")
-
-# Create individual plots for each archipelago
-library(ggplot2)
-gal_plot <- ggplot(combined_importance %>% filter(Archipelago == "Galápagos"),
-                   aes(x = Predictor, y = Importance, fill = Flora)) +
-  geom_bar(
-    stat = "identity", 
-    position = position_dodge(width = 0.7),
-    aes(color = ifelse(Flora == "Littoral", "black", NA)),
-    size = 0.8,
-    width = 0.6
-  ) +
-  scale_fill_manual(values = c("Littoral" = "skyblue", "Non-Littoral" = "skyblue")) +
-  scale_color_identity() +
-  labs(
-    title = "Galápagos",
-    y = "Relative Importance",
-    x = "Predictor"
-  ) +
-  ylim(0, 1) +
-  theme_classic() +
-  theme(
-    legend.position = "bottom",
-    legend.title = element_text(size = 10),
-    legend.text = element_text(size = 9)
-  )
-
-can_plot <- ggplot(combined_importance %>% filter(Archipelago == "Canaries"),
-                   aes(x = Predictor, y = Importance, fill = Flora)) +
-  geom_bar(
-    stat = "identity", 
-    position = position_dodge(width = 0.7),
-    aes(color = ifelse(Flora == "Littoral", "black", NA)),
-    size = 0.8,
-    width = 0.6
-  ) +
-  scale_fill_manual(values = c("Littoral" = "#660099", "Non-Littoral" = "#660099")) +
-  scale_color_identity() +
-  labs(
-    title = "Canaries",
-    y = "Relative Importance",
-    x = "Predictor"
-  ) +
-  ylim(0, 1) +
-  theme_classic() +
-  theme(
-    legend.position = "bottom",
-    legend.title = element_text(size = 10),
-    legend.text = element_text(size = 9)
-  )
-
-az_plot <- ggplot(combined_importance %>% filter(Archipelago == "Azores"),
-                  aes(x = Predictor, y = Importance, fill = Flora)) +
-  geom_bar(
-    stat = "identity", 
-    position = position_dodge(width = 0.7),
-    aes(color = ifelse(Flora == "Littoral", "black", NA)),
-    size = 0.8,
-    width = 0.6
-  ) +
-  scale_fill_manual(values = c("Littoral" = "lightcoral", "Non-Littoral" = "lightcoral")) +
-  scale_color_identity() +
-  labs(
-    title = "Azores",
-    y = "Relative Importance",
-    x = "Predictor"
-  ) +
-  ylim(0, 1) +
-  theme_classic() +
-  theme(
-    legend.position = "bottom",
-    legend.title = element_text(size = 10),
-    legend.text = element_text(size = 9)
-  )
-
-# Combine the three plots using ggarrange
-library(ggpubr)
-ggarrange(gal_plot, can_plot, az_plot, ncol = 1, nrow = 3, common.legend = TRUE, legend = "bottom")
-
-```
-
